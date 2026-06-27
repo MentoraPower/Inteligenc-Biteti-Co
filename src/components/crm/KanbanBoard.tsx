@@ -1397,7 +1397,17 @@ export function KanbanBoard() {
                     }}
                     numberOfMonths={1}
                     locale={ptBR}
-                    className="pointer-events-auto p-0"
+                    className="pointer-events-auto p-0 w-full"
+                    classNames={{
+                      months: "w-full",
+                      month: "w-full space-y-3",
+                      table: "w-full border-collapse",
+                      head_row: "flex w-full",
+                      head_cell: "flex-1 text-muted-foreground rounded-md font-normal text-[0.8rem]",
+                      row: "flex w-full mt-1.5",
+                      cell: "flex-1 h-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      day: "inline-flex items-center justify-center rounded-md text-sm font-normal h-10 w-full p-0 hover:bg-accent hover:text-accent-foreground aria-selected:opacity-100 transition-colors",
+                    }}
                   />
                 </div>
               </div>
