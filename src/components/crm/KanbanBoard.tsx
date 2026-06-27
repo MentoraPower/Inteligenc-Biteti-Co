@@ -46,6 +46,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
 import { toast } from "sonner";
@@ -1316,7 +1317,7 @@ export function KanbanBoard() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={8} className="w-[360px] bg-popover z-[9999] p-0 overflow-hidden rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-2xl">
+            <DropdownMenuContent align="end" sideOffset={8} className="w-[600px] bg-popover z-[9999] p-0 overflow-hidden rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-2xl">
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08]">
                 <div className="flex items-center gap-2">
@@ -1338,13 +1339,12 @@ export function KanbanBoard() {
                 )}
               </div>
 
-              <div className="p-5 space-y-3">
-                {/* Período */}
-                <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Período de cadastro
-                </span>
-
-                <div className="grid grid-cols-2 gap-2">
+              <div className="flex">
+                {/* Left: quick presets */}
+                <div className="w-52 shrink-0 p-3 border-r border-black/[0.06] dark:border-white/[0.08] space-y-1.5">
+                  <span className="block px-1 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Período
+                  </span>
                   {[
                     { key: "today", label: "Hoje" },
                     { key: "yesterday", label: "Ontem" },
@@ -1357,14 +1357,11 @@ export function KanbanBoard() {
                       onClick={() => {
                         const next = datePreset === preset.key ? "all" : (preset.key as typeof datePreset);
                         setDatePreset(next);
-                        if (next !== "custom") {
-                          setStartDate(undefined);
-                          setEndDate(undefined);
-                        }
+                        setStartDate(undefined);
+                        setEndDate(undefined);
                       }}
                       className={cn(
-                        "px-3 py-2.5 text-xs font-medium rounded-lg border transition-all",
-                        preset.key === "thismonth" && "col-span-2",
+                        "w-full px-3 py-2 text-sm font-medium rounded-lg border text-left transition-all",
                         datePreset === preset.key
                           ? "bg-foreground text-background border-foreground"
                           : "bg-background border-black/[0.08] dark:border-white/[0.08] hover:bg-muted hover:border-black/20 dark:hover:border-white/20"
@@ -1375,80 +1372,34 @@ export function KanbanBoard() {
                   ))}
                 </div>
 
-                {/* Divider (light line) */}
-                <div className="h-px -mx-5 bg-black/[0.06] dark:bg-white/[0.08]" />
-
-                {/* Custom Date Range */}
-                <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Intervalo personalizado
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        onClick={() => setDatePreset("custom")}
-                        className={cn(
-                          "flex items-center gap-2 w-full px-3 py-2.5 text-xs rounded-lg bg-background border border-black/[0.08] dark:border-white/[0.08] text-left transition-colors hover:border-black/20 dark:hover:border-white/20",
-                          !startDate && "text-muted-foreground",
-                          datePreset === "custom" && startDate && "border-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="w-3.5 h-3.5" />
-                        {startDate ? format(startDate, "dd/MM/yy", { locale: ptBR }) : "Início"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[99999]" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={(date) => {
-                          setStartDate(date);
-                          setDatePreset("custom");
-                        }}
-                        initialFocus
-                        locale={ptBR}
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        onClick={() => setDatePreset("custom")}
-                        className={cn(
-                          "flex items-center gap-2 w-full px-3 py-2.5 text-xs rounded-lg bg-background border border-black/[0.08] dark:border-white/[0.08] text-left transition-colors hover:border-black/20 dark:hover:border-white/20",
-                          !endDate && "text-muted-foreground",
-                          datePreset === "custom" && endDate && "border-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="w-3.5 h-3.5" />
-                        {endDate ? format(endDate, "dd/MM/yy", { locale: ptBR }) : "Fim"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[99999]" align="end">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={(date) => {
-                          setEndDate(date);
-                          setDatePreset("custom");
-                        }}
-                        initialFocus
-                        locale={ptBR}
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                {/* Right: custom range calendar (início + fim in one) */}
+                <div className="flex-1 p-3">
+                  <div className="flex items-center justify-between px-1 pb-1.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Personalizado
+                    </span>
+                    <span className={cn(
+                      "text-xs font-medium",
+                      datePreset === "custom" && (startDate || endDate) ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {startDate ? format(startDate, "dd/MM/yy", { locale: ptBR }) : "Início"}
+                      {"  —  "}
+                      {endDate ? format(endDate, "dd/MM/yy", { locale: ptBR }) : "Fim"}
+                    </span>
+                  </div>
+                  <Calendar
+                    mode="range"
+                    selected={{ from: startDate, to: endDate } as DateRange}
+                    onSelect={(range: DateRange | undefined) => {
+                      setStartDate(range?.from);
+                      setEndDate(range?.to);
+                      setDatePreset("custom");
+                    }}
+                    numberOfMonths={1}
+                    locale={ptBR}
+                    className="pointer-events-auto p-0"
+                  />
                 </div>
-              </div>
-
-              {/* Footer - result count */}
-              <div className="px-5 py-3 border-t border-black/[0.06] dark:border-white/[0.08] bg-muted/20">
-                <span className="text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground">{displayLeads.length.toLocaleString('pt-BR')}</span>{" "}
-                  {displayLeads.length === 1 ? "lead" : "leads"}
-                </span>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>

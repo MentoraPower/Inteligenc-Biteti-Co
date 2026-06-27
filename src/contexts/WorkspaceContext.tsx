@@ -16,8 +16,12 @@ interface WorkspaceContextType {
   isSwitching: boolean;
   switchWorkspace: (workspaceId: string) => void;
   createWorkspace: (name: string) => Promise<Workspace | null>;
+  renameWorkspace: (workspaceId: string, name: string) => Promise<boolean>;
+  deleteWorkspace: (workspaceId: string) => Promise<boolean>;
   refetchWorkspaces: () => Promise<void>;
 }
+
+const DEFAULT_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
 
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
@@ -228,6 +232,68 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const renameWorkspace = useCallback(async (workspaceId: string, name: string): Promise<boolean> => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({ name: trimmed })
+        .eq('id', workspaceId);
+
+      if (error) {
+        console.error('Error renaming workspace:', error);
+        return false;
+      }
+
+      setWorkspaces(prev => prev.map(w => (w.id === workspaceId ? { ...w, name: trimmed } : w)));
+      setCurrentWorkspace(prev => (prev && prev.id === workspaceId ? { ...prev, name: trimmed } : prev));
+      try {
+        if (currentWorkspace?.id === workspaceId) localStorage.setItem('crm_ws_name', trimmed);
+      } catch { /* ignore */ }
+      return true;
+    } catch (error) {
+      console.error('Error renaming workspace:', error);
+      return false;
+    }
+  }, [currentWorkspace?.id]);
+
+  const deleteWorkspace = useCallback(async (workspaceId: string): Promise<boolean> => {
+    if (workspaceId === DEFAULT_WORKSPACE_ID) return false; // never delete the default
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .delete()
+        .eq('id', workspaceId);
+
+      if (error) {
+        console.error('Error deleting workspace:', error);
+        return false;
+      }
+
+      const remaining = workspaces.filter(w => w.id !== workspaceId);
+      setWorkspaces(remaining);
+
+      // If the deleted workspace was the current one, switch to another and reload.
+      if (currentWorkspace?.id === workspaceId) {
+        const next = remaining[0] || null;
+        if (next) {
+          setCurrentWorkspace(next);
+          localStorage.setItem(WORKSPACE_STORAGE_KEY, next.id);
+          setIsSwitching(true);
+          sessionStorage.setItem('workspace_switching', 'true');
+          const nativeOverlay = document.getElementById('workspace-loading-overlay');
+          if (nativeOverlay) nativeOverlay.style.display = 'flex';
+          setTimeout(() => { window.location.href = '/crm'; }, 150);
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      return false;
+    }
+  }, [workspaces, currentWorkspace?.id]);
+
   const refetchWorkspaces = useCallback(async () => {
     await fetchWorkspaces();
   }, [fetchWorkspaces]);
@@ -240,6 +306,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       isSwitching,
       switchWorkspace,
       createWorkspace,
+      renameWorkspace,
+      deleteWorkspace,
       refetchWorkspaces
     }}>
       <AnimatePresence>
