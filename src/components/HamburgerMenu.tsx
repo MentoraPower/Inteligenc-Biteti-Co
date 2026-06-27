@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import scaleLogo from "@/assets/scale-logo-menu.png";
 
 interface MenuItem {
   label: string;
@@ -89,13 +88,13 @@ const HamburgerMenu = () => {
             className={`flex items-center justify-between py-2 px-4 rounded-xl transition-colors duration-300 ${bgClass}`}
             layout
           >
-            <motion.img
-              src={scaleLogo}
-              alt="Scale Beauty"
-              className="h-6 object-contain"
+            <motion.span
+              className="font-bold text-sm uppercase tracking-tight bg-gradient-to-r from-[#FF6B00] to-[#CC5500] bg-clip-text text-transparent"
               animate={{ scale: isOpen ? 1.15 : 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-            />
+            >
+              Biteti &amp; Co Inteligenc
+            </motion.span>
             
             <div className="relative">
               <button
@@ -161,7 +160,7 @@ const HamburgerMenu = () => {
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-center justify-between py-3">
             <span className="font-bold text-sm uppercase tracking-tight bg-gradient-to-r from-[#FF6B00] to-[#CC5500] bg-clip-text text-transparent">
-              Scale Beauty
+              Biteti &amp; Co Inteligenc
             </span>
             
             <nav className="flex items-center gap-8">
