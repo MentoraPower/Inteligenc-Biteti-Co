@@ -1,0 +1,1 @@
+UPDATE email_automations SET name = 'Fluxo de Emails' WHERE id = '5d549392-896c-42ae-993d-a13f4b84e0c4';

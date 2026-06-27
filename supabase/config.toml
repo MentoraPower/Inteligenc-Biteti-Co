@@ -1,0 +1,46 @@
+project_id = "ytdfwkchsumgdvcroaqg"
+
+[functions.analyze-lead-profile]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.recalculate-mql]
+verify_jwt = false
+
+[functions.trigger-webhook]
+verify_jwt = false
+
+[functions.receive-webhook]
+verify_jwt = false
+
+[functions.create-team-member]
+verify_jwt = false
+
+[functions.list-team-members]
+verify_jwt = false
+
+[functions.update-team-member]
+verify_jwt = false
+
+[functions.bulk-move-leads]
+verify_jwt = false
+
+[functions.process-scheduled-emails]
+verify_jwt = false
+
+[functions.facebook-ads]
+verify_jwt = false
+
+[functions.email-tracking]
+verify_jwt = false
+
+[functions.generate-email]
+verify_jwt = false
+
+[functions.sync-guru-sales]
+verify_jwt = false
+
+[functions.import-guru-sales]
+verify_jwt = false

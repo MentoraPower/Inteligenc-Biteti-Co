@@ -1,0 +1,1 @@
+DELETE FROM overview_cards WHERE sub_origin_id = '06828c22-3c33-477a-b9cf-72125b951d59';

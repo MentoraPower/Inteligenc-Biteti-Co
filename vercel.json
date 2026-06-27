@@ -1,0 +1,30 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/webhook",
+      "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/receive-webhook"
+    },
+    {
+      "source": "/api/webhook/:path*",
+      "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/receive-webhook/:path*"
+    },
+    {
+      "source": "/api/wasender-webhook",
+      "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/wasender-webhook"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, apikey, x-client-info" }
+      ]
+    }
+  ]
+}
