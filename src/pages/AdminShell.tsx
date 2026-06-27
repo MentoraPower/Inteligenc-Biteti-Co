@@ -8,6 +8,8 @@ import { User, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { MobileBlock } from "@/components/MobileBlock";
+import { isMobilePhone } from "@/lib/device";
 
 function TopNavbar() {
   const navigate = useNavigate();
@@ -111,6 +113,11 @@ function TopNavbar() {
 }
 
 export default function AdminShell() {
+  // Block access on mobile phones — by device, not by screen size.
+  if (isMobilePhone()) {
+    return <MobileBlock />;
+  }
+
   return (
     <>
       <TopNavbar />
