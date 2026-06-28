@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
-import DotShaderBackground from "@/components/DotShaderBackground";
+import { MobileBlock } from "@/components/MobileBlock";
+import { isMobilePhone } from "@/lib/device";
+
 const loginSchema = z.object({
   email: z.string().email("Email inválido").max(255, "Email muito longo"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres").max(128, "Senha muito longa")
 });
+
 const Auth = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -19,53 +22,31 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   useEffect(() => {
-    // Check if user is already logged in
     const checkAuth = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) navigate("/");
       setIsCheckingAuth(false);
     };
     checkAuth();
 
-    // Listen for auth changes
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) navigate("/");
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate input
-    const validation = loginSchema.safeParse({
-      email,
-      password
-    });
+    const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
     }
     setIsLoading(true);
     try {
-      const {
-        error
-      } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Email ou senha incorretos");
@@ -84,80 +65,105 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-  if (isCheckingAuth) {
-    return <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-      </div>;
+
+  // Block the login on mobile phones — by device, not screen size.
+  if (isMobilePhone()) {
+    return <MobileBlock />;
   }
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen relative flex items-center justify-center px-4 overflow-hidden">
-      <DotShaderBackground 
-        bgColor="#0a0a0a" 
-        dotColor="#FFFFFF" 
-        gridSize={80} 
-        dotOpacity={0.1}
-      />
-      <div className="w-full max-w-md relative z-10">
-        {/* White Card Container */}
-        <div className="bg-[#f5f5f5] rounded-3xl p-10 shadow-2xl">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-neutral-900 tracking-tight mb-2">Acesse sua conta</h1>
-            <p className="text-neutral-500 text-sm leading-relaxed">
-              Se você já possui uma conta, preencha seus dados de acesso à plataforma.
-            </p>
-          </div>
+    <div className="min-h-screen relative flex overflow-hidden bg-neutral-100">
+      {/* Strong light-blurred + noisy ambient background (same image) */}
+      <div className="absolute inset-0">
+        <img
+          src="/login-bg.jpg"
+          alt=""
+          className="w-full h-full object-cover scale-125 blur-3xl"
+        />
+        <div className="absolute inset-0 bg-white/60" />
+        <div className="absolute inset-0 login-noise" />
+      </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-neutral-700 text-sm font-medium">E-mail</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                placeholder="contato@email.com.br" 
-                className="bg-transparent border-0 border-b border-neutral-300 rounded-none text-neutral-900 placeholder:text-neutral-400 focus:ring-0 focus:border-neutral-900 h-12 px-0 transition-all duration-200" 
-                disabled={isLoading} 
-                autoComplete="email" 
-              />
+      {/* Content — split: image on one side, form on the other */}
+      <div className="relative z-10 flex w-full min-h-screen">
+        {/* Image side (rounded, with margin top/sides/bottom) */}
+        <div className="hidden lg:flex w-1/2 p-6">
+          <img
+            src="/login-bg.jpg"
+            alt=""
+            className="w-full h-full object-cover rounded-[28px] shadow-2xl select-none pointer-events-none"
+          />
+        </div>
+
+        {/* Form side */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/70">
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-neutral-900 tracking-tight mb-2">Acesse sua conta</h1>
+              <p className="text-neutral-500 text-sm leading-relaxed">
+                Se você já possui uma conta, preencha seus dados de acesso à plataforma.
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-neutral-700 text-sm font-medium">Senha</Label>
-              <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  value={password} 
-                  onChange={e => setPassword(e.target.value)} 
-                  placeholder="••••••••••••" 
-                  className="bg-transparent border-0 border-b border-neutral-300 rounded-none text-neutral-900 placeholder:text-neutral-400 focus:ring-0 focus:border-neutral-900 h-12 px-0 pr-10 transition-all duration-200" 
-                  disabled={isLoading} 
-                  autoComplete="current-password" 
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-neutral-700 text-sm font-medium">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="contato@email.com.br"
+                  className="h-12 rounded-xl bg-white border border-neutral-300 px-4 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-neutral-900/15 focus-visible:border-neutral-900 transition-all"
+                  disabled={isLoading}
+                  autoComplete="email"
                 />
-                <button 
-                  type="button" 
-                  onClick={() => setShowPassword(!showPassword)} 
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              disabled={isLoading} 
-              className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium h-14 rounded-xl transition-all duration-200 hover:shadow-lg mt-4"
-            >
-              {isLoading ? "Entrando..." : "Acessar sua conta"}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-neutral-700 text-sm font-medium">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="h-12 rounded-xl bg-white border border-neutral-300 px-4 pr-11 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-neutral-900/15 focus-visible:border-neutral-900 transition-all"
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium h-13 py-3.5 rounded-xl transition-all duration-200 hover:shadow-lg mt-2"
+              >
+                {isLoading ? "Entrando..." : "Acessar sua conta"}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Auth;
