@@ -188,13 +188,12 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {/* Desktop Sidebar - Black background, CSS-only hover expansion */}
         <aside
           ref={sidebarRef}
-          style={{ 
+          style={{
             left: 0,
             top: '60px',
             height: 'calc(100vh - 60px)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.125)',
           }}
-          className="group hidden lg:flex flex-col fixed bg-black overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
+          className="group hidden lg:flex flex-col fixed bg-card border-r border-border overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
         >
           <div className="flex flex-col h-full relative">
             {/* Top spacing (logo removed) */}
@@ -208,8 +207,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   className={cn(
                     "relative flex items-center h-10 rounded-lg transition-all duration-200",
                     activePanel === 'crm'
-                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
-                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                      ? "bg-accent text-foreground before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                 >
                   <div className="w-10 flex items-center justify-center flex-shrink-0">
