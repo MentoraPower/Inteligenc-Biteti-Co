@@ -6,12 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Clock } from "lucide-react";
 import { getAvatarForName } from "@/lib/avatar";
 import WhatsApp from "@/components/icons/WhatsApp";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from "date-fns";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
