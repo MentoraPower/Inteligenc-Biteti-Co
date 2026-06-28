@@ -3,7 +3,7 @@
 // stable avatar while the set looks varied across the board.
 // Avatars live in /public so we reference them by absolute URL.
 const MALE_AVATARS = ["/avatar-male.png", "/avatar-male-2.png"];
-const FEMALE_AVATARS = ["/avatar-female.png"];
+const FEMALE_AVATARS = ["/avatar-female.png", "/avatar-female-2.png"];
 
 // Female names that do NOT end in "a" (so the heuristic would miss them).
 const FEMALE_NAMES = new Set([
