@@ -3,7 +3,8 @@ import { useSortable, AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Lead, LeadTag } from "@/types/crm";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, User, Clock } from "lucide-react";
+import { Mail, Clock } from "lucide-react";
+import { getAvatarForName } from "@/lib/avatar";
 import WhatsApp from "@/components/icons/WhatsApp";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from "date-fns";
@@ -192,9 +193,12 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
       <CardContent className="p-4 flex flex-col h-full">
         {/* Top: avatar (left) + name + contact (right) */}
         <div className="flex items-start gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-lg bg-green-800/20 flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-white" />
-          </div>
+          <img
+            src={getAvatarForName(lead.name)}
+            alt=""
+            loading="lazy"
+            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 select-none pointer-events-none"
+          />
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-[15px] leading-tight truncate">{lead.name}</h3>
             {/* phone (with DDI) — placeholder keeps all cards the same height */}
