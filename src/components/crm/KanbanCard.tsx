@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Clock } from "lucide-react";
 import { getAvatarForName } from "@/lib/avatar";
 import WhatsApp from "@/components/icons/WhatsApp";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { differenceInSeconds, differenceInMinutes, differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from "date-fns";
 import {
@@ -227,18 +228,43 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
               <Clock className="w-3.5 h-3.5" />
               <span className="font-semibold">{timeAgo}</span>
             </div>
-            {/* Tags in the corner (right, single line) */}
-            <div className="flex items-center gap-1.5 overflow-hidden min-w-0 justify-end">
-              {tags.map((tag) => (
+            {/* Tags in the corner: first tag + "+N" circle (hover shows the rest) */}
+            {tags.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-hidden min-w-0 justify-end">
                 <span
-                  key={tag.id}
-                  className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap flex-shrink-0"
-                  style={{ backgroundColor: tagColorAlpha(tag.color, 0.25), color: tag.color }}
+                  className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap truncate"
+                  style={{ backgroundColor: tagColorAlpha(tags[0].color, 0.25), color: tags[0].color }}
                 >
-                  {tag.name}
+                  {tags[0].name}
                 </span>
-              ))}
-            </div>
+                {tags.length > 1 && (
+                  <TooltipProvider delayDuration={80}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-muted text-foreground/70 text-[10px] font-bold cursor-default flex-shrink-0"
+                        >
+                          +{tags.length - 1}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="end" className="flex flex-col items-start gap-1 p-2 max-w-[200px]">
+                        {tags.slice(1).map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap"
+                            style={{ backgroundColor: tagColorAlpha(tag.color, 0.25), color: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
