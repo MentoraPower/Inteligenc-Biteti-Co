@@ -237,7 +237,7 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
                 >
                   {tags[0].name}
                 </span>
-                {tags.length > 1 && (
+                {tags.length > 0 && (
                   <TooltipProvider delayDuration={80}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -246,11 +246,11 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
                           onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center justify-center h-5 min-w-[22px] px-1.5 rounded-full bg-muted text-foreground/80 text-[11px] font-bold cursor-default flex-shrink-0"
                         >
-                          +{tags.length - 1}
+                          +{tags.length}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="top" align="end" className="flex flex-col items-start gap-1 p-2 max-w-[220px]">
-                        {tags.slice(1).map((tag) => (
+                        {tags.map((tag) => (
                           <span
                             key={tag.id}
                             className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap"
