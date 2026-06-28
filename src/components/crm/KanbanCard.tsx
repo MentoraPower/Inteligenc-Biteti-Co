@@ -128,14 +128,19 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
     animateLayoutChanges,
   });
 
-  // Posicionamento instantâneo sem animação
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition: undefined,
-    opacity: isDragging ? 0 : 1,
-    position: 'relative',
-    zIndex: isDragging ? 0 : 1,
-  };
+  // Posicionamento instantâneo sem animação.
+  // The drag overlay renders this same card by id, so its own useSortable also
+  // reports isDragging — we must keep the overlay copy fully visible (opacity 1)
+  // and skip the sortable transform (the overlay wrapper positions it).
+  const style: React.CSSProperties = isDraggingOverlay
+    ? { opacity: 1, position: 'relative', zIndex: 1 }
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition: undefined,
+        opacity: isDragging ? 0 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 0 : 1,
+      };
 
   const isBeingDragged = isDraggingOverlay;
 
