@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuTrigger,
@@ -30,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const DEFAULT_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -107,84 +107,95 @@ export function WorkspaceDropdown() {
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72 bg-popover border border-border p-1.5">
+        <DropdownMenuContent align="start" sideOffset={8} className="w-80 bg-popover border border-border p-0 rounded-2xl overflow-hidden shadow-2xl">
           {/* Current workspace header */}
-          <div className="px-1 py-1 mb-1">
-            <div className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl bg-sidebar-accent">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-semibold text-white">
+          <div className="p-3 bg-muted/40 border-b border-border">
+            <span className="block px-1 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Espaço atual
+            </span>
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-card border border-border">
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-sm font-bold text-white">
                   {currentWorkspace ? getInitials(currentWorkspace.name) : 'W'}
                 </span>
               </div>
-              <div className="min-w-0">
-                <span className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Espaço atual</span>
-                <span className="block text-base font-semibold truncate">{currentWorkspace?.name || 'Workspace'}</span>
-              </div>
+              <span className="flex-1 text-[15px] font-bold truncate">{currentWorkspace?.name || 'Workspace'}</span>
+              <Check className="h-[18px] w-[18px] text-primary flex-shrink-0" />
             </div>
           </div>
 
-          <DropdownMenuSeparator />
-
           {/* Workspace list */}
-          <div className="py-1 space-y-0.5">
-            {workspaces.map((workspace) => {
-              const isActive = currentWorkspace?.id === workspace.id;
-              return (
-                <div
-                  key={workspace.id}
-                  className="group flex items-center gap-1 pl-2 pr-1 py-1.5 rounded-lg hover:bg-accent transition-colors"
-                >
-                  <button
-                    onClick={() => { setIsDropdownOpen(false); switchWorkspace(workspace.id); }}
-                    className="flex flex-1 items-center gap-2.5 min-w-0 outline-none"
+          <div className="p-2">
+            <span className="block px-2 pt-1 pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Trocar de espaço
+            </span>
+            <div className="space-y-0.5 max-h-[280px] overflow-y-auto kanban-scroll">
+              {workspaces.map((workspace) => {
+                const isActive = currentWorkspace?.id === workspace.id;
+                return (
+                  <div
+                    key={workspace.id}
+                    className={cn(
+                      "group flex items-center gap-1 pl-2 pr-1 py-1.5 rounded-xl transition-colors",
+                      isActive ? "bg-accent" : "hover:bg-accent"
+                    )}
                   >
-                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[11px] font-semibold text-white">
-                        {getInitials(workspace.name)}
-                      </span>
-                    </div>
-                    <span className="flex-1 text-sm font-medium text-left truncate">{workspace.name}</span>
-                    {isActive && <Check className="h-4 w-4 text-primary flex-shrink-0" />}
-                  </button>
+                    <button
+                      onClick={() => { setIsDropdownOpen(false); switchWorkspace(workspace.id); }}
+                      className="flex flex-1 items-center gap-3 min-w-0 outline-none"
+                    >
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-white">
+                          {getInitials(workspace.name)}
+                        </span>
+                      </div>
+                      <span className="flex-1 text-sm font-medium text-left truncate">{workspace.name}</span>
+                      {isActive && <Check className="h-4 w-4 text-primary flex-shrink-0" />}
+                    </button>
 
-                  {/* Kebab (vertical 3 dots) with edit & delete */}
-                  <DropdownMenuSub>
-                    <DropdownMenuPrimitive.SubTrigger asChild>
-                      <button
-                        className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 outline-none data-[state=open]:bg-black/5 dark:data-[state=open]:bg-white/10 flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuPrimitive.SubTrigger>
-                    <DropdownMenuSubContent className="min-w-[160px] p-1">
-                      <DropdownMenuItem
-                        className="text-sm gap-2 cursor-pointer"
-                        onClick={() => { setRenameTarget(workspace); setRenameValue(workspace.name); }}
-                      >
-                        <Pencil className="h-4 w-4" /> Editar
-                      </DropdownMenuItem>
-                      {workspace.id !== DEFAULT_WORKSPACE_ID && (
-                        <DropdownMenuItem
-                          className="text-sm gap-2 cursor-pointer text-destructive focus:text-destructive"
-                          onClick={() => setDeleteTarget(workspace)}
+                    {/* Kebab (vertical 3 dots) with edit & delete */}
+                    <DropdownMenuSub>
+                      <DropdownMenuPrimitive.SubTrigger asChild>
+                        <button
+                          className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 outline-none data-[state=open]:bg-black/5 dark:data-[state=open]:bg-white/10 flex-shrink-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Trash2 className="h-4 w-4" /> Apagar
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuPrimitive.SubTrigger>
+                      <DropdownMenuSubContent className="min-w-[160px] p-1 rounded-xl">
+                        <DropdownMenuItem
+                          className="text-sm gap-2 cursor-pointer rounded-lg"
+                          onClick={() => { setRenameTarget(workspace); setRenameValue(workspace.name); }}
+                        >
+                          <Pencil className="h-4 w-4" /> Editar
                         </DropdownMenuItem>
-                      )}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </div>
-              );
-            })}
+                        {workspace.id !== DEFAULT_WORKSPACE_ID && (
+                          <DropdownMenuItem
+                            className="text-sm gap-2 cursor-pointer rounded-lg text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(workspace)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Apagar
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem className="text-sm gap-2 py-2.5 cursor-pointer" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Criar espaço de trabalho
-          </DropdownMenuItem>
+          {/* Create */}
+          <div className="p-2 border-t border-border">
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent hover:border-foreground/20 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Criar espaço de trabalho
+            </button>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
