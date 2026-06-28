@@ -288,7 +288,8 @@ export default function LeadDetail() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="flex h-full">
+        <div className="space-y-3 flex-1 min-w-0 pt-6">
         {/* Breadcrumb skeleton */}
         <div className="flex items-center gap-2">
           <Skeleton className="h-4 w-20" />
@@ -335,6 +336,7 @@ export default function LeadDetail() {
           <div className="space-y-4">
             <Skeleton className="h-64 w-full rounded-xl" />
           </div>
+        </div>
         </div>
       </div>
     );
