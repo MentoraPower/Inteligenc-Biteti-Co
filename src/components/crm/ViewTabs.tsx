@@ -300,11 +300,11 @@ export const ViewTabs = memo(function ViewTabs({ activeView, onViewChange, onSet
         <div className="flex items-center justify-between w-full px-4 pb-2">
           <div ref={containerRef} className="relative inline-flex items-center gap-0">
             {/* Animated gradient indicator */}
-            <div 
-              className="absolute bottom-0 h-[3px] rounded-sm bg-gradient-to-r from-orange-400 to-orange-600"
+            <div
+              className="absolute bottom-0 h-[2px] rounded-sm bg-gradient-to-r from-orange-400 to-orange-600"
               style={{
-                left: indicator.left,
-                width: indicator.width,
+                left: indicator.left - 8,
+                width: indicator.width + 16,
                 transition: "left 200ms cubic-bezier(0.4, 0, 0.2, 1), width 200ms cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             />
