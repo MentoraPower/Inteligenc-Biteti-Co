@@ -2,7 +2,11 @@
 // Several variants per gender are picked deterministically so each lead keeps a
 // stable avatar while the set looks varied across the board.
 // Avatars live in /public so we reference them by absolute URL.
-const MALE_AVATARS = ["/avatar-male.png", "/avatar-male-2.png"];
+const MALE_AVATARS = [
+  "/avatar-male.png",
+  "/avatar-male-2.png",
+  "/avatar-male-3.png",
+];
 const FEMALE_AVATARS = [
   "/avatar-female.png",
   "/avatar-female-2.png",
