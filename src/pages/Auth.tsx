@@ -73,14 +73,14 @@ const Auth = () => {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+      <div className="h-screen bg-neutral-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative flex overflow-hidden bg-neutral-100">
+    <div className="h-screen relative flex overflow-hidden bg-neutral-100">
       {/* Strong light-blurred + noisy ambient background (same image) */}
       <div className="absolute inset-0">
         <img
@@ -93,7 +93,7 @@ const Auth = () => {
       </div>
 
       {/* Content — split: image on one side, form on the other */}
-      <div className="relative z-10 flex w-full min-h-screen">
+      <div className="relative z-10 flex w-full h-full">
         {/* Image side (rounded, with margin top/sides/bottom) */}
         <div className="hidden lg:flex w-1/2 p-6">
           <img
