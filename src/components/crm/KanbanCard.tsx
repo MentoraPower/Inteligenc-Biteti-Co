@@ -228,8 +228,8 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
               {tags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold text-black dark:text-white uppercase tracking-wide whitespace-nowrap flex-shrink-0"
-                  style={{ backgroundColor: tagColorAlpha(tag.color, 0.25) }}
+                  className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap flex-shrink-0"
+                  style={{ backgroundColor: tagColorAlpha(tag.color, 0.25), color: tag.color }}
                 >
                   {tag.name}
                 </span>
