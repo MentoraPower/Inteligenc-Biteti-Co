@@ -301,7 +301,7 @@ export const ViewTabs = memo(function ViewTabs({ activeView, onViewChange, onSet
           <div ref={containerRef} className="relative inline-flex items-center gap-0">
             {/* Animated gradient indicator */}
             <div 
-              className="absolute bottom-0 h-[1.5px] rounded-sm bg-gradient-to-r from-orange-400 to-orange-600"
+              className="absolute bottom-0 h-[3px] rounded-sm bg-gradient-to-r from-orange-400 to-orange-600"
               style={{
                 left: indicator.left,
                 width: indicator.width,
