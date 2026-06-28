@@ -1161,15 +1161,8 @@ export function KanbanBoard() {
     return { leadsByPipeline: map, orphanLeads: orphans };
   }, [displayLeads, pipelines]);
 
-  // Create a virtual "orphan" pipeline for display
-  const orphanPipeline: Pipeline | null = orphanLeads.length > 0 ? {
-    id: "__orphan__",
-    nome: "Sem pipeline",
-    cor: "#9ca3af",
-    ordem: -1,
-    sub_origin_id: subOriginId,
-    created_at: new Date().toISOString(),
-  } : null;
+  // "Sem pipeline" (orphan) column removed — leads without a valid pipeline are not shown.
+  const orphanPipeline: Pipeline | null = null;
 
   // Persist the real column count (incl. the orphan column) so the loading
   // skeleton renders the correct number of columns INSTANTLY on the next load —
