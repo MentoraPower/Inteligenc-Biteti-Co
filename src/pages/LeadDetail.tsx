@@ -21,8 +21,6 @@ import { MoveLeadDropdown } from "@/components/crm/MoveLeadDropdown";
 import { EditableField } from "@/components/crm/EditableField";
 import { LeadCustomFields } from "@/components/crm/LeadCustomFields";
 import { CustomFieldsPanel } from "@/components/crm/CustomFieldsPanel";
-import { OnboardingSection, OnboardingBuilderData } from "@/components/onboarding/OnboardingSection";
-import { OnboardingFormBuilder } from "@/components/onboarding/OnboardingFormBuilder";
 
 
 
@@ -90,7 +88,6 @@ const tabs = [
   { id: "atividades", label: "Atividades" },
   { id: "contato", label: "Contato" },
   { id: "rastreamento", label: "Rastreamento" },
-  { id: "leadform", label: "Lead Form" },
 ];
 
 export default function LeadDetail() {
@@ -108,7 +105,6 @@ export default function LeadDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [onboardingBuilderData, setOnboardingBuilderData] = useState<OnboardingBuilderData | null>(null);
   const [isCustomFieldsPanelOpen, setIsCustomFieldsPanelOpen] = useState(false);
   const [customFieldsRefresh, setCustomFieldsRefresh] = useState(0);
 
@@ -125,7 +121,7 @@ export default function LeadDetail() {
   };
   
   // Use URL param for tab persistence, default to "atividades"
-  const activeTab = tabParam && ["atividades", "contato", "rastreamento", "leadform"].includes(tabParam) 
+  const activeTab = tabParam && ["atividades", "contato", "rastreamento"].includes(tabParam)
     ? tabParam 
     : "atividades";
 
@@ -346,22 +342,6 @@ export default function LeadDetail() {
 
   if (!lead) return null;
 
-  // If onboarding builder is open, show only the builder
-  if (onboardingBuilderData) {
-    return (
-      <div className="relative flex flex-col h-[calc(100vh-2rem)] w-full overflow-hidden">
-        <OnboardingFormBuilder
-          form={onboardingBuilderData.form}
-          fields={onboardingBuilderData.fields}
-          onClose={() => setOnboardingBuilderData(null)}
-          onUpdate={() => {
-            // Will refresh data when builder closes
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex h-full">
@@ -373,7 +353,7 @@ export default function LeadDetail() {
           className={`space-y-3 flex-1 min-w-0 pt-3 transition-all duration-300 ${isCustomFieldsPanelOpen ? 'pr-4' : ''}`}
         >
         {/* Breadcrumb Navigation */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm pl-1">
           <button
             onClick={() => navigate(buildCrmUrl())}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -658,27 +638,6 @@ export default function LeadDetail() {
               </motion.div>
             )}
 
-            {activeTab === "leadform" && (
-              <motion.div
-                key="leadform"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="h-[calc(100vh-280px)] overflow-y-auto"
-              >
-                <Card className="border-[#00000010] shadow-none">
-                  <CardContent className="p-6">
-                    <OnboardingSection 
-                      leadId={lead.id} 
-                      leadName={lead.name} 
-                      inline 
-                      onOpenBuilder={(data) => setOnboardingBuilderData(data)}
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </motion.div>
