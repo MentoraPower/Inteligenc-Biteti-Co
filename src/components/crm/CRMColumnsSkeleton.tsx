@@ -31,7 +31,7 @@ export function CRMColumnsSkeleton({ count }: CRMColumnsSkeletonProps) {
           key={`sk-${i}`}
           className="flex-shrink-0 w-[420px] flex flex-col min-h-0 relative"
         >
-          <div className="flex-1 min-h-0 rounded-xl rounded-b-none border border-b-0 bg-card border-black/[0.04] dark:border-white/[0.06] flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 rounded-xl rounded-b-none border border-b-0 bg-background border-black/[0.04] dark:border-white/[0.06] flex flex-col overflow-hidden">
             {/* Header (matches VirtualizedKanbanColumn, no name) */}
             <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06] bg-black/[0.03] dark:bg-white/[0.04]">
               <div className="flex items-center justify-between mb-2">
