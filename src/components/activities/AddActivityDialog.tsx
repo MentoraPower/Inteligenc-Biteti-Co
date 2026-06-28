@@ -110,12 +110,11 @@ function AddActivityDialogComponent({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl gap-0">
+      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden rounded-2xl gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <DialogTitle className="text-xl font-semibold">
             {editingActivity ? "Editar atividade" : "Nova atividade"}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">{stepName}</p>
         </DialogHeader>
 
         <div className="px-6 py-5 space-y-5">
