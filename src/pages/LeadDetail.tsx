@@ -350,10 +350,10 @@ export default function LeadDetail() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className={`space-y-3 flex-1 min-w-0 pt-3 transition-all duration-300 ${isCustomFieldsPanelOpen ? 'pr-4' : ''}`}
+          className={`space-y-3 flex-1 min-w-0 pt-3 pl-5 transition-all duration-300 ${isCustomFieldsPanelOpen ? 'pr-4' : ''}`}
         >
         {/* Breadcrumb Navigation */}
-        <div className="flex items-center gap-2 text-sm pl-1">
+        <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => navigate(buildCrmUrl())}
             className="text-muted-foreground hover:text-foreground transition-colors"
