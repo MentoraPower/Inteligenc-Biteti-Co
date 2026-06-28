@@ -41,7 +41,7 @@ export function CRMColumnsSkeleton({ count }: CRMColumnsSkeletonProps) {
               <Skeleton className="h-5 w-32" />
             </div>
             {/* Cards */}
-            <div className="flex-1 overflow-hidden px-4 py-3 space-y-2.5 bg-zinc-500/[0.06]">
+            <div className="flex-1 overflow-hidden px-4 py-3 space-y-2.5 bg-zinc-500/[0.03]">
               {Array.from({ length: 3 + (i % 3) }).map((_, c) => (
                 <Skeleton key={c} className="h-[140px] w-full rounded-xl" />
               ))}

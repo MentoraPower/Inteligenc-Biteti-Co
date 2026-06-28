@@ -154,7 +154,7 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         {/* Virtualized Cards container - this is the scroll container */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-4 py-3 kanban-scroll bg-zinc-500/[0.06]"
+          className="flex-1 overflow-y-auto px-4 py-3 kanban-scroll bg-zinc-500/[0.03]"
           style={{ minHeight: 0 }} // Important for flex child scrolling
         >
           <SortableContext
