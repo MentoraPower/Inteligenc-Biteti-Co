@@ -101,6 +101,12 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     setActivePanel(panelId);
 
     if (panelId === 'crm') {
+      // Toggle: if already on CRM and the submenu is open, close it
+      if (location.pathname.startsWith('/crm') && crmSubmenuOpen) {
+        setCrmSubmenuOpen(false);
+        return;
+      }
+
       setCrmSubmenuOpen(true);
 
       // Check if already on CRM with an origin
@@ -152,7 +158,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     }
 
       setCrmSubmenuOpen(false);
-  }, [location.pathname, location.search, navigate, currentWorkspace?.id]);
+  }, [location.pathname, location.search, navigate, currentWorkspace?.id, crmSubmenuOpen]);
 
   // Navigate when panel changes
   useEffect(() => {
