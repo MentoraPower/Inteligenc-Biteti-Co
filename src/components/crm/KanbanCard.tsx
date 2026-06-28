@@ -182,7 +182,7 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
       data-lead-id={lead.id}
       className={`
         cursor-grab active:cursor-grabbing bg-zinc-50 dark:bg-zinc-900 shadow-none select-none touch-none
-        rounded-xl h-full
+        border-0 rounded-xl h-full
         ${isBeingDragged ? "opacity-100 scale-[1.02]" : ""}
       `}
       onPointerDown={handlePointerDown}
