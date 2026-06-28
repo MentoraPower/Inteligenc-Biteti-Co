@@ -747,14 +747,35 @@ export function KanbanBoard() {
 
         const oldIndex = pipelineLeads.findIndex((l) => l.id === activeId);
         const targetIndex = pipelineLeads.findIndex((l) => l.id === overId);
-        
-        if (oldIndex === -1 || targetIndex === -1 || oldIndex === targetIndex) {
+
+        if (oldIndex === -1 || targetIndex === -1) {
           isReorderingRef.current = false;
           return;
         }
 
-        // Simple swap using arrayMove - let dnd-kit handle the logic
-        const reorderedLeads = arrayMove(pipelineLeads, oldIndex, targetIndex);
+        // Insert exactly where the visual gap showed: at the top/bottom of the
+        // target card, computed in "without the dragged card" coordinates so the
+        // drop matches the dashed slot 1:1 (no jump on release).
+        const without = pipelineLeads.filter((l) => l.id !== activeId);
+        const targetInWithout = without.findIndex((l) => l.id === overId);
+        const insertAt =
+          targetInWithout === -1
+            ? without.length
+            : currentDropIndicator?.position === "bottom"
+              ? targetInWithout + 1
+              : targetInWithout;
+
+        const reorderedLeads = [
+          ...without.slice(0, insertAt),
+          pipelineLeads[oldIndex],
+          ...without.slice(insertAt),
+        ];
+
+        // No-op if the order didn't actually change
+        if (reorderedLeads.findIndex((l) => l.id === activeId) === oldIndex) {
+          isReorderingRef.current = false;
+          return;
+        }
 
         // Update ordem for all reordered leads
         const updates = reorderedLeads.map((lead, index) => ({
