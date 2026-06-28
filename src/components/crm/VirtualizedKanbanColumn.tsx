@@ -137,7 +137,7 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         }`}
       >
         {/* Header */}
-        <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06]">
+        <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06] bg-black/[0.03] dark:bg-white/[0.04]">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-base">{pipeline.nome}</h2>
             <span className={`text-sm px-2 py-0.5 rounded-full transition-colors ${

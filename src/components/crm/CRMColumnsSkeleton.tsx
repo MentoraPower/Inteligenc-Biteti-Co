@@ -33,7 +33,7 @@ export function CRMColumnsSkeleton({ count }: CRMColumnsSkeletonProps) {
         >
           <div className="flex-1 min-h-0 rounded-xl rounded-b-none border border-b-0 bg-black/[0.02] dark:bg-zinc-900/80 border-black/[0.04] dark:border-white/[0.06] flex flex-col overflow-hidden">
             {/* Header (matches VirtualizedKanbanColumn, no name) */}
-            <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06]">
+            <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06] bg-black/[0.03] dark:bg-white/[0.04]">
               <div className="flex items-center justify-between mb-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-5 w-8 rounded-full" />
