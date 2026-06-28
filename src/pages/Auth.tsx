@@ -92,18 +92,8 @@ const Auth = () => {
         <div className="absolute inset-0 login-noise" />
       </div>
 
-      {/* Content — split: image on one side, form on the other */}
+      {/* Content — centered form over the blurred/noisy background */}
       <div className="relative z-10 flex w-full h-full">
-        {/* Image side (rounded, with margin top/sides/bottom) */}
-        <div className="hidden lg:flex w-1/2 p-6">
-          <img
-            src="/login-bg.jpg"
-            alt=""
-            className="w-full h-full object-cover rounded-[28px] shadow-2xl select-none pointer-events-none"
-          />
-        </div>
-
-        {/* Form side */}
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/70">
             <div className="mb-8">
