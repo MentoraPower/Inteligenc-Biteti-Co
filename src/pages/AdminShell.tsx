@@ -4,9 +4,8 @@ import { StatusBanner } from "@/components/StatusBanner";
 import { WorkspaceDropdown } from "@/components/workspace/WorkspaceDropdown";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileBlock } from "@/components/MobileBlock";
 import { isMobilePhone } from "@/lib/device";
@@ -15,7 +14,6 @@ function TopNavbar() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,17 +79,6 @@ function TopNavbar() {
               
               <div className="p-1">
                 <button
-                  onClick={() => {
-                    setProfileMenuOpen(false);
-                    setSettingsOpen(true);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground rounded-lg transition-colors"
-                >
-                  <Settings className="h-4 w-4" />
-                  Configurações
-                </button>
-                
-                <button
                   onClick={async () => {
                     await supabase.auth.signOut();
                     navigate("/auth");
@@ -106,8 +93,6 @@ function TopNavbar() {
           </div>
         </div>
       </div>
-      
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   );
 }
