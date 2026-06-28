@@ -228,32 +228,42 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
               <Clock className="w-3.5 h-3.5" />
               <span className="font-semibold">{timeAgo}</span>
             </div>
-            {/* Tags: a single circle with the tag count (+N); hover shows all tags */}
+            {/* Tags: one tag chip + a glued count circle (+N total); hover shows all tags */}
             {tags.length > 0 && (
-              <TooltipProvider delayDuration={80}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center justify-center h-5 min-w-[22px] px-1.5 rounded-full bg-muted text-foreground/80 text-[11px] font-bold cursor-default flex-shrink-0"
-                    >
-                      +{tags.length}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" align="end" className="flex flex-col items-start gap-1 p-2 max-w-[220px]">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap"
-                        style={{ backgroundColor: tagColorAlpha(tag.color, 0.25), color: tag.color }}
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex items-center gap-1 overflow-hidden min-w-0 justify-end">
+                <span
+                  className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap truncate"
+                  style={{ backgroundColor: tagColorAlpha(tags[0].color, 0.25), color: tags[0].color }}
+                >
+                  {tags[0].name}
+                </span>
+                {tags.length > 1 && (
+                  <TooltipProvider delayDuration={80}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center justify-center h-5 min-w-[22px] px-1.5 rounded-full bg-muted text-foreground/80 text-[11px] font-bold cursor-default flex-shrink-0"
+                        >
+                          +{tags.length}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="end" className="flex flex-col items-start gap-1 p-2 max-w-[220px]">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide whitespace-nowrap"
+                            style={{ backgroundColor: tagColorAlpha(tag.color, 0.25), color: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             )}
           </div>
         </div>
