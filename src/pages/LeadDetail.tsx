@@ -85,8 +85,8 @@ interface Pipeline {
 }
 
 const tabs = [
-  { id: "atividades", label: "Atividades" },
   { id: "contato", label: "Contato" },
+  { id: "atividades", label: "Atividades" },
   { id: "rastreamento", label: "Rastreamento" },
 ];
 
@@ -120,10 +120,10 @@ export default function LeadDetail() {
     return `/crm${queryString ? `?${queryString}` : ''}`;
   };
   
-  // Use URL param for tab persistence, default to "atividades"
+  // Use URL param for tab persistence, default to "contato"
   const activeTab = tabParam && ["atividades", "contato", "rastreamento"].includes(tabParam)
-    ? tabParam 
-    : "atividades";
+    ? tabParam
+    : "contato";
 
   const setActiveTab = (tab: string) => {
     const newParams = new URLSearchParams(searchParams);
