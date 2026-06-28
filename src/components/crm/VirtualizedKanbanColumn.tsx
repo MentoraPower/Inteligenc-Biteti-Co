@@ -140,7 +140,7 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06] bg-black/[0.03] dark:bg-white/[0.04]">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-base">{pipeline.nome}</h2>
-            <span className="text-[13px] font-bold px-2 py-0.5 rounded-full bg-green-800 text-white">
+            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-green-800 text-white text-[12px] font-bold">
               {displayCount.toLocaleString('pt-BR')}
             </span>
           </div>
