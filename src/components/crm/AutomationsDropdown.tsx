@@ -362,7 +362,22 @@ export function AutomationsDropdown({
           hasMore = false;
         }
       }
-      
+
+      // Also include auto-tags defined on webhooks, so a tag that was saved but
+      // not yet applied to any lead still shows up as a suggestion next time.
+      const { data: webhookTags } = await supabase
+        .from("crm_webhooks")
+        .select("auto_tag_name, auto_tag_color")
+        .not("auto_tag_name", "is", null);
+      if (webhookTags && webhookTags.length > 0) {
+        allTags = [
+          ...allTags,
+          ...webhookTags
+            .filter((t: any) => t.auto_tag_name && String(t.auto_tag_name).trim())
+            .map((t: any) => ({ name: t.auto_tag_name, color: t.auto_tag_color || "#6366f1" })),
+        ];
+      }
+
       // Get unique tags by name (case-insensitive, use first occurrence's color)
       const uniqueMap = new Map<string, string>();
       allTags.forEach((tag: any) => {
@@ -633,6 +648,8 @@ export function AutomationsDropdown({
 
       refetchWebhooks();
       queryClient.invalidateQueries({ queryKey: ["crm-webhooks", subOriginId] });
+      // Refresh the auto-tag suggestions so a newly defined tag appears next time.
+      queryClient.invalidateQueries({ queryKey: ["unique-lead-tags"] });
       resetWebhookForm();
     } catch (error) {
       console.error("Erro ao salvar webhook:", error);
