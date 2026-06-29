@@ -101,7 +101,7 @@ const Auth = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="contato@email.com.br"
-                  className="h-12 rounded-xl bg-white border border-neutral-300 px-4 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-neutral-900/15 focus-visible:border-neutral-900 transition-all"
+                  className="h-12 rounded-xl bg-white border border-neutral-300 px-4 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-neutral-300 transition-all"
                   disabled={isLoading}
                   autoComplete="email"
                 />
@@ -116,7 +116,7 @@ const Auth = () => {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="h-12 rounded-xl bg-white border border-neutral-300 px-4 pr-11 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-neutral-900/15 focus-visible:border-neutral-900 transition-all"
+                    className="h-12 rounded-xl bg-white border border-neutral-300 px-4 pr-11 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-neutral-300 transition-all"
                     disabled={isLoading}
                     autoComplete="current-password"
                   />
