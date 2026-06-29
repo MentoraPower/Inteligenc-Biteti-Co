@@ -66,19 +66,19 @@ export function EditableField({
   };
 
   if (isEditing) {
+    // Visually identical to the display: same padding/size, no border, no ring —
+    // clicking to edit doesn't resize the text or pop a border, just a subtle bg.
     return (
-      <div className="flex items-center gap-1">
-        <Input
-          ref={inputRef}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleSave}
-          placeholder={placeholder}
-          disabled={isSaving}
-          className={`h-7 text-sm py-0 px-2 ${inputClassName}`}
-        />
-      </div>
+      <Input
+        ref={inputRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={handleSave}
+        placeholder={placeholder}
+        disabled={isSaving}
+        className={`h-auto py-0 px-1 -mx-1 rounded border-0 shadow-none bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 ${inputClassName}`}
+      />
     );
   }
 

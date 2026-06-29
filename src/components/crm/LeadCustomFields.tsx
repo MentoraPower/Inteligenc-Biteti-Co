@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EditableField } from "./EditableField";
 import { FilePreview } from "./FilePreview";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -34,53 +34,49 @@ interface LeadCustomFieldsProps {
 }
 
 export function LeadCustomFields({ leadId, subOriginId, onOpenManager, refreshTrigger }: LeadCustomFieldsProps) {
-  const [fields, setFields] = useState<CustomField[]>([]);
+  const queryClient = useQueryClient();
   const [responses, setResponses] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
-    if (!subOriginId) {
-      setIsLoading(false);
-      return;
-    }
-
-    const { data: fieldsData, error: fieldsError } = await supabase
-      .from("sub_origin_custom_fields")
-      .select("*")
-      .eq("sub_origin_id", subOriginId)
-      .order("ordem");
-
-    if (fieldsError) {
-      console.error("Error fetching custom fields:", fieldsError);
-      setIsLoading(false);
-      return;
-    }
-
-    setFields(fieldsData || []);
-
-    if (fieldsData && fieldsData.length > 0) {
-      const { data: responsesData, error: responsesError } = await supabase
-        .from("lead_custom_field_responses")
+  // React-query cache persists across tab switches → no skeleton/refetch flash
+  // when leaving the tab and coming back.
+  const queryKey = ["lead-custom-fields", leadId, subOriginId] as const;
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey,
+    enabled: !!subOriginId,
+    staleTime: 60000,
+    queryFn: async () => {
+      const { data: fieldsData } = await supabase
+        .from("sub_origin_custom_fields")
         .select("*")
-        .eq("lead_id", leadId);
-
-      if (responsesError) {
-        console.error("Error fetching responses:", responsesError);
-      } else {
-        const responsesMap: Record<string, string> = {};
+        .eq("sub_origin_id", subOriginId)
+        .order("ordem");
+      const fields = (fieldsData || []) as CustomField[];
+      const responsesMap: Record<string, string> = {};
+      if (fields.length > 0) {
+        const { data: responsesData } = await supabase
+          .from("lead_custom_field_responses")
+          .select("*")
+          .eq("lead_id", leadId);
         (responsesData || []).forEach((r: CustomFieldResponse) => {
           responsesMap[r.field_id] = r.response_value || "";
         });
-        setResponses(responsesMap);
       }
-    }
+      return { fields, responses: responsesMap };
+    },
+  });
 
-    setIsLoading(false);
-  };
+  const fields = data?.fields || [];
 
+  // Keep a local copy of responses for instant optimistic edits.
   useEffect(() => {
-    fetchData();
-  }, [leadId, subOriginId, refreshTrigger]);
+    if (data?.responses) setResponses(data.responses);
+  }, [data?.responses]);
+
+  // Refetch when fields are changed via the manager panel.
+  useEffect(() => {
+    if (refreshTrigger) queryClient.invalidateQueries({ queryKey });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const handleUpdateField = async (fieldId: string, value: string) => {
     const { data: existing } = await supabase
@@ -116,6 +112,10 @@ export function LeadCustomFields({ leadId, subOriginId, onOpenManager, refreshTr
     }
 
     setResponses({ ...responses, [fieldId]: value });
+    // Keep the cache in sync so the edit survives a tab switch / remount.
+    queryClient.setQueryData(queryKey, (old: { fields: CustomField[]; responses: Record<string, string> } | undefined) =>
+      old ? { ...old, responses: { ...old.responses, [fieldId]: value } } : old
+    );
     toast.success("Campo atualizado");
   };
 
@@ -159,10 +159,9 @@ export function LeadCustomFields({ leadId, subOriginId, onOpenManager, refreshTr
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground">Campos Personalizados</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
-          ))}
+        {/* Small horizontal loading bar instead of a full skeleton */}
+        <div className="h-1 w-full bg-muted/40 rounded-full overflow-hidden">
+          <div className="h-full w-1/3 bg-foreground/50 rounded-full animate-[loading-progress_1.2s_ease-in-out_infinite]" />
         </div>
       </div>
     );
@@ -189,6 +188,13 @@ export function LeadCustomFields({ leadId, subOriginId, onOpenManager, refreshTr
           </Button>
         )}
       </div>
+
+      {/* Subtle bar while refreshing in the background (no full skeleton) */}
+      {isFetching && (
+        <div className="h-0.5 w-full bg-muted/40 rounded-full overflow-hidden">
+          <div className="h-full w-1/3 bg-foreground/40 rounded-full animate-[loading-progress_1.2s_ease-in-out_infinite]" />
+        </div>
+      )}
 
       {fields.length === 0 ? (
         <div className="text-sm text-muted-foreground italic py-4 text-center border border-dashed border-border rounded-lg">

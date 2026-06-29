@@ -534,6 +534,7 @@ export default function LeadDetail() {
                         value={isIncompleteEmail(lead.email) ? "" : lead.email}
                         onSave={(value) => updateLeadField("email", value)}
                         placeholder="Digite o email"
+                        inputClassName="text-[15px] font-medium"
                         displayValue={
                           isIncompleteEmail(lead.email) ? (
                             <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
@@ -554,6 +555,7 @@ export default function LeadDetail() {
                         value={lead.whatsapp || ""}
                         onSave={(value) => updateLeadField("whatsapp", value)}
                         placeholder="Digite o WhatsApp"
+                        inputClassName="text-[15px] font-medium"
                         displayValue={
                           !lead.whatsapp || lead.whatsapp === "" ? (
                             <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
@@ -574,6 +576,7 @@ export default function LeadDetail() {
                         value={lead.instagram === "@" ? "" : lead.instagram || ""}
                         onSave={(value) => updateLeadField("instagram", value.startsWith("@") ? value : `@${value}`)}
                         placeholder="Digite o Instagram"
+                        inputClassName="text-[15px] font-medium"
                         displayValue={
                           !lead.instagram || lead.instagram === "" || lead.instagram === "@" ? (
                             <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
