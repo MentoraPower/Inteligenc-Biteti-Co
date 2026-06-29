@@ -417,10 +417,48 @@ export function KanbanBoard() {
   // Pre-process tags by lead_id for O(1) lookup
   const leadTagsRaw = useMemo(() => {
     if (!leadsWithTags) return [];
-    return leadsWithTags.flatMap(lead => 
+    return leadsWithTags.flatMap(lead =>
       (lead.lead_tags || []).map(tag => ({ ...tag, lead_id: lead.id }))
     );
   }, [leadsWithTags]);
+
+  // The lead detail aggregates a contact's tags across every lead record that
+  // shares the same email/whatsapp. Cards must match — so we fetch the tags of
+  // all related leads (across sub-origins) and aggregate by contact identity.
+  const identityKey = useMemo(() => {
+    const emails = [...new Set(leads.map((l) => (l as any).email).filter(Boolean))].sort();
+    const whats = [...new Set(leads.map((l) => (l as any).whatsapp).filter(Boolean))].sort();
+    return JSON.stringify([emails, whats]);
+  }, [leads]);
+
+  const { data: relatedTagLeads = [] } = useQuery({
+    queryKey: ["crm-related-tags", identityKey],
+    queryFn: async () => {
+      const emails = [...new Set(leads.map((l) => (l as any).email).filter(Boolean))] as string[];
+      const whats = [...new Set(leads.map((l) => (l as any).whatsapp).filter(Boolean))] as string[];
+      const chunk = <T,>(arr: T[], n: number) => {
+        const out: T[][] = [];
+        for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+        return out;
+      };
+      const rows = new Map<string, any>();
+      const runIn = async (col: string, values: string[]) => {
+        for (const c of chunk(values, 200)) {
+          const { data } = await supabase
+            .from("leads")
+            .select("id, email, whatsapp, lead_tags (id, name, color)")
+            .in(col, c);
+          (data || []).forEach((l: any) => rows.set(l.id, l));
+        }
+      };
+      if (emails.length) await runIn("email", emails);
+      if (whats.length) await runIn("whatsapp", whats);
+      return Array.from(rows.values());
+    },
+    enabled: leads.length > 0,
+    staleTime: 10000,
+    refetchOnWindowFocus: false,
+  });
 
   // Get unique tags for filtering
   const allTags = useMemo(() => {
@@ -439,16 +477,46 @@ export function KanbanBoard() {
     [leadTagsRaw]
   );
 
-  // Map of lead_id -> LeadTag[] for card display
+  // Map of lead_id -> LeadTag[] for card display, aggregated by contact identity
+  // (email/whatsapp) and de-duplicated by tag name — same set the detail shows.
   const tagsMap = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; color: string }[]>();
-    leadTagsRaw.forEach(tag => {
-      const existing = map.get(tag.lead_id) || [];
-      existing.push({ id: tag.id, name: tag.name, color: tag.color });
-      map.set(tag.lead_id, existing);
+    type Tag = { id: string; name: string; color: string };
+    const byEmail = new Map<string, Map<string, Tag>>();
+    const byWhats = new Map<string, Map<string, Tag>>();
+    const addTag = (m: Map<string, Map<string, Tag>>, key: string | null | undefined, tag: Tag) => {
+      if (!key) return;
+      let inner = m.get(key);
+      if (!inner) { inner = new Map(); m.set(key, inner); }
+      const nk = (tag.name || "").trim().toLowerCase();
+      if (nk && !inner.has(nk)) inner.set(nk, tag);
+    };
+    relatedTagLeads.forEach((l: any) => {
+      (l.lead_tags || []).forEach((t: Tag) => {
+        addTag(byEmail, l.email, t);
+        addTag(byWhats, l.whatsapp, t);
+      });
+    });
+
+    const map = new Map<string, Tag[]>();
+    leads.forEach((lead) => {
+      const inner = new Map<string, Tag>();
+      const collect = (m: Map<string, Map<string, Tag>>, key: string | null | undefined) => {
+        const i = key ? m.get(key) : null;
+        if (i) i.forEach((t, nk) => { if (!inner.has(nk)) inner.set(nk, t); });
+      };
+      collect(byEmail, (lead as any).email);
+      collect(byWhats, (lead as any).whatsapp);
+      // Fallback to the lead's own tags if no identity match was loaded yet.
+      if (inner.size === 0) {
+        leadTagsRaw.filter((t) => t.lead_id === lead.id).forEach((t) => {
+          const nk = (t.name || "").trim().toLowerCase();
+          if (nk && !inner.has(nk)) inner.set(nk, { id: t.id, name: t.name, color: t.color });
+        });
+      }
+      map.set(lead.id, Array.from(inner.values()));
     });
     return map;
-  }, [leadTagsRaw]);
+  }, [relatedTagLeads, leads, leadTagsRaw]);
 
   // Consider loading: always loading if no subOriginId yet, or while queries are in progress
   const isLoading = !subOriginId || isLoadingPipelines || isLoadingLeads || isLoadingSubOrigin;
