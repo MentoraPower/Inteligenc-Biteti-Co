@@ -609,7 +609,7 @@ export default function LeadDetail() {
 
 
               {/* Business Info - Custom Fields - Full Width */}
-              <Card className="border-[#00000010] shadow-none">
+              <Card className="border-0 bg-zinc-500/[0.08] shadow-none">
                 <CardContent className="p-6">
                   <LeadCustomFields 
                     leadId={lead.id} 
