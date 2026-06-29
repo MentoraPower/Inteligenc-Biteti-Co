@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveOriginParam } from "@/lib/origin-slugs";
 import { getAvatarForName } from "@/lib/avatar";
+import { getFlagSvgUrl, findCountryByDial } from "@/data/countries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -551,19 +552,35 @@ export default function LeadDetail() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-muted-foreground">WhatsApp</p>
-                      <EditableField
-                        value={lead.whatsapp || ""}
-                        onSave={(value) => updateLeadField("whatsapp", value)}
-                        placeholder="Digite o WhatsApp"
-                        inputClassName="text-[15px] font-medium"
-                        displayValue={
-                          !lead.whatsapp || lead.whatsapp === "" ? (
-                            <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
-                          ) : (
-                            <span className="text-[15px] font-medium">{lead.whatsapp}</span>
-                          )
-                        }
-                      />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {(() => {
+                          const waCountry = findCountryByDial(lead.country_code) || findCountryByDial("+55");
+                          return waCountry ? (
+                            <span className="flex items-center gap-1 flex-shrink-0">
+                              <img
+                                src={getFlagSvgUrl(waCountry.code)}
+                                alt=""
+                                className="w-5 h-[14px] rounded-[2px] object-cover ring-1 ring-black/5"
+                              />
+                              <span className="text-[15px] font-medium text-muted-foreground">{waCountry.dialCode}</span>
+                            </span>
+                          ) : null;
+                        })()}
+                        <EditableField
+                          value={lead.whatsapp || ""}
+                          onSave={(value) => updateLeadField("whatsapp", value)}
+                          placeholder="Digite o WhatsApp"
+                          inputClassName="text-[15px] font-medium"
+                          className="flex-1 min-w-0"
+                          displayValue={
+                            !lead.whatsapp || lead.whatsapp === "" ? (
+                              <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
+                            ) : (
+                              <span className="text-[15px] font-medium">{lead.whatsapp}</span>
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-muted/30 border border-[#00000010] rounded-lg">

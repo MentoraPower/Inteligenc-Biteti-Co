@@ -71,9 +71,7 @@ export function EditableField({
   return (
     <div
       onClick={isEditing ? undefined : () => setIsEditing(true)}
-      className={`rounded px-1 -mx-1 leading-tight transition-colors ${
-        isEditing ? "" : "cursor-pointer hover:bg-muted/50"
-      } ${className}`}
+      className={`leading-tight ${isEditing ? "" : "cursor-text"} ${className}`}
     >
       {isEditing ? (
         <Input
