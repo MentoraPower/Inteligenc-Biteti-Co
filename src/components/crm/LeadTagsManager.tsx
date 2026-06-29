@@ -498,7 +498,7 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
           <Button
             variant="outline"
             title="Adicionar tag"
-            className={`h-6 px-0 rounded-full inline-flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
+            className={`h-6 px-0 gap-0 rounded-full inline-flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
               isHovered || isOpen ? "w-[116px]" : "w-6"
             }`}
             onMouseEnter={() => setTimeout(() => setIsHovered(true), 100)}
