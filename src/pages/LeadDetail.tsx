@@ -483,7 +483,7 @@ export default function LeadDetail() {
         <div className="h-px bg-border" />
 
         {/* Tab Content */}
-        <div className="mt-4 flex-1 px-2">
+        <div className="mt-4 flex-1 px-6">
           <AnimatePresence mode="wait">
             {activeTab === "atividades" && (
               <motion.div

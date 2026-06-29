@@ -498,13 +498,15 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
           <Button
             variant="outline"
             title="Adicionar tag"
-            className={`h-6 px-0 gap-0 rounded-full inline-flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
+            className={`h-6 px-0 gap-0 rounded-full inline-flex items-center justify-start border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
               isHovered || isOpen ? "w-[116px]" : "w-6"
             }`}
             onMouseEnter={() => setTimeout(() => setIsHovered(true), 100)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+            {/* Plus anchored at 5px = centered in the 24px circle; stays put when the
+                button expands (the label grows to the right, the + never moves) */}
+            <Plus className="h-3.5 w-3.5 flex-shrink-0 ml-[5px]" />
             <span
               className={`overflow-hidden whitespace-nowrap text-xs transition-all duration-300 ${
                 isHovered || isOpen ? "max-w-[100px] ml-1.5 opacity-100" : "max-w-0 min-w-0 opacity-0"
