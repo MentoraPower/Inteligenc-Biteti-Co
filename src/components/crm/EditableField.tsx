@@ -65,29 +65,30 @@ export function EditableField({
     }
   };
 
-  if (isEditing) {
-    // Visually identical to the display: same padding/size, no border, no ring —
-    // clicking to edit doesn't resize the text or pop a border, just a subtle bg.
-    return (
-      <Input
-        ref={inputRef}
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleSave}
-        placeholder={placeholder}
-        disabled={isSaving}
-        className={`h-auto py-0 px-1 -mx-1 rounded border-0 shadow-none bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 ${inputClassName}`}
-      />
-    );
-  }
-
+  // A single, fixed-size container is kept for BOTH states. Only the inner content
+  // swaps (text span ↔ transparent input). The input inherits the exact font and
+  // line-height, so clicking to edit never shifts the layout or resizes the text.
   return (
     <div
-      onClick={() => setIsEditing(true)}
-      className={`cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors ${className}`}
+      onClick={isEditing ? undefined : () => setIsEditing(true)}
+      className={`rounded px-1 -mx-1 leading-tight transition-colors ${
+        isEditing ? "bg-muted/50" : "cursor-pointer hover:bg-muted/50"
+      } ${className}`}
     >
-      {displayValue}
+      {isEditing ? (
+        <Input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSave}
+          placeholder={placeholder}
+          disabled={isSaving}
+          className={`block h-auto w-full p-0 m-0 border-0 shadow-none bg-transparent rounded-none leading-tight focus-visible:ring-0 focus-visible:ring-offset-0 ${inputClassName}`}
+        />
+      ) : (
+        displayValue
+      )}
     </div>
   );
 }
