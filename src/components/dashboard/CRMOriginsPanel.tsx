@@ -1117,7 +1117,7 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
 
   // When embedded, just return the content
   if (embedded) {
-    return <div className="h-full flex flex-col bg-card text-foreground">{content}</div>;
+    return <div className="h-full flex flex-col bg-background text-foreground">{content}</div>;
   }
 
   // Standalone mode (mobile/fallback)
