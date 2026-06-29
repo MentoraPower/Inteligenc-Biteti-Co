@@ -11,7 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Copy, Check, X, Code } from "lucide-react";
+import { Plus, Trash2, Copy, Check, X, Code, MoreVertical, Pencil } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 interface CustomField {
@@ -44,6 +50,8 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
     field_type: "text",
     options: "",
   });
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
 
   const generateWebhookModel = () => {
     const model: Record<string, string> = {};
@@ -164,6 +172,30 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
     onFieldsChange?.();
   };
 
+  const startEditField = (field: CustomField) => {
+    setEditingFieldId(field.id);
+    setEditingLabel(field.field_label);
+  };
+
+  const handleSaveEditField = async (fieldId: string) => {
+    const label = editingLabel.trim();
+    if (!label) return;
+    const { error } = await supabase
+      .from("sub_origin_custom_fields")
+      .update({ field_label: label })
+      .eq("id", fieldId);
+
+    if (error) {
+      toast.error("Erro ao atualizar campo");
+      return;
+    }
+
+    setFields(fields.map(f => (f.id === fieldId ? { ...f, field_label: label } : f)));
+    setEditingFieldId(null);
+    toast.success("Campo atualizado");
+    onFieldsChange?.();
+  };
+
   const copyFieldId = (fieldId: string) => {
     navigator.clipboard.writeText(fieldId);
     setCopiedId(fieldId);
@@ -257,37 +289,78 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
               {fields.map((field) => (
                 <div
                   key={field.id}
-                  className="flex items-center gap-2 p-3.5 bg-muted/40 rounded-xl border border-border"
+                  className="p-3.5 bg-zinc-500/[0.06] rounded-xl"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[15px] truncate">{field.field_label}</div>
-                    <div className="text-xs text-muted-foreground truncate font-mono mt-0.5">
-                      {field.id}
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md flex-shrink-0">
-                    {getFieldTypeLabel(field.field_type)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 flex-shrink-0 rounded-lg"
-                    onClick={() => copyFieldId(field.id)}
-                  >
-                    {copiedId === field.id ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                  {/* Top row: name (or inline edit) + type + kebab */}
+                  <div className="flex items-center gap-2">
+                    {editingFieldId === field.id ? (
+                      <Input
+                        value={editingLabel}
+                        autoFocus
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveEditField(field.id);
+                          if (e.key === "Escape") setEditingFieldId(null);
+                        }}
+                        onBlur={() => handleSaveEditField(field.id)}
+                        className="h-8 flex-1 rounded-lg text-sm"
+                      />
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <span className="flex-1 min-w-0 font-semibold text-[15px] truncate">{field.field_label}</span>
                     )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 flex-shrink-0 rounded-lg text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteField(field.id)}
+
+                    <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md flex-shrink-0">
+                      {getFieldTypeLabel(field.field_type)}
+                    </span>
+
+                    {editingFieldId === field.id ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 flex-shrink-0 rounded-lg text-green-600"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleSaveEditField(field.id)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 rounded-lg">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[150px] rounded-xl">
+                          <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg" onClick={() => startEditField(field)}>
+                            <Pencil className="h-4 w-4" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2 cursor-pointer rounded-lg text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteField(field.id)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Apagar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+
+                  {/* ID row: click to copy */}
+                  <button
+                    type="button"
+                    onClick={() => copyFieldId(field.id)}
+                    title="Copiar ID"
+                    className="mt-1.5 flex items-center gap-1.5 max-w-full text-left group/id"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <span className="text-xs text-muted-foreground truncate font-mono group-hover/id:text-foreground transition-colors">
+                      {field.id}
+                    </span>
+                    {copiedId === field.id ? (
+                      <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </button>
                 </div>
               ))}
             </div>
