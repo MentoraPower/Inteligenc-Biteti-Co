@@ -438,24 +438,11 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
 
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Cor</p>
-                <div className="grid grid-cols-8 gap-1.5">
-                  {TAG_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setEditTagColor(color)}
-                      className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
-                        editTagColor === color
-                          ? "ring-2 ring-offset-2 ring-black/20"
-                          : ""
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                  {/* Custom RGB color (manual) */}
-                  <label
-                    title="Cor personalizada"
-                    className="h-5 w-5 rounded-full cursor-pointer ring-1 ring-black/10 relative overflow-hidden transition-transform hover:scale-110"
-                    style={{ background: "conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444)" }}
+                {/* Custom color only (manual RGB) */}
+                <label className="flex items-center gap-2.5 cursor-pointer w-fit">
+                  <span
+                    className="h-8 w-8 rounded-full ring-1 ring-black/10 relative overflow-hidden flex-shrink-0"
+                    style={{ background: editTagColor }}
                   >
                     <input
                       type="color"
@@ -463,8 +450,9 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
                       onChange={(e) => setEditTagColor(e.target.value)}
                       className="absolute -inset-1 opacity-0 cursor-pointer"
                     />
-                  </label>
-                </div>
+                  </span>
+                  <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{editTagColor}</span>
+                </label>
               </div>
 
               {/* Preview */}
@@ -585,24 +573,11 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
             {/* Color picker - only show after clicking preview */}
             {newTagName.trim() && showColorPicker && (
               <div>
-                <div className="grid grid-cols-8 gap-1.5">
-                  {TAG_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
-                        selectedColor === color
-                          ? "ring-2 ring-offset-2 ring-black/20"
-                          : ""
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                  {/* Custom RGB color (manual) */}
-                  <label
-                    title="Cor personalizada"
-                    className="h-5 w-5 rounded-full cursor-pointer ring-1 ring-black/10 relative overflow-hidden transition-transform hover:scale-110"
-                    style={{ background: "conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444)" }}
+                {/* Custom color only (manual RGB) */}
+                <label className="flex items-center gap-2.5 cursor-pointer w-fit">
+                  <span
+                    className="h-8 w-8 rounded-full ring-1 ring-black/10 relative overflow-hidden flex-shrink-0"
+                    style={{ background: selectedColor }}
                   >
                     <input
                       type="color"
@@ -610,8 +585,9 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
                       onChange={(e) => setSelectedColor(e.target.value)}
                       className="absolute -inset-1 opacity-0 cursor-pointer"
                     />
-                  </label>
-                </div>
+                  </span>
+                  <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{selectedColor}</span>
+                </label>
               </div>
             )}
 
