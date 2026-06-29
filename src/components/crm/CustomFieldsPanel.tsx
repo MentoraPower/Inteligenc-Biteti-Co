@@ -37,6 +37,7 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
   const [isLoading, setIsLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [tab, setTab] = useState<"existing" | "new">("existing");
   
   const [newField, setNewField] = useState({
     field_label: "",
@@ -194,16 +195,33 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-lg tracking-tight">Campos Personalizados</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Use o ID do campo no webhook
-            </p>
           </div>
           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        {fields.length > 0 && (
+        {/* Tabs */}
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl">
+          <button
+            onClick={() => setTab("existing")}
+            className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors ${
+              tab === "existing" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Campos existentes
+          </button>
+          <button
+            onClick={() => setTab("new")}
+            className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors ${
+              tab === "new" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Adicionar
+          </button>
+        </div>
+
+        {tab === "existing" && fields.length > 0 && (
           <Button
             variant="outline"
             className="w-full gap-2 text-sm h-10 rounded-lg"
@@ -225,11 +243,9 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Existing fields list */}
+        {/* Existing fields tab */}
+        {tab === "existing" && (
         <div className="space-y-2.5">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Campos existentes
-          </h4>
           {isLoading ? (
             <div className="text-sm text-muted-foreground">Carregando...</div>
           ) : fields.length === 0 ? (
@@ -277,20 +293,18 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
             </div>
           )}
         </div>
+        )}
 
-        {/* Add new field form */}
-        <div className="pt-5 border-t border-border space-y-3.5">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Adicionar novo campo
-          </h4>
-
+        {/* Add new field tab */}
+        {tab === "new" && (
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-sm">Nome do campo</Label>
             <Input
               placeholder="Ex: Profissão"
               value={newField.field_label}
               onChange={(e) => setNewField({ ...newField, field_label: e.target.value })}
-              className="h-10 rounded-lg text-sm"
+              className="h-12 rounded-lg text-sm"
             />
           </div>
 
@@ -300,7 +314,7 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
               value={newField.field_type}
               onValueChange={(value) => setNewField({ ...newField, field_type: value })}
             >
-              <SelectTrigger className="h-10 rounded-lg text-sm">
+              <SelectTrigger className="h-12 rounded-lg text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -313,7 +327,6 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
             </Select>
           </div>
 
-
           {newField.field_type === "select" && (
             <div className="space-y-2">
               <Label className="text-sm">Opções (separadas por vírgula)</Label>
@@ -321,16 +334,20 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
                 placeholder="Opção 1, Opção 2, Opção 3"
                 value={newField.options}
                 onChange={(e) => setNewField({ ...newField, options: e.target.value })}
-                className="h-10 rounded-lg text-sm"
+                className="h-12 rounded-lg text-sm"
               />
             </div>
           )}
 
-          <Button onClick={handleAddField} className="w-full gap-2 h-11 rounded-lg text-sm font-semibold">
+          <Button
+            onClick={handleAddField}
+            className="w-full gap-2 h-12 rounded-lg text-sm font-semibold bg-foreground text-background hover:bg-foreground/90"
+          >
             <Plus className="h-4 w-4" />
             Adicionar Campo
           </Button>
         </div>
+        )}
       </div>
       </div>
     </div>
