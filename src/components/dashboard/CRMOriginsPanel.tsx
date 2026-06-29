@@ -82,6 +82,21 @@ function AddSubOriginDropdown({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Cmd/Ctrl+K focuses the spaces search field
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -696,6 +711,24 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
     ? subOrigins
     : subOrigins.filter(subOrigin => userPermissions.allowedSubOriginIds.includes(subOrigin.id));
 
+  // Apply the "Pesquisar" search: keep origins that match by name or that have a
+  // matching sub-origin; when matching by sub, only show the matching subs + expand.
+  const searchTerm = searchQuery.trim().toLowerCase();
+  const searchedOrigins = filteredOrigins
+    .map((origin) => {
+      const allSubs = filteredSubOrigins.filter((s) => s.origin_id === origin.id);
+      if (!searchTerm) return { origin, subs: allSubs, forceExpand: false };
+      const originMatches = origin.nome.toLowerCase().includes(searchTerm);
+      const matchingSubs = allSubs.filter((s) => s.nome.toLowerCase().includes(searchTerm));
+      if (!originMatches && matchingSubs.length === 0) return null;
+      return {
+        origin,
+        subs: originMatches ? allSubs : matchingSubs,
+        forceExpand: matchingSubs.length > 0,
+      };
+    })
+    .filter(Boolean) as { origin: typeof filteredOrigins[number]; subs: typeof filteredSubOrigins; forceExpand: boolean }[];
+
   // Real-time subscriptions - only for structure changes, not navigation
   useEffect(() => {
     const originsChannel = supabase
@@ -965,7 +998,11 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
         <div className="flex items-center gap-2 border-b border-border pb-2">
           <Search className="w-4 h-4 text-muted-foreground" />
           <input
+            ref={searchInputRef}
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setSearchQuery(''); }}
             placeholder="Pesquisar..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
@@ -984,12 +1021,17 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredOrigins.map(o => o.id)}
+            items={searchedOrigins.map(({ origin }) => origin.id)}
             strategy={verticalListSortingStrategy}
           >
-            {filteredOrigins.map((origin) => {
-              const originSubOrigins = filteredSubOrigins.filter(s => s.origin_id === origin.id);
-              const isOriginExpanded = expandedOrigins.has(origin.id);
+            {searchedOrigins.length === 0 && searchTerm && (
+              <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                Nenhum espaço encontrado
+              </div>
+            )}
+            {searchedOrigins.map(({ origin, subs, forceExpand }) => {
+              const originSubOrigins = subs;
+              const isOriginExpanded = forceExpand || expandedOrigins.has(origin.id);
 
               return (
                 <SortableOriginItem
