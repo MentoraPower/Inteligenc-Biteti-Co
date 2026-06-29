@@ -495,9 +495,20 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
           <Button
             variant="outline"
             title="Adicionar tag"
-            className="h-6 w-6 p-0 rounded-full flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-colors flex-shrink-0"
+            className={`h-6 rounded-full inline-flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
+              isHovered || isOpen ? "w-[116px] px-2.5" : "w-6 px-0"
+            }`}
+            onMouseEnter={() => setTimeout(() => setIsHovered(true), 100)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap text-xs transition-all duration-300 ${
+                isHovered || isOpen ? "max-w-[100px] ml-1.5 opacity-100" : "max-w-0 opacity-0"
+              }`}
+            >
+              Adicionar tag
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[340px] p-0 rounded-2xl overflow-hidden shadow-xl" align="start">

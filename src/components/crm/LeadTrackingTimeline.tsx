@@ -267,7 +267,7 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
               
               {/* Right side - Card content */}
               <div className="flex-1 pb-6">
-                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-sm hover:shadow-md transition-shadow">
+                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
                   <CardContent className="p-4">
                     <p className="text-sm font-semibold text-foreground">Lead existe em outras origens</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -314,7 +314,7 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
               
               {/* Right side - UTM Card content */}
               <div className="flex-1 pb-6">
-                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-sm">
+                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
                   <CardContent className="p-4">
                     <p className="text-sm font-semibold text-foreground mb-3">Parâmetros UTM</p>
                     
@@ -361,7 +361,7 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
                 
                 {/* Right side - Card content */}
                 <div className="flex-1 pb-6">
-                  <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-sm hover:shadow-md transition-shadow">
+                  <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
                     <CardContent className="p-4">
                       {/* Title */}
                       <p className="text-sm font-semibold text-foreground">{event.titulo}</p>
