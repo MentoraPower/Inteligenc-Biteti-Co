@@ -519,7 +519,7 @@ export default function LeadDetail() {
               >
               <div className="space-y-6">
               {/* Contact Info */}
-              <Card className="border-[#00000010] shadow-none">
+              <Card className="border border-black/10 dark:border-white/10 shadow-none">
                 <CardContent className="p-6 space-y-4">
                   <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                     Informações de Contato
