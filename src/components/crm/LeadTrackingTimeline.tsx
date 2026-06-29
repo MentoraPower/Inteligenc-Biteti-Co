@@ -237,15 +237,10 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
       </h3>
       
       {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="flex gap-4">
-                <div className="h-10 w-10 rounded-lg bg-muted flex-shrink-0" />
-                <div className="flex-1 bg-muted rounded-lg h-24" />
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-center py-8">
+          <div className="h-1 w-56 max-w-full bg-muted/40 rounded-full overflow-hidden">
+            <div className="h-full w-1/3 bg-foreground/50 rounded-full animate-[loading-progress_1.2s_ease-in-out_infinite]" />
+          </div>
         </div>
       ) : (
         <div className="relative">
