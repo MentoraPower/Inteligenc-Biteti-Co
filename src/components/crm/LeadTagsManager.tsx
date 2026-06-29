@@ -411,12 +411,15 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
         >
           <PopoverTrigger asChild>
             <span
-              className="relative inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold leading-none text-white cursor-pointer hover:opacity-90 transition-opacity group"
+              className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-semibold leading-none text-white cursor-pointer hover:opacity-95 transition-all duration-200 group"
               style={{ backgroundColor: tag.color }}
               onClick={() => handleStartEdit(tag)}
             >
               {tag.name}
-              <Pencil className="absolute right-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 opacity-0 group-hover:opacity-80 transition-opacity" />
+              {/* Edit pencil expands in on hover, pushing the content beside it */}
+              <span className="inline-flex items-center overflow-hidden max-w-0 min-w-0 opacity-0 group-hover:max-w-4 group-hover:ml-1.5 group-hover:opacity-100 transition-all duration-200">
+                <Pencil className="h-3 w-3 flex-shrink-0" />
+              </span>
             </span>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
@@ -495,18 +498,16 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
           <Button
             variant="outline"
             title="Adicionar tag"
-            className={`h-6 px-0 rounded-full inline-flex items-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
+            className={`h-6 px-0 rounded-full inline-flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-all duration-300 overflow-hidden flex-shrink-0 ${
               isHovered || isOpen ? "w-[116px]" : "w-6"
             }`}
             onMouseEnter={() => setTimeout(() => setIsHovered(true), 100)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {/* Plus stays fixed at the circle's center (5px in a 24px circle) so it
-                never shifts when collapsing back from the hover state */}
-            <Plus className="h-3.5 w-3.5 flex-shrink-0 ml-[5px]" />
+            <Plus className="h-3.5 w-3.5 flex-shrink-0" />
             <span
-              className={`whitespace-nowrap text-xs ml-1.5 transition-opacity duration-200 ${
-                isHovered || isOpen ? "opacity-100" : "opacity-0"
+              className={`overflow-hidden whitespace-nowrap text-xs transition-all duration-300 ${
+                isHovered || isOpen ? "max-w-[100px] ml-1.5 opacity-100" : "max-w-0 min-w-0 opacity-0"
               }`}
             >
               Adicionar tag
