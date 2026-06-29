@@ -509,33 +509,38 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-3" align="start">
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1.5">Nome</p>
+        <PopoverContent className="w-[340px] p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
+          <div className="px-4 py-3.5 border-b border-border">
+            <h4 className="text-sm font-semibold">Adicionar tag</h4>
+          </div>
+          <div className="p-4 space-y-4">
+            {/* Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Nome</label>
               <Input
                 placeholder="Nome da tag"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
-                className="h-8 text-sm"
+                className="h-10 rounded-lg text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleAddTag();
                   }
                 }}
+                autoFocus
               />
-              
+
               {/* Suggestions */}
               {suggestions.length > 0 && (
-                <div className="mt-2 border border-black/10 rounded-md overflow-hidden">
+                <div className="mt-1.5 border border-border rounded-lg overflow-hidden">
                   {suggestions.slice(0, 5).map((suggestion, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleSelectSuggestion(suggestion)}
-                      className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm transition-colors text-left ${
-                        suggestion.alreadyAdded 
-                          ? "bg-muted/30 text-muted-foreground cursor-default" 
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors text-left ${
+                        suggestion.alreadyAdded
+                          ? "bg-muted/30 text-muted-foreground cursor-default"
                           : "hover:bg-muted/50"
                       }`}
                     >
@@ -553,48 +558,44 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
               )}
             </div>
 
-            {/* Preview - only show when no suggestions match OR after selecting a suggestion */}
-            {newTagName.trim() && (suggestions.length === 0 || showColorPicker) && (
-              <div className="pt-2 border-t border-black/5">
-                <p className="text-xs text-muted-foreground mb-1">
-                  {showColorPicker ? "Selecione a cor" : "Clique para escolher a cor"}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowColorPicker(true)}
-                  className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium text-white cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: selectedColor }}
+            {/* Color (custom only) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Cor</label>
+              <label className="flex items-center gap-2.5 cursor-pointer w-fit">
+                <span
+                  className="h-9 w-9 rounded-lg ring-1 ring-black/10 relative overflow-hidden flex-shrink-0"
+                  style={{ background: selectedColor }}
                 >
-                  {newTagName}
-                </button>
-              </div>
-            )}
+                  <input
+                    type="color"
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="absolute -inset-1 opacity-0 cursor-pointer"
+                  />
+                </span>
+                <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{selectedColor}</span>
+              </label>
+            </div>
 
-            {/* Color picker - only show after clicking preview */}
-            {newTagName.trim() && showColorPicker && (
-              <div>
-                {/* Custom color only (manual RGB) */}
-                <label className="flex items-center gap-2.5 cursor-pointer w-fit">
+            {/* Preview */}
+            {newTagName.trim() && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Pré-visualização</label>
+                <div>
                   <span
-                    className="h-8 w-8 rounded-full ring-1 ring-black/10 relative overflow-hidden flex-shrink-0"
-                    style={{ background: selectedColor }}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold text-white"
+                    style={{ backgroundColor: selectedColor }}
                   >
-                    <input
-                      type="color"
-                      value={selectedColor}
-                      onChange={(e) => setSelectedColor(e.target.value)}
-                      className="absolute -inset-1 opacity-0 cursor-pointer"
-                    />
+                    {newTagName}
                   </span>
-                  <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{selectedColor}</span>
-                </label>
+                </div>
               </div>
             )}
 
             <Button
               onClick={handleAddTag}
               disabled={!newTagName.trim() || isLoading}
-              className="w-full h-9 text-sm rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold"
+              className="w-full h-10 text-sm rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold"
             >
               {isLoading ? "Salvando..." : "Salvar"}
             </Button>
