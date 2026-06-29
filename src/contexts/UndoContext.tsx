@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 export interface UndoableAction {
@@ -13,8 +13,6 @@ interface UndoContextValue {
   pushAction: (action: UndoableAction) => void;
   undo: () => void;
   redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
 }
 
 const UndoContext = createContext<UndoContextValue | null>(null);
@@ -22,24 +20,18 @@ const UndoContext = createContext<UndoContextValue | null>(null);
 const MAX_HISTORY = 50;
 
 export function UndoProvider({ children }: { children: React.ReactNode }) {
+  // Everything is kept in refs so registering/undoing an action NEVER re-renders
+  // the provider (and therefore never re-renders the whole app tree mid-drag).
   const undoStack = useRef<UndoableAction[]>([]);
   const redoStack = useRef<UndoableAction[]>([]);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
   const busy = useRef(false);
-
-  const sync = useCallback(() => {
-    setCanUndo(undoStack.current.length > 0);
-    setCanRedo(redoStack.current.length > 0);
-  }, []);
 
   const pushAction = useCallback((action: UndoableAction) => {
     undoStack.current.push(action);
     if (undoStack.current.length > MAX_HISTORY) undoStack.current.shift();
     // A new action invalidates the redo history.
     redoStack.current = [];
-    sync();
-  }, [sync]);
+  }, []);
 
   const undo = useCallback(async () => {
     if (busy.current) return;
@@ -56,9 +48,8 @@ export function UndoProvider({ children }: { children: React.ReactNode }) {
       toast.error("Não foi possível desfazer");
     } finally {
       busy.current = false;
-      sync();
     }
-  }, [sync]);
+  }, []);
 
   const redo = useCallback(async () => {
     if (busy.current) return;
@@ -75,9 +66,8 @@ export function UndoProvider({ children }: { children: React.ReactNode }) {
       toast.error("Não foi possível refazer");
     } finally {
       busy.current = false;
-      sync();
     }
-  }, [sync]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -85,9 +75,8 @@ export function UndoProvider({ children }: { children: React.ReactNode }) {
       if (!mod) return;
       const key = e.key.toLowerCase();
       // Only let the browser's native undo win inside fields where the user is
-      // editing actual content (a textarea, a rich-text area, or an input that
-      // opts in via data-undo-native, e.g. EditableField). A plain filter/search
-      // input must NOT block the platform undo.
+      // editing actual content (textarea, contentEditable, or an input that opts
+      // in via data-undo-native). A plain filter/search input must NOT block it.
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
       const nativeUndo =
@@ -108,24 +97,15 @@ export function UndoProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [undo, redo]);
 
-  return (
-    <UndoContext.Provider value={{ pushAction, undo, redo, canUndo, canRedo }}>
-      {children}
-    </UndoContext.Provider>
-  );
+  // Stable value — identity never changes, so consumers never re-render from undo.
+  const value = useMemo(() => ({ pushAction, undo, redo }), [pushAction, undo, redo]);
+
+  return <UndoContext.Provider value={value}>{children}</UndoContext.Provider>;
 }
 
 // Safe to call outside the provider — returns a no-op so components don't crash.
+const NOOP: UndoContextValue = { pushAction: () => {}, undo: () => {}, redo: () => {} };
+
 export function useUndo(): UndoContextValue {
-  const ctx = useContext(UndoContext);
-  if (!ctx) {
-    return {
-      pushAction: () => {},
-      undo: () => {},
-      redo: () => {},
-      canUndo: false,
-      canRedo: false,
-    };
-  }
-  return ctx;
+  return useContext(UndoContext) ?? NOOP;
 }
