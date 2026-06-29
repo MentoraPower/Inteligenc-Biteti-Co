@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveOriginParam } from "@/lib/origin-slugs";
 import { getAvatarForName } from "@/lib/avatar";
-import { getFlagSvgUrl, findCountryByDial } from "@/data/countries";
+import { CountryDialSelect } from "@/components/crm/CountryDialSelect";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -553,19 +553,10 @@ export default function LeadDetail() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-muted-foreground">WhatsApp</p>
                       <div className="flex items-center gap-1.5 min-w-0">
-                        {(() => {
-                          const waCountry = findCountryByDial(lead.country_code) || findCountryByDial("+55");
-                          return waCountry ? (
-                            <span className="flex items-center gap-1 flex-shrink-0">
-                              <img
-                                src={getFlagSvgUrl(waCountry.code)}
-                                alt=""
-                                className="w-5 h-[14px] rounded-[2px] object-cover ring-1 ring-black/5"
-                              />
-                              <span className="text-[15px] font-medium text-muted-foreground">{waCountry.dialCode}</span>
-                            </span>
-                          ) : null;
-                        })()}
+                        <CountryDialSelect
+                          value={lead.country_code}
+                          onChange={(dial) => updateLeadField("country_code", dial)}
+                        />
                         <EditableField
                           value={lead.whatsapp || ""}
                           onSave={(value) => updateLeadField("whatsapp", value)}
