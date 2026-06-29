@@ -411,12 +411,12 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
         >
           <PopoverTrigger asChild>
             <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white cursor-pointer hover:opacity-90 transition-opacity group"
+              className="relative inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold leading-none text-white cursor-pointer hover:opacity-90 transition-opacity group"
               style={{ backgroundColor: tag.color }}
               onClick={() => handleStartEdit(tag)}
             >
               {tag.name}
-              <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-70 transition-opacity" />
+              <Pencil className="absolute right-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 opacity-0 group-hover:opacity-80 transition-opacity" />
             </span>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
@@ -494,19 +494,10 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
-            className="h-5 px-1.5 text-[10px] border-[#00000010] bg-transparent hover:bg-muted/50 transition-all duration-300 w-fit"
-            onMouseEnter={() => setTimeout(() => setIsHovered(true), 150)}
-            onMouseLeave={() => setIsHovered(false)}
+            title="Adicionar tag"
+            className="h-6 w-6 p-0 rounded-full flex items-center justify-center border-black/10 dark:border-white/15 bg-transparent hover:bg-muted/50 transition-colors flex-shrink-0"
           >
-            <Plus className="h-3 w-3" />
-            <span
-              className={`overflow-hidden transition-all duration-300 ${
-                isHovered || isOpen ? "max-w-[100px] ml-1 opacity-100" : "max-w-0 opacity-0"
-              }`}
-            >
-              Adicionar tag
-            </span>
+            <Plus className="h-3.5 w-3.5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[340px] p-0 rounded-2xl overflow-hidden shadow-xl" align="start">
