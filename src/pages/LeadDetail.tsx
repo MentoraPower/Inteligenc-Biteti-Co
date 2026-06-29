@@ -2,6 +2,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveOriginParam } from "@/lib/origin-slugs";
+import { getAvatarForName } from "@/lib/avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -372,18 +373,13 @@ export default function LeadDetail() {
         <div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Avatar */}
-              {lead.photo_url ? (
-                <img 
-                  src={lead.photo_url} 
-                  alt={lead.name} 
-                  className="h-10 w-10 rounded-full object-cover ring-2 ring-border/20" 
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-black/5">
-                  <User className="h-5 w-5 text-primary/70" />
-                </div>
-              )}
+              {/* Avatar (gender-based, same rounded corners as the card) */}
+              <img
+                src={getAvatarForName(lead.name)}
+                alt=""
+                loading="lazy"
+                className="h-10 w-10 rounded-lg object-cover flex-shrink-0 select-none pointer-events-none"
+              />
               
               {/* Name and Company */}
               <div className="flex-1">
