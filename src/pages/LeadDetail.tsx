@@ -385,7 +385,7 @@ export default function LeadDetail() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   {lead.clinic_name && (
-                    <p className="uppercase tracking-wide text-xs text-muted-foreground font-medium">
+                    <p className="uppercase tracking-wide text-sm text-muted-foreground font-medium">
                       {lead.clinic_name}
                     </p>
                   )}
@@ -460,7 +460,7 @@ export default function LeadDetail() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative pb-3 text-sm font-medium transition-colors ${
+                  className={`relative pb-3 text-[15px] font-medium transition-colors ${
                     activeTab === tab.id
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -520,7 +520,7 @@ export default function LeadDetail() {
               {/* Contact Info */}
               <Card className="border-[#00000010] shadow-none">
                 <CardContent className="p-6 space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+                  <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                     Informações de Contato
                   </h3>
                   
@@ -529,16 +529,16 @@ export default function LeadDetail() {
                       <Mail className="h-5 w-5 text-neutral-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">Email</p>
                       <EditableField
                         value={isIncompleteEmail(lead.email) ? "" : lead.email}
                         onSave={(value) => updateLeadField("email", value)}
                         placeholder="Digite o email"
                         displayValue={
                           isIncompleteEmail(lead.email) ? (
-                            <span className="text-sm font-medium text-muted-foreground italic">incompleto</span>
+                            <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
                           ) : (
-                            <span className="text-sm font-medium">{lead.email}</span>
+                            <span className="text-[15px] font-medium">{lead.email}</span>
                           )
                         }
                       />
@@ -549,16 +549,16 @@ export default function LeadDetail() {
                       <WhatsApp className="h-5 w-5 text-neutral-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">WhatsApp</p>
+                      <p className="text-sm text-muted-foreground">WhatsApp</p>
                       <EditableField
                         value={lead.whatsapp || ""}
                         onSave={(value) => updateLeadField("whatsapp", value)}
                         placeholder="Digite o WhatsApp"
                         displayValue={
                           !lead.whatsapp || lead.whatsapp === "" ? (
-                            <span className="text-sm font-medium text-muted-foreground italic">incompleto</span>
+                            <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
                           ) : (
-                            <span className="text-sm font-medium">{lead.whatsapp}</span>
+                            <span className="text-[15px] font-medium">{lead.whatsapp}</span>
                           )
                         }
                       />
@@ -569,16 +569,16 @@ export default function LeadDetail() {
                       <Instagram className="h-5 w-5 text-neutral-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Instagram</p>
+                      <p className="text-sm text-muted-foreground">Instagram</p>
                       <EditableField
                         value={lead.instagram === "@" ? "" : lead.instagram || ""}
                         onSave={(value) => updateLeadField("instagram", value.startsWith("@") ? value : `@${value}`)}
                         placeholder="Digite o Instagram"
                         displayValue={
                           !lead.instagram || lead.instagram === "" || lead.instagram === "@" ? (
-                            <span className="text-sm font-medium text-muted-foreground italic">incompleto</span>
+                            <span className="text-[15px] font-medium text-muted-foreground italic">incompleto</span>
                           ) : (
-                            <span className="text-sm font-medium">{lead.instagram}</span>
+                            <span className="text-[15px] font-medium">{lead.instagram}</span>
                           )
                         }
                       />
@@ -589,8 +589,8 @@ export default function LeadDetail() {
                       <Calendar className="h-5 w-5 text-neutral-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Data de Cadastro</p>
-                      <p className="text-sm font-medium">{formatDate(lead.created_at)}</p>
+                      <p className="text-sm text-muted-foreground">Data de Cadastro</p>
+                      <p className="text-[15px] font-medium">{formatDate(lead.created_at)}</p>
                     </div>
                   </div>
                 </CardContent>
