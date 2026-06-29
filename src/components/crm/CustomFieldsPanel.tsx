@@ -291,8 +291,12 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
                   key={field.id}
                   className="p-3.5 bg-zinc-500/[0.06] rounded-xl"
                 >
-                  {/* Top row: name (or inline edit) + type + kebab */}
+                  {/* Top row: type (front) + name (or inline edit) + kebab */}
                   <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md flex-shrink-0">
+                      {getFieldTypeLabel(field.field_type)}
+                    </span>
+
                     {editingFieldId === field.id ? (
                       <Input
                         value={editingLabel}
@@ -308,10 +312,6 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
                     ) : (
                       <span className="flex-1 min-w-0 font-semibold text-[15px] truncate">{field.field_label}</span>
                     )}
-
-                    <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md flex-shrink-0">
-                      {getFieldTypeLabel(field.field_type)}
-                    </span>
 
                     {editingFieldId === field.id ? (
                       <Button
