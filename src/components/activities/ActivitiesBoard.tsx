@@ -221,11 +221,10 @@ export function ActivitiesBoard({ leadId, leadName, currentPipelineId, currentSu
 
                 {/* Add activity button at bottom */}
                 <Button
-                  variant="outline"
-                  className="w-full mt-4 border-dashed flex-shrink-0"
+                  className="w-full mt-4 flex-shrink-0 gap-2 font-medium bg-foreground/70 text-background hover:bg-foreground/80"
                   onClick={handleOpenAddDialog}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4" />
                   Nova atividade
                 </Button>
               </>
