@@ -210,7 +210,7 @@ export function LeadCustomFields({ leadId, subOriginId, onOpenManager, refreshTr
             return (
               <div 
                 key={field.id} 
-                className="p-3 bg-muted/30 border border-[#00000010] rounded-lg animate-fade-in"
+                className="p-3 bg-zinc-500/[0.08] rounded-lg animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center gap-2 mb-1">

@@ -96,7 +96,7 @@ export function ActivitiesBoard({ leadId, leadName, currentPipelineId, currentSu
   return (
     <div className="space-y-4">
       {/* Step Navigation */}
-      <Card className="border-border/20 dark:border-white/[0.06] bg-card shadow-none">
+      <Card className="border-0 bg-zinc-500/[0.08] shadow-none">
         <CardContent className="p-4 pt-2">
           <StepNavigation
             pipelines={pipelines}
