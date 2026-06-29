@@ -86,6 +86,7 @@ export function EditableField({
       {isEditing ? (
         <Input
           ref={inputRef}
+          data-undo-native
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}

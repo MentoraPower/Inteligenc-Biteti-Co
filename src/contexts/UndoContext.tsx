@@ -84,12 +84,17 @@ export function UndoProvider({ children }: { children: React.ReactNode }) {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
       const key = e.key.toLowerCase();
-      // Don't hijack undo/redo inside text inputs (let the field handle its own).
+      // Only let the browser's native undo win inside fields where the user is
+      // editing actual content (a textarea, a rich-text area, or an input that
+      // opts in via data-undo-native, e.g. EditableField). A plain filter/search
+      // input must NOT block the platform undo.
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
-      const isEditable =
-        tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable;
-      if (isEditable) return;
+      const nativeUndo =
+        tag === "TEXTAREA" ||
+        !!target?.isContentEditable ||
+        !!target?.closest?.("[data-undo-native]");
+      if (nativeUndo) return;
 
       if (key === "z" && !e.shiftKey) {
         e.preventDefault();
