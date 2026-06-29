@@ -560,11 +560,15 @@ export function KanbanBoard() {
     };
   }, [queryClient, subOriginId]);
 
+  // While we're auto-resolving the first origin, DON'T flash the "Criar origem"
+  // empty state (it would briefly show on every workspace switch).
+  const [resolvingOrigin, setResolvingOrigin] = useState(true);
+
   // Auto-navigate to first sub-origin if none selected OR if selected belongs to different workspace
   useEffect(() => {
     const autoSelectFirstSubOrigin = async () => {
       if (!currentWorkspace?.id) return;
-      
+
       // If we have a subOriginId, validate it belongs to current workspace
       if (subOriginId) {
         const { data: subOrigin } = await supabase
@@ -572,14 +576,17 @@ export function KanbanBoard() {
           .select('id, crm_origins!inner(workspace_id)')
           .eq('id', subOriginId)
           .maybeSingle();
-        
+
         // If sub-origin exists and belongs to current workspace, we're good
         if (subOrigin && (subOrigin.crm_origins as any)?.workspace_id === currentWorkspace.id) {
+          setResolvingOrigin(false);
           return;
         }
         // Otherwise, clear and select first from current workspace
       }
-      
+
+      setResolvingOrigin(true);
+
       // Get first origin from CURRENT workspace
       const { data: origins } = await supabase
         .from('crm_origins')
@@ -587,7 +594,7 @@ export function KanbanBoard() {
         .eq('workspace_id', currentWorkspace.id)
         .order('ordem')
         .limit(1);
-      
+
       if (origins && origins.length > 0) {
         // Get first sub-origin of that origin
         const { data: subOrigins } = await supabase
@@ -596,22 +603,25 @@ export function KanbanBoard() {
           .eq('origin_id', origins[0].id)
           .order('ordem')
           .limit(1);
-        
+
         if (subOrigins && subOrigins.length > 0) {
           const newParams = new URLSearchParams(searchParams);
           newParams.set('origin', subOrigins[0].id);
           setSearchParams(newParams, { replace: true });
+          // keep resolvingOrigin true — it flips to false once subOriginId updates
         } else {
-          // No sub-origins - clear the param
+          // Origin has no sub-origins — genuinely empty
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('origin');
           setSearchParams(newParams, { replace: true });
+          setResolvingOrigin(false);
         }
       } else {
-        // No origins in this workspace - clear the param
+        // No origins in this workspace — genuinely empty
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('origin');
         setSearchParams(newParams, { replace: true });
+        setResolvingOrigin(false);
       }
     };
 
@@ -1206,7 +1216,7 @@ export function KanbanBoard() {
   }
 
   // Check if no sub-origin selected and workspace has no origins (empty workspace)
-  if (!subOriginId && !isLoadingSubOrigin && !isLoadingPipelines) {
+  if (!subOriginId && !resolvingOrigin && !isLoadingSubOrigin && !isLoadingPipelines) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] gap-4">
         <div className="text-center space-y-4">

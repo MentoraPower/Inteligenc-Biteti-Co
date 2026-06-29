@@ -8,17 +8,7 @@ export function WorkspaceLoadingOverlay() {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
     >
-      <motion.span
-        className="text-2xl font-bold tracking-tight text-foreground"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{
-          duration: 1.2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        Biteti &amp; Co Inteligenc
-      </motion.span>
+      <div className="h-8 w-8 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
     </motion.div>
   );
 }

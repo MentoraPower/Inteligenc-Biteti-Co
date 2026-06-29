@@ -35,16 +35,13 @@
   <body>
     <!-- Native loading overlay for workspace switching (survives page reload) -->
     <div id="workspace-loading-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--background, #fff);align-items:center;justify-content:center;">
-      <span id="ws-overlay-name">Biteti &amp; Co Inteligenc</span>
+      <div id="ws-overlay-spinner"></div>
     </div>
     <style>
-      @keyframes ws-pulse {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
-      }
-      #ws-overlay-name { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: #111; animation: ws-pulse 1.2s ease-in-out infinite; }
+      @keyframes ws-spin { to { transform: rotate(360deg); } }
+      #ws-overlay-spinner { height: 32px; width: 32px; border-radius: 9999px; border: 3px solid rgba(0,0,0,0.15); border-top-color: rgba(0,0,0,0.7); animation: ws-spin 0.7s linear infinite; }
       .dark #workspace-loading-overlay { background: #000; }
-      .dark #ws-overlay-name { color: #fff; }
+      .dark #ws-overlay-spinner { border-color: rgba(255,255,255,0.2); border-top-color: rgba(255,255,255,0.9); }
     </style>
     <script>
       // Show overlay immediately if workspace switch is in progress
