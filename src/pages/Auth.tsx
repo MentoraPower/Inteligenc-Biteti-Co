@@ -81,21 +81,10 @@ const Auth = () => {
 
   return (
     <div className="h-screen relative flex overflow-hidden bg-neutral-100">
-      {/* Strong light-blurred + noisy ambient background (same image) */}
-      <div className="absolute inset-0">
-        <img
-          src="/login-bg.jpg"
-          alt=""
-          className="w-full h-full object-cover scale-125 blur-3xl"
-        />
-        <div className="absolute inset-0 bg-white/60" />
-        <div className="absolute inset-0 login-noise" />
-      </div>
-
-      {/* Content — centered form over the blurred/noisy background */}
+      {/* Content — centered form on a solid background */}
       <div className="relative z-10 flex w-full h-full">
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/70">
+          <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-neutral-200">
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-neutral-900 tracking-tight mb-2">Acesse sua conta</h1>
               <p className="text-neutral-500 text-sm leading-relaxed">
