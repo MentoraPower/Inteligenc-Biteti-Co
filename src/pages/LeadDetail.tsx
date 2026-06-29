@@ -353,7 +353,7 @@ export default function LeadDetail() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className={`space-y-3 flex-1 min-w-0 pt-6 transition-all duration-300 ${isCustomFieldsPanelOpen ? 'pr-4' : ''}`}
+          className={`space-y-3 flex-1 min-w-0 pt-6 px-3 transition-all duration-300 ${isCustomFieldsPanelOpen ? 'pr-4' : ''}`}
         >
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-sm">
@@ -483,7 +483,7 @@ export default function LeadDetail() {
         <div className="h-px bg-border" />
 
         {/* Tab Content */}
-        <div className="mt-4 flex-1 px-6">
+        <div className="mt-4 flex-1">
           <AnimatePresence mode="wait">
             {activeTab === "atividades" && (
               <motion.div
