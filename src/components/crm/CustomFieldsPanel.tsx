@@ -185,29 +185,28 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
     <div 
       className={`flex-shrink-0 bg-background border-l border-border h-full overflow-hidden rounded-t-xl rounded-b-xl transition-all duration-300 ease-out ${
         isOpen 
-          ? 'w-80 opacity-100' 
+          ? 'w-[420px] opacity-100' 
           : 'w-0 opacity-0 border-l-0'
       }`}
     >
-      <div className="w-80 h-full overflow-y-auto">
-      <div className="sticky top-0 bg-background z-10 p-4 border-b border-border rounded-t-xl space-y-3">
+      <div className="w-[420px] h-full overflow-y-auto">
+      <div className="sticky top-0 bg-background z-10 p-5 border-b border-border rounded-t-xl space-y-3.5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-sm">Campos Personalizados</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h3 className="font-bold text-lg tracking-tight">Campos Personalizados</h3>
+            <p className="text-sm text-muted-foreground mt-1">
               Use o ID do campo no webhook
             </p>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={onClose}>
+            <X className="h-5 w-5" />
           </Button>
         </div>
-        
+
         {fields.length > 0 && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full gap-2 text-xs"
+          <Button
+            variant="outline"
+            className="w-full gap-2 text-sm h-10 rounded-lg"
             onClick={copyWebhookModel}
           >
             {copiedWebhook ? (
@@ -225,53 +224,53 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
         )}
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-5 space-y-5">
         {/* Existing fields list */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="space-y-2.5">
+          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             Campos existentes
           </h4>
           {isLoading ? (
             <div className="text-sm text-muted-foreground">Carregando...</div>
           ) : fields.length === 0 ? (
-            <div className="text-xs text-muted-foreground italic py-2">
+            <div className="text-sm text-muted-foreground italic py-2">
               Nenhum campo criado ainda
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {fields.map((field) => (
                 <div
                   key={field.id}
-                  className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border"
+                  className="flex items-center gap-2 p-3.5 bg-muted/40 rounded-xl border border-border"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{field.field_label}</div>
-                    <div className="text-[10px] text-muted-foreground truncate font-mono">
+                    <div className="font-semibold text-[15px] truncate">{field.field_label}</div>
+                    <div className="text-xs text-muted-foreground truncate font-mono mt-0.5">
                       {field.id}
                     </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
+                  <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md flex-shrink-0">
                     {getFieldTypeLabel(field.field_type)}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 flex-shrink-0"
+                    className="h-8 w-8 flex-shrink-0 rounded-lg"
                     onClick={() => copyFieldId(field.id)}
                   >
                     {copiedId === field.id ? (
-                      <Check className="h-3.5 w-3.5 text-green-500" />
+                      <Check className="h-4 w-4 text-green-500" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="h-4 w-4" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 flex-shrink-0 text-destructive hover:text-destructive"
+                    className="h-8 w-8 flex-shrink-0 rounded-lg text-destructive hover:text-destructive"
                     onClick={() => handleDeleteField(field.id)}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
@@ -280,28 +279,28 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
         </div>
 
         {/* Add new field form */}
-        <div className="pt-4 border-t border-border space-y-3">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="pt-5 border-t border-border space-y-3.5">
+          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             Adicionar novo campo
           </h4>
-          
+
           <div className="space-y-2">
-            <Label className="text-xs">Nome do campo</Label>
+            <Label className="text-sm">Nome do campo</Label>
             <Input
               placeholder="Ex: Profissão"
               value={newField.field_label}
               onChange={(e) => setNewField({ ...newField, field_label: e.target.value })}
-              className="h-9"
+              className="h-10 rounded-lg text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Tipo</Label>
+            <Label className="text-sm">Tipo</Label>
             <Select
               value={newField.field_type}
               onValueChange={(value) => setNewField({ ...newField, field_type: value })}
             >
-              <SelectTrigger className="h-9">
+              <SelectTrigger className="h-10 rounded-lg text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -317,17 +316,17 @@ export function CustomFieldsPanel({ subOriginId, isOpen, onClose, onFieldsChange
 
           {newField.field_type === "select" && (
             <div className="space-y-2">
-              <Label className="text-xs">Opções (separadas por vírgula)</Label>
+              <Label className="text-sm">Opções (separadas por vírgula)</Label>
               <Input
                 placeholder="Opção 1, Opção 2, Opção 3"
                 value={newField.options}
                 onChange={(e) => setNewField({ ...newField, options: e.target.value })}
-                className="h-9"
+                className="h-10 rounded-lg text-sm"
               />
             </div>
           )}
 
-          <Button onClick={handleAddField} className="w-full gap-2">
+          <Button onClick={handleAddField} className="w-full gap-2 h-11 rounded-lg text-sm font-semibold">
             <Plus className="h-4 w-4" />
             Adicionar Campo
           </Button>
