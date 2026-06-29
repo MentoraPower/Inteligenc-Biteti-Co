@@ -451,6 +451,19 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
                       style={{ backgroundColor: color }}
                     />
                   ))}
+                  {/* Custom RGB color (manual) */}
+                  <label
+                    title="Cor personalizada"
+                    className="h-5 w-5 rounded-full cursor-pointer ring-1 ring-black/10 relative overflow-hidden transition-transform hover:scale-110"
+                    style={{ background: "conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444)" }}
+                  >
+                    <input
+                      type="color"
+                      value={editTagColor}
+                      onChange={(e) => setEditTagColor(e.target.value)}
+                      className="absolute -inset-1 opacity-0 cursor-pointer"
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -478,7 +491,7 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
                 <Button
                   onClick={handleSaveEdit}
                   disabled={!editTagName.trim() || isEditLoading}
-                  className="flex-1 h-8 text-sm bg-gradient-to-r from-[#F40000] to-[#A10000] hover:opacity-90 text-white"
+                  className="flex-1 h-9 text-sm rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold"
                 >
                   {isEditLoading ? "Salvando..." : "Salvar"}
                 </Button>
@@ -585,6 +598,19 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
                       style={{ backgroundColor: color }}
                     />
                   ))}
+                  {/* Custom RGB color (manual) */}
+                  <label
+                    title="Cor personalizada"
+                    className="h-5 w-5 rounded-full cursor-pointer ring-1 ring-black/10 relative overflow-hidden transition-transform hover:scale-110"
+                    style={{ background: "conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444)" }}
+                  >
+                    <input
+                      type="color"
+                      value={selectedColor}
+                      onChange={(e) => setSelectedColor(e.target.value)}
+                      className="absolute -inset-1 opacity-0 cursor-pointer"
+                    />
+                  </label>
                 </div>
               </div>
             )}
@@ -592,7 +618,7 @@ export function LeadTagsManager({ leadId }: LeadTagsManagerProps) {
             <Button
               onClick={handleAddTag}
               disabled={!newTagName.trim() || isLoading}
-              className="w-full h-8 text-sm bg-gradient-to-r from-[#F40000] to-[#A10000] hover:opacity-90 text-white"
+              className="w-full h-9 text-sm rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold"
             >
               {isLoading ? "Salvando..." : "Salvar"}
             </Button>
