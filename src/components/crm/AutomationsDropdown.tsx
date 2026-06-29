@@ -557,7 +557,11 @@ export function AutomationsDropdown({
   };
 
   const getGeneratedWebhookUrl = () => {
-    const baseUrl = `https://scalebeauty.com.br/api/webhook`;
+    // Use the platform's current domain (Vercel deployment / custom domain).
+    // The /api/webhook path is proxied to the Supabase receive-webhook function
+    // via the rewrite in vercel.json.
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const baseUrl = `${origin}/api/webhook`;
     const params = new URLSearchParams();
     params.append("sub_origin_id", subOriginId);
     if (webhookType === "receive" && webhookTriggerPipelineId) {
