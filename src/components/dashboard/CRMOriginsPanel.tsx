@@ -82,21 +82,6 @@ function AddSubOriginDropdown({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Cmd/Ctrl+K focuses the spaces search field
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -510,6 +495,21 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
   const [subOrigins, setSubOrigins] = useState<SubOrigin[]>([]);
   const [leadCounts, setLeadCounts] = useState<LeadCount[]>([]);
   const hasInitialized = useRef(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Cmd/Ctrl+K focuses the spaces search field
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   
   // User permissions state
   const [userPermissions, setUserPermissions] = useState<UserPermissions>({
