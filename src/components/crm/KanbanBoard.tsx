@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useUndo } from "@/contexts/UndoContext";
 import { Lead, Pipeline } from "@/types/crm";
 import { triggerWebhook } from "@/lib/webhooks";
 import { trackPipelineMove, trackPositionChange } from "@/lib/leadTracking";
@@ -126,6 +127,7 @@ export function KanbanBoard() {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines">("automations");
   const queryClient = useQueryClient();
+  const { pushAction } = useUndo();
   const searchTimeoutRef = useRef<number | null>(null);
 
   // Debounce ref for tab hover prefetch
@@ -1031,6 +1033,31 @@ export function KanbanBoard() {
           }).catch(console.error);
 
           // Email automations are handled server-side by the trigger-webhook edge function.
+
+          // Register the move for Cmd+Z / Cmd+Y
+          {
+            const oldPipelineId = activeLead.pipeline_id;
+            const oldOrdem = activeLead.ordem ?? 0;
+            const moveLeadTo = async (pipelineId: string, ordem: number) => {
+              await supabase
+                .from("leads")
+                .update({ pipeline_id: pipelineId, ordem })
+                .eq("id", activeId);
+              setLocalLeads((prev) =>
+                prev.map((l) => (l.id === activeId ? { ...l, pipeline_id: pipelineId, ordem } : l))
+              );
+              queryClient.setQueryData<Lead[]>(["crm-leads", subOriginId], (oldData) =>
+                oldData
+                  ? oldData.map((l) => (l.id === activeId ? { ...l, pipeline_id: pipelineId, ordem } : l))
+                  : oldData
+              );
+            };
+            pushAction({
+              label: "Mover card",
+              undo: () => moveLeadTo(oldPipelineId, oldOrdem),
+              redo: () => moveLeadTo(newPipelineId, insertIndex),
+            });
+          }
 
         } catch (error) {
           setLocalLeads((prev) =>

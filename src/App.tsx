@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { UndoProvider } from "@/contexts/UndoContext";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
@@ -20,6 +21,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <RealtimeProvider>
       <WorkspaceProvider>
+        <UndoProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -39,6 +41,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </UndoProvider>
       </WorkspaceProvider>
     </RealtimeProvider>
   </QueryClientProvider>

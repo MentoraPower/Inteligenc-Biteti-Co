@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Check, X } from "lucide-react";
+import { useUndo } from "@/contexts/UndoContext";
 
 interface EditableFieldProps {
   value: string;
@@ -23,6 +24,7 @@ export function EditableField({
   const [editValue, setEditValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { pushAction } = useUndo();
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -42,9 +44,17 @@ export function EditableField({
     }
 
     setIsSaving(true);
+    const oldValue = value;
+    const newValue = editValue;
     try {
-      await onSave(editValue);
+      await onSave(newValue);
       setIsEditing(false);
+      // Register for Cmd+Z / Cmd+Y
+      pushAction({
+        label: "Editar campo",
+        undo: () => onSave(oldValue),
+        redo: () => onSave(newValue),
+      });
     } catch (error) {
       console.error("Error saving field:", error);
     } finally {
