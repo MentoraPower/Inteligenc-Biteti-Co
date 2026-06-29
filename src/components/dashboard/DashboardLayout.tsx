@@ -255,7 +255,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
               animationsEnabled && "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
             )}
           >
-            <div className="h-full bg-background border border-border border-t-0 border-l-0">
+            <div className="h-full bg-background border border-border border-t-0 border-l-0 overflow-hidden">
               <div
                 className={cn(
                   "h-full",
