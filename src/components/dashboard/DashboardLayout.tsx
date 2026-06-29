@@ -236,7 +236,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             left: sidebarCollapsedWidth - 16,
             top: '60px',
             height: 'calc(100vh - 60px)',
-            width: submenuWidth + 16 + 4,
+            width: submenuWidth + 16,
             zIndex: 39,
             pointerEvents: crmSubmenuOpen ? 'auto' : 'none',
           }}
@@ -360,8 +360,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {isDesktop ? (
           <main 
             style={{ 
-              left: crmSubmenuOpen 
-                ? sidebarCollapsedWidth - 16 + submenuWidth + 16 + 4
+              left: crmSubmenuOpen
+                ? sidebarCollapsedWidth - 16 + submenuWidth + 16
                 : sidebarCollapsedWidth + 8,
               top: '49px',
               right: 0,
