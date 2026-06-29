@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, ClipboardList, Phone, Clock } from "lucide-react";
+import { CalendarIcon, ClipboardList, Phone, Clock, Instagram } from "lucide-react";
+import WhatsApp from "@/components/icons/WhatsApp";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ interface AddActivityDialogProps {
 const activityTypes = [
   { id: "tarefas", label: "Tarefas", icon: ClipboardList },
   { id: "ligacao", label: "Ligação", icon: Phone },
+  { id: "instagram", label: "Instagram", icon: Instagram },
+  { id: "whatsapp", label: "WhatsApp", icon: WhatsApp },
 ] as const;
 
 // Insert ":" as the user types (digits only) — no clamping while typing.

@@ -6,7 +6,8 @@ import { StepNavigation } from "./StepNavigation";
 import { AddActivityDialog } from "./AddActivityDialog";
 import { ActivityDetails } from "./ActivityDetails";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, MoreVertical, Trash2, Pencil, ClipboardList, Phone } from "lucide-react";
+import { Plus, MoreVertical, Trash2, Pencil, ClipboardList, Phone, Instagram } from "lucide-react";
+import WhatsApp from "@/components/icons/WhatsApp";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,10 @@ const getTipoIcon = (tipo: string) => {
       return <ClipboardList className="h-5 w-5" strokeWidth={1.5} />;
     case 'ligacao':
       return <Phone className="h-5 w-5" strokeWidth={1.5} />;
+    case 'instagram':
+      return <Instagram className="h-5 w-5" strokeWidth={1.5} />;
+    case 'whatsapp':
+      return <WhatsApp className="h-5 w-5" />;
     default:
       return null;
   }
