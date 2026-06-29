@@ -133,7 +133,7 @@ const Auth = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium h-13 py-3.5 rounded-xl transition-all duration-200 hover:shadow-lg mt-2"
+                className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium h-13 py-3.5 rounded-xl shadow-none transition-colors duration-200 mt-2"
               >
                 {isLoading ? "Entrando..." : "Acessar sua conta"}
               </Button>
