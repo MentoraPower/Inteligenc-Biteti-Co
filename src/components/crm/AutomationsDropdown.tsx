@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Play, Plus, Trash2, ArrowRight, Webhook, FolderSync, Copy, Check, Send, X, Settings, Mail, Loader2, Workflow, ClipboardCheck, UserPlus, UserMinus, ChevronDown, Pencil } from "lucide-react";
+import { Play, Plus, Trash2, ArrowRight, Webhook, FolderSync, Copy, Check, Send, X, Settings, Mail, Loader2, Workflow, ClipboardCheck, UserPlus, UserMinus, ChevronDown, Pencil, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -1728,46 +1729,65 @@ export function AutomationsDropdown({
                   <p className="text-sm mt-1">Configure webhooks para integrar com sistemas externos</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="rounded-xl overflow-hidden border border-border">
+                  {/* Column headers */}
+                  <div className="grid grid-cols-[1fr_120px_120px_120px_44px] items-center gap-2 px-4 py-2.5 bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <div>Nome</div>
+                    <div>Data</div>
+                    <div>Evento</div>
+                    <div>Ativa</div>
+                    <div className="text-right">Ações</div>
+                  </div>
                   {webhooks.map((webhook) => (
-                    <div key={webhook.id} className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium">{webhook.name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                            {webhook.type === "receive" ? "Receber" : (webhook.type as string) === "update" ? "Atualizar" : "Enviar"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => toggleWebhook(webhook.id, webhook.is_active)}
-                            className={cn(
-                              "relative w-10 h-5 rounded-full transition-colors",
-                              webhook.is_active ? "bg-emerald-500" : "bg-muted"
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform",
-                                webhook.is_active ? "left-[22px]" : "left-0.5"
-                              )}
-                            />
-                          </button>
-                          <button
-                            onClick={() => startEditingWebhook(webhook as any)}
-                            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteWebhook(webhook.id)}
-                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                    <div
+                      key={webhook.id}
+                      className="grid grid-cols-[1fr_120px_120px_120px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm"
+                    >
+                      <div className="font-medium truncate">{webhook.name}</div>
+                      <div className="text-muted-foreground">
+                        {webhook.created_at ? new Date(webhook.created_at).toLocaleDateString("pt-BR") : "—"}
                       </div>
-                      {/* Show auto-tag badge if configured */}
+                      <div>
+                        <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                          {webhook.type === "receive" ? "Receber" : (webhook.type as string) === "update" ? "Atualizar" : "Enviar"}
+                        </span>
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => toggleWebhook(webhook.id, webhook.is_active)}
+                          className={cn(
+                            "relative w-10 h-5 rounded-full transition-colors flex-shrink-0",
+                            webhook.is_active ? "bg-emerald-500" : "bg-muted"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform",
+                              webhook.is_active ? "left-[22px]" : "left-0.5"
+                            )}
+                          />
+                        </button>
+                      </div>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-[140px] rounded-xl">
+                            <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg" onClick={() => startEditingWebhook(webhook as any)}>
+                              <Pencil className="h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer rounded-lg text-destructive focus:text-destructive"
+                              onClick={() => deleteWebhook(webhook.id)}
+                            >
+                              <Trash2 className="h-4 w-4" /> Apagar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   ))}
                 </div>
