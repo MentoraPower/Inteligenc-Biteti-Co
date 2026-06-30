@@ -1733,7 +1733,6 @@ export function AutomationsDropdown({
                     <div key={webhook.id} className="p-4 rounded-lg bg-muted/30 border border-border">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={cn("w-2 h-2 rounded-full", webhook.is_active ? "bg-emerald-500" : "bg-gray-400")} />
                           <span className="text-sm font-medium">{webhook.name}</span>
                           <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                             {webhook.type === "receive" ? "Receber" : (webhook.type as string) === "update" ? "Atualizar" : "Enviar"}

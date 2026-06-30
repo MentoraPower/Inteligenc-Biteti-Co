@@ -1576,10 +1576,7 @@ export function KanbanBoard() {
               <DialogTitle className="sr-only">Configurações</DialogTitle>
 
               {/* Header with tabs */}
-              <div className="border-b border-border">
-                <div className="px-6 py-4">
-                  <h2 className="text-xl font-semibold">Configurações</h2>
-                </div>
+              <div className="border-b border-border pt-4">
 
                 <div className="flex items-center gap-1 px-6">
                   <button
