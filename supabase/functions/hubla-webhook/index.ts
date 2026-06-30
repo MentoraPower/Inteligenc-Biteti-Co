@@ -20,6 +20,8 @@ const HUBLA_TYPE_MAP: Record<string, string> = {
   Refund: "reembolso",
   Refunded: "reembolso",
   RefundedSale: "reembolso",
+  RefundRequested: "reembolso",
+  CanceledSale: "reembolso",
   CanceledSubscription: "reembolso",
   Chargeback: "reembolso",
 };
@@ -55,9 +57,26 @@ serve(async (req) => {
     const hublaType = String(body?.type ?? "");
     const mapped = HUBLA_TYPE_MAP[hublaType] || null;
 
-    // Only act when the incoming event matches the integration's configured event.
-    if (mapped && integration.event_type && mapped !== integration.event_type) {
-      return json({ ignored: true, reason: `${hublaType} != ${integration.event_type}` });
+    // Only act on KNOWN Hubla events that match the integration's configured event.
+    // Unknown event types are ignored (avoids reacting to unrelated webhooks).
+    if (!mapped || mapped !== integration.event_type) {
+      return json({ ignored: true, reason: `${hublaType || "?"} != ${integration.event_type}` });
+    }
+
+    // Hubla fires several events for the same action (e.g. a refund sends both
+    // "RefundRequested" and "CanceledSale"). De-duplicate by transactionId + the
+    // logical event so the lead/tracking isn't recorded twice.
+    const transactionId = ev.transactionId ?? ev.transaction_id ?? null;
+    if (transactionId) {
+      const { data: dup } = await supabase
+        .from("lead_tracking")
+        .select("id")
+        .eq("dados->>transactionId", String(transactionId))
+        .eq("dados->>event_type", mapped)
+        .limit(1);
+      if (dup && dup.length > 0) {
+        return json({ duplicate: true, transactionId });
+      }
     }
 
     const name = ev.userName || ev.name || "Cliente";
@@ -143,7 +162,8 @@ serve(async (req) => {
       dados: {
         source: "hubla",
         type: hublaType,
-        transactionId: ev.transactionId ?? null,
+        event_type: mapped,
+        transactionId: transactionId,
         totalAmount: ev.totalAmount ?? null,
         groupName: ev.groupName ?? null,
       },
