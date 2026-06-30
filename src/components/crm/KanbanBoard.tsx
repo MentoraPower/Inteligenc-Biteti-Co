@@ -1538,7 +1538,7 @@ export function KanbanBoard() {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-2 text-sm font-medium rounded"
+            className="h-9 gap-2 text-sm font-medium rounded-full"
             onClick={() => setIsPipelinesDialogOpen(true)}
           >
             <Plus className="w-3.5 h-3.5" />
