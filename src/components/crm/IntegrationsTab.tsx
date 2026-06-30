@@ -31,11 +31,16 @@ interface PlatformIntegration {
   is_active: boolean;
 }
 
-export function IntegrationsTab() {
+interface IntegrationsTabProps {
+  subOriginId: string;
+  pipelines: { id: string; nome: string }[];
+}
+
+export function IntegrationsTab({ subOriginId, pipelines }: IntegrationsTabProps) {
   const [openPlatform, setOpenPlatform] = useState<string | null>(null);
 
   if (openPlatform === "hubla") {
-    return <HublaPage onBack={() => setOpenPlatform(null)} />;
+    return <HublaPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} pipelines={pipelines} />;
   }
 
   return (
@@ -64,7 +69,7 @@ export function IntegrationsTab() {
   );
 }
 
-function HublaPage({ onBack }: { onBack: () => void }) {
+function HublaPage({ onBack, subOriginId, pipelines }: { onBack: () => void; subOriginId: string; pipelines: { id: string; nome: string }[] }) {
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -132,6 +137,8 @@ function HublaPage({ onBack }: { onBack: () => void }) {
 
         {creating && (
           <CreateHublaIntegration
+            subOriginId={subOriginId}
+            pipelines={pipelines}
             onDone={() => {
               setCreating(false);
               queryClient.invalidateQueries({ queryKey: ["platform-integrations", "hubla"] });
@@ -193,51 +200,55 @@ function HublaPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function CreateHublaIntegration({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+function CreateHublaIntegration({
+  subOriginId,
+  pipelines,
+  onDone,
+  onCancel,
+}: {
+  subOriginId: string;
+  pipelines: { id: string; nome: string }[];
+  onDone: () => void;
+  onCancel: () => void;
+}) {
   const [name, setName] = useState("");
   const [eventType, setEventType] = useState("compra_aprovada");
-  const [subOriginId, setSubOriginId] = useState("");
   const [pipelineId, setPipelineId] = useState("");
   const [tagName, setTagName] = useState("");
   const [tagColor, setTagColor] = useState("#6366f1");
   const [saving, setSaving] = useState(false);
 
-  const { data: subOrigins = [] } = useQuery({
-    queryKey: ["integration-suborigins"],
-    queryFn: async () => {
-      const { data } = await supabase.from("crm_sub_origins").select("id, nome").order("nome");
-      return (data || []) as { id: string; nome: string }[];
-    },
-  });
-
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ["integration-pipelines", subOriginId],
-    enabled: !!subOriginId,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("pipelines")
-        .select("id, nome")
-        .eq("sub_origin_id", subOriginId)
-        .order("ordem");
-      return (data || []) as { id: string; nome: string }[];
-    },
-  });
-
   const { data: savedTags = [] } = useQuery({
     queryKey: ["integration-tags"],
     queryFn: async () => {
-      const { data } = await supabase.from("lead_tags").select("name, color").limit(2000);
+      const { data: tagsData } = await supabase.from("lead_tags").select("name, color").limit(2000);
+      // Also pull tags defined on saved webhooks (same source as the webhook auto-tag).
+      const { data: webhookTags } = await supabase
+        .from("crm_webhooks")
+        .select("auto_tag_name, auto_tag_color")
+        .not("auto_tag_name", "is", null);
+      const all: { name: string; color: string }[] = [...((tagsData || []) as any[])];
+      (webhookTags || []).forEach((t: any) => {
+        if (t.auto_tag_name && String(t.auto_tag_name).trim()) {
+          all.push({ name: t.auto_tag_name, color: t.auto_tag_color || "#6366f1" });
+        }
+      });
       const map = new Map<string, string>();
-      (data || []).forEach((t: any) => {
+      all.forEach((t) => {
         const k = (t.name || "").trim().toLowerCase();
         if (k && !map.has(k)) map.set(k, t.color);
       });
       return Array.from(map.entries()).map(([name, color]) => {
-        const orig = (data || []).find((t: any) => (t.name || "").trim().toLowerCase() === name);
+        const orig = all.find((t) => (t.name || "").trim().toLowerCase() === name);
         return { name: orig?.name || name, color };
       });
     },
   });
+
+  const isNewTag = useMemo(
+    () => tagName.trim() !== "" && !savedTags.some((t) => t.name.toLowerCase() === tagName.toLowerCase().trim()),
+    [tagName, savedTags]
+  );
 
   const tagSuggestions = useMemo(
     () => savedTags.filter((t) => t.name.toLowerCase().includes(tagName.toLowerCase().trim())),
@@ -246,7 +257,6 @@ function CreateHublaIntegration({ onDone, onCancel }: { onDone: () => void; onCa
 
   const save = async () => {
     if (!name.trim()) return toast.error("Dê um nome à integração");
-    if (!subOriginId) return toast.error("Escolha onde o lead vai cair");
     if (!pipelineId) return toast.error("Escolha a pipeline");
     setSaving(true);
     const { error } = await supabase.from("platform_integrations").insert({
@@ -292,52 +302,64 @@ function CreateHublaIntegration({ onDone, onCancel }: { onDone: () => void; onCa
       </div>
 
       <div className="space-y-1.5">
-        <label className={labelCls}>Onde o lead vai cair (espaço)</label>
-        <Select value={subOriginId} onValueChange={(v) => { setSubOriginId(v); setPipelineId(""); }}>
-          <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione o espaço..." /></SelectTrigger>
+        <label className={labelCls}>Pipeline onde o lead vai cair</label>
+        <Select value={pipelineId} onValueChange={setPipelineId}>
+          <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione a pipeline..." /></SelectTrigger>
           <SelectContent className="z-[10000]">
-            {subOrigins.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+            {pipelines.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {subOriginId && (
-        <div className="space-y-1.5">
-          <label className={labelCls}>Pipeline de entrada</label>
-          <Select value={pipelineId} onValueChange={setPipelineId}>
-            <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione a pipeline..." /></SelectTrigger>
-            <SelectContent className="z-[10000]">
-              {pipelines.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
       <div className="space-y-1.5">
         <label className={labelCls}>Tag automática (opcional)</label>
         <div className="flex items-center gap-2">
-          <Input value={tagName} onChange={(e) => setTagName(e.target.value)} placeholder="Nome da tag" className={cn(inputCls, "flex-1")} />
-          <label className="h-11 w-11 rounded-xl ring-1 ring-black/10 relative overflow-hidden flex-shrink-0 cursor-pointer" style={{ background: tagColor }}>
-            <input type="color" value={tagColor} onChange={(e) => setTagColor(e.target.value)} className="absolute -inset-1 opacity-0 cursor-pointer" />
-          </label>
+          <Input
+            value={tagName}
+            onChange={(e) => {
+              const v = e.target.value;
+              setTagName(v);
+              // If it matches a saved tag, adopt its color automatically.
+              const match = savedTags.find((t) => t.name.toLowerCase() === v.toLowerCase().trim());
+              if (match) setTagColor(match.color);
+            }}
+            placeholder="Digite ou escolha uma tag"
+            className={cn(inputCls, "flex-1")}
+          />
+          {/* Color picker only appears for a brand-new tag */}
+          {isNewTag && (
+            <label className="h-11 w-11 rounded-xl ring-1 ring-black/10 relative overflow-hidden flex-shrink-0 cursor-pointer" style={{ background: tagColor }}>
+              <input type="color" value={tagColor} onChange={(e) => setTagColor(e.target.value)} className="absolute -inset-1 opacity-0 cursor-pointer" />
+            </label>
+          )}
         </div>
+
+        {/* Saved tag suggestions while typing */}
         {tagName.trim() && tagSuggestions.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {tagSuggestions.slice(0, 8).map((t) => (
+            {tagSuggestions.slice(0, 10).map((t) => (
               <button
                 key={t.name}
                 type="button"
                 onClick={() => { setTagName(t.name); setTagColor(t.color); }}
-                className="px-2 py-1 rounded-full text-white text-[11px] font-semibold"
+                className="px-2.5 py-1 rounded-full text-white text-[11px] font-semibold hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: t.color }}
               >
                 {t.name}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* New-tag hint + live preview */}
+        {isNewTag && (
+          <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+            <span>Nova tag:</span>
+            <span className="px-2.5 py-1 rounded-full text-white text-[11px] font-semibold" style={{ backgroundColor: tagColor }}>
+              {tagName.trim()}
+            </span>
           </div>
         )}
       </div>

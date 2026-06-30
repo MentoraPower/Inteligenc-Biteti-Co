@@ -1677,7 +1677,7 @@ export function KanbanBoard() {
 
                 {settingsTab === "integrations" && (
                   <div className="h-full">
-                    <IntegrationsTab />
+                    <IntegrationsTab subOriginId={subOriginId} pipelines={pipelines} />
                   </div>
                 )}
               </div>
