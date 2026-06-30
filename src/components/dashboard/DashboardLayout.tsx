@@ -172,6 +172,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   const submenuWidth = 256;
   const sidebarMargin = 10; // gap around the floating menu (sides / top / bottom)
   const topbarHeight = 60;
+  const submenuExtra = 8;   // submenu is a bit shorter than the sidebar (top + bottom)
+  const submenuTuck = sidebarCollapsedWidth; // submenu extends left UNDER the menu
 
   return (
     <div className="min-h-screen bg-background px-3 pb-3">
@@ -235,10 +237,10 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {/* CRM Submenu Clip Container - clips the submenu animation */}
         <div
           style={{
-            left: sidebarMargin + sidebarCollapsedWidth - 16,
-            top: topbarHeight + sidebarMargin,
-            height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
-            width: submenuWidth + 16,
+            left: sidebarMargin,
+            top: topbarHeight + sidebarMargin + submenuExtra,
+            height: `calc(100vh - ${topbarHeight + (sidebarMargin + submenuExtra) * 2}px)`,
+            width: submenuWidth + submenuTuck,
             zIndex: 39,
             pointerEvents: crmSubmenuOpen ? 'auto' : 'none',
           }}
@@ -247,10 +249,9 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
           {/* CRM Submenu Panel - animated inside clip container */}
           <div
             style={{
-              width: submenuWidth + 16,
-              transform: crmSubmenuOpen ? 'translateX(0px)' : `translateX(-${submenuWidth + 16}px)`,
+              width: submenuWidth + submenuTuck,
+              transform: crmSubmenuOpen ? 'translateX(0px)' : `translateX(-${submenuWidth + submenuTuck}px)`,
               willChange: animationsEnabled ? 'transform' : 'auto',
-              paddingLeft: 16,
             }}
             className={cn(
               "h-full overflow-hidden",
@@ -264,8 +265,9 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   animationsEnabled && "transition-opacity duration-400"
                 )}
                 style={{
-                  width: submenuWidth,
-                  minWidth: submenuWidth,
+                  width: submenuWidth + submenuTuck,
+                  minWidth: submenuWidth + submenuTuck,
+                  paddingLeft: submenuTuck,
                   opacity: crmSubmenuOpen ? 1 : 0,
                   transitionDelay: (animationsEnabled && crmSubmenuOpen) ? '80ms' : '0ms',
                 }}
