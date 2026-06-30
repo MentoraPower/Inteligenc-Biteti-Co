@@ -247,22 +247,19 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
           {/* Other Origins - First in Timeline */}
           {otherOriginLeads.length > 0 && (
             <div className="relative flex">
-              {/* Left side - Icon and vertical line */}
-              <div className="flex flex-col items-center mr-4">
-                {/* Icon */}
-                <div className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted dark:bg-[#1f1f1f] text-muted-foreground shadow-sm z-10">
+              {/* Left rail - icon block + continuous connector line */}
+              <div className="relative flex-shrink-0 w-10 mr-4">
+                {hasContentBelow && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-10 bottom-0 w-px bg-black/10 dark:bg-white/10" />
+                )}
+                <div className="relative z-10 h-10 w-10 rounded-xl flex items-center justify-center bg-muted dark:bg-[#1f1f1f] text-muted-foreground ring-1 ring-black/5 dark:ring-white/10">
                   <Users className="h-5 w-5" />
                 </div>
-                
-                {/* Vertical line */}
-                {hasContentBelow && (
-                  <div className="w-0.5 flex-1 bg-gray-200 dark:bg-[#1f1f1f] my-2" />
-                )}
               </div>
               
               {/* Right side - Card content */}
               <div className="flex-1 pb-6">
-                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
+                <Card className="rounded-xl border-black/5 dark:border-white/10 bg-white dark:bg-[#141414] shadow-none">
                   <CardContent className="p-4">
                     <p className="text-sm font-semibold text-foreground">Lead existe em outras origens</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -294,22 +291,19 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
           {/* UTM Parameters Card - Modern Layout */}
           {hasUTMData && (
             <div className="relative flex">
-              {/* Left side - Icon and vertical line */}
-              <div className="flex flex-col items-center mr-4">
-                {/* Icon */}
-                <div className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted dark:bg-[#1f1f1f] text-muted-foreground shadow-sm z-10">
+              {/* Left rail - icon block + continuous connector line */}
+              <div className="relative flex-shrink-0 w-10 mr-4">
+                {events.length > 0 && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-10 bottom-0 w-px bg-black/10 dark:bg-white/10" />
+                )}
+                <div className="relative z-10 h-10 w-10 rounded-xl flex items-center justify-center bg-muted dark:bg-[#1f1f1f] text-muted-foreground ring-1 ring-black/5 dark:ring-white/10">
                   <Globe className="h-5 w-5" />
                 </div>
-                
-                {/* Vertical line */}
-                {events.length > 0 && (
-                  <div className="w-0.5 flex-1 bg-gray-200 dark:bg-[#1f1f1f] my-2" />
-                )}
               </div>
               
               {/* Right side - UTM Card content */}
               <div className="flex-1 pb-6">
-                <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
+                <Card className="rounded-xl border-black/5 dark:border-white/10 bg-white dark:bg-[#141414] shadow-none">
                   <CardContent className="p-4">
                     <p className="text-sm font-semibold text-foreground mb-3">Parâmetros UTM</p>
                     
@@ -341,22 +335,19 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
             
             return (
               <div key={event.id} className="relative flex animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                {/* Left side - Icon and vertical line */}
-                <div className="flex flex-col items-center mr-4">
-                  {/* Icon */}
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconColors.bg} ${iconColors.text} shadow-sm z-10`}>
+                {/* Left rail - icon block + continuous connector line */}
+                <div className="relative flex-shrink-0 w-10 mr-4">
+                  {!isLast && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-10 bottom-0 w-px bg-black/10 dark:bg-white/10" />
+                  )}
+                  <div className={`relative z-10 h-10 w-10 rounded-xl flex items-center justify-center ${iconColors.bg} ${iconColors.text} ring-1 ring-black/5 dark:ring-white/10`}>
                     {getIconForType(event.tipo)}
                   </div>
-                  
-                  {/* Vertical line */}
-                  {!isLast && (
-                    <div className="w-0.5 flex-1 bg-gray-200 dark:bg-[#1f1f1f] my-2" />
-                  )}
                 </div>
                 
                 {/* Right side - Card content */}
                 <div className="flex-1 pb-6">
-                  <Card className="border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#141414] shadow-none">
+                  <Card className="rounded-xl border-black/5 dark:border-white/10 bg-white dark:bg-[#141414] shadow-none">
                     <CardContent className="p-4">
                       {/* Title */}
                       <p className="text-sm font-semibold text-foreground">{event.titulo}</p>
