@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Copy, Check, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -280,44 +281,39 @@ function CreateHublaIntegration({ onDone, onCancel }: { onDone: () => void; onCa
 
       <div className="space-y-1.5">
         <label className={labelCls}>Evento</label>
-        <select
-          value={eventType}
-          onChange={(e) => setEventType(e.target.value)}
-          className={cn(inputCls, "w-full border border-border bg-background px-3")}
-        >
-          {HUBLA_EVENTS.map((e) => (
-            <option key={e.id} value={e.id}>{e.label}</option>
-          ))}
-        </select>
+        <Select value={eventType} onValueChange={setEventType}>
+          <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+          <SelectContent className="z-[10000]">
+            {HUBLA_EVENTS.map((e) => (
+              <SelectItem key={e.id} value={e.id}>{e.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
         <label className={labelCls}>Onde o lead vai cair (espaço)</label>
-        <select
-          value={subOriginId}
-          onChange={(e) => { setSubOriginId(e.target.value); setPipelineId(""); }}
-          className={cn(inputCls, "w-full border border-border bg-background px-3")}
-        >
-          <option value="">Selecione o espaço...</option>
-          {subOrigins.map((s) => (
-            <option key={s.id} value={s.id}>{s.nome}</option>
-          ))}
-        </select>
+        <Select value={subOriginId} onValueChange={(v) => { setSubOriginId(v); setPipelineId(""); }}>
+          <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione o espaço..." /></SelectTrigger>
+          <SelectContent className="z-[10000]">
+            {subOrigins.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {subOriginId && (
         <div className="space-y-1.5">
           <label className={labelCls}>Pipeline de entrada</label>
-          <select
-            value={pipelineId}
-            onChange={(e) => setPipelineId(e.target.value)}
-            className={cn(inputCls, "w-full border border-border bg-background px-3")}
-          >
-            <option value="">Selecione a pipeline...</option>
-            {pipelines.map((p) => (
-              <option key={p.id} value={p.id}>{p.nome}</option>
-            ))}
-          </select>
+          <Select value={pipelineId} onValueChange={setPipelineId}>
+            <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione a pipeline..." /></SelectTrigger>
+            <SelectContent className="z-[10000]">
+              {pipelines.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
