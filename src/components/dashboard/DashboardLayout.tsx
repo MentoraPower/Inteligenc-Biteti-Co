@@ -176,7 +176,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   const submenuTuck = sidebarCollapsedWidth; // submenu extends left UNDER the menu
 
   return (
-    <div className="min-h-screen bg-background px-3 pb-3">
+    <div className="min-h-screen bg-card px-3 pb-3">
       <div className="min-h-[calc(100vh-0.75rem)] relative">
         <LoadingBar />
         
