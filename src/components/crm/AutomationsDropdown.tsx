@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Pipeline } from "@/types/crm";
 import { cn } from "@/lib/utils";
 import { EmailFlowBuilder } from "./EmailFlowBuilder";
+import { IntegrationsTab } from "./IntegrationsTab";
 
 interface ExistingTag {
   name: string;
@@ -112,7 +113,7 @@ interface EmailBuilderProps {
   pendingEmailsCount?: number;
 }
 
-type ActiveTab = "automations" | "webhooks";
+type ActiveTab = "automations" | "webhooks" | "integrations";
 
 export function AutomationsDropdown({ 
   pipelines, 
@@ -1847,10 +1848,24 @@ export function AutomationsDropdown({
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setActiveTab("integrations")}
+              className={cn(
+                "pb-3 text-sm font-medium border-b-2 transition-colors",
+                activeTab === "integrations"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Integrações
+            </button>
           </div>
         </div>
 
         <div className="overflow-y-auto h-[calc(700px-110px)]">
+          {/* Integrations Tab */}
+          {activeTab === "integrations" && <IntegrationsTab />}
+
           {/* Automations Tab */}
           {activeTab === "automations" && (
             <div className="p-6">

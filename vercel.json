@@ -13,6 +13,10 @@
       "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/wasender-webhook"
     },
     {
+      "source": "/api/integrations/hubla",
+      "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/hubla-webhook"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
