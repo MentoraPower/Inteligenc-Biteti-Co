@@ -203,7 +203,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             top: topbarHeight + sidebarMargin,
             height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
           }}
-          className="group hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-card border border-zinc-800 dark:border-border rounded-2xl shadow-sm overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
+          className="group hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300 rounded-2xl shadow-sm overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
         >
           <div className="flex flex-col h-full relative">
             {/* Top spacing (logo removed) */}
@@ -217,8 +217,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   className={cn(
                     "relative flex items-center h-10 rounded-lg transition-all duration-200",
                     activePanel === 'crm'
-                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
-                      : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                      ? "bg-white/10 text-white dark:bg-black/[0.06] dark:text-zinc-900 before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
+                      : "text-zinc-400 hover:bg-white/10 hover:text-white dark:text-zinc-500 dark:hover:bg-black/[0.06] dark:hover:text-zinc-900"
                   )}
                 >
                   <div className="w-10 flex items-center justify-center flex-shrink-0">
