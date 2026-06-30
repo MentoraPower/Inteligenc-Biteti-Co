@@ -1572,7 +1572,7 @@ export function KanbanBoard() {
           
           {/* Settings Dialog */}
           <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
-            <DialogContent className="max-w-7xl w-[95vw] h-[85vh] max-h-[90vh] p-0 flex flex-col gap-0" aria-describedby={undefined}>
+            <DialogContent className="max-w-[1600px] w-[96vw] h-[72vh] max-h-[80vh] p-0 flex flex-col gap-0" aria-describedby={undefined}>
               <DialogTitle className="sr-only">Configurações</DialogTitle>
 
               {/* Header with tabs */}
