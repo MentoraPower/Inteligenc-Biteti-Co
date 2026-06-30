@@ -940,7 +940,8 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
   const handleDeleteOrigin = async (originId: string) => {
     const { error } = await supabase.from("crm_origins").delete().eq("id", originId);
     if (error) {
-      toast.error("Erro ao excluir origem");
+      console.error("Erro ao excluir origem:", error);
+      toast.error(`Erro ao excluir origem: ${error.message}`);
       return;
     }
     toast.success("Origem excluída");
@@ -950,7 +951,8 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
   const handleDeleteSubOrigin = async (subOriginId: string) => {
     const { error } = await supabase.from("crm_sub_origins").delete().eq("id", subOriginId);
     if (error) {
-      toast.error("Erro ao excluir sub-origem");
+      console.error("Erro ao excluir sub-origem:", error);
+      toast.error(`Erro ao excluir sub-origem: ${error.message}`);
       return;
     }
     toast.success("Sub-origem excluída");
