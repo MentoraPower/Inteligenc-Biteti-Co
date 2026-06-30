@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PhoneOff, UserCheck, Webhook, Globe, ChevronDown, ChevronUp, ArrowRight, ListOrdered, MoveRight, UserPlus, FileText, Users, FolderSync, UserPlus2, UserMinus2 } from "lucide-react";
+import { Clock, PhoneOff, UserCheck, Webhook, Globe, ChevronDown, ChevronUp, ArrowRight, ListOrdered, MoveRight, UserPlus, FileText, Users, FolderSync, UserPlus2, UserMinus2, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -398,8 +398,21 @@ export function LeadTrackingTimeline({ leadId, utmData, leadEmail, leadWhatsapp 
                         </div>
                       )}
                       
+                      {/* Who performed the action */}
+                      {event.dados && ((event.dados as any).actor_name || (event.dados as any).actor_email) && (
+                        <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                          <User className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">
+                            por <span className="font-semibold text-foreground">{(event.dados as any).actor_name || (event.dados as any).actor_email}</span>
+                            {(event.dados as any).actor_name && (event.dados as any).actor_email && (
+                              <span className="text-muted-foreground"> · {(event.dados as any).actor_email}</span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Timestamp */}
-                      <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         <span>
                           {formatDistanceToNow(new Date(event.created_at), {

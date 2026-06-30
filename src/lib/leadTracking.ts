@@ -33,13 +33,37 @@ export async function trackLeadEvent({
   dados,
 }: TrackingEventData): Promise<void> {
   try {
+    // Capture who performed the action (logged-in user) and stamp it on the event.
+    let actor: { actor_name: string | null; actor_email: string | null } = {
+      actor_name: null,
+      actor_email: null,
+    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, email")
+          .eq("id", user.id)
+          .maybeSingle();
+        actor = {
+          actor_name: profile?.name || (user.user_metadata as any)?.name || (user.user_metadata as any)?.full_name || null,
+          actor_email: profile?.email || user.email || null,
+        };
+      }
+    } catch {
+      // ignore — actor stays null
+    }
+
+    const mergedDados = { ...(dados || {}), ...actor };
+
     const { error } = await supabase.from("lead_tracking").insert({
       lead_id: leadId,
       tipo,
       titulo,
       descricao: descricao || null,
       origem: origem || null,
-      dados: dados || null,
+      dados: mergedDados,
     });
 
     if (error) {
