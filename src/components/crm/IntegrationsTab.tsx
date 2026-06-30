@@ -280,23 +280,15 @@ function CreateHublaIntegration({ onDone, onCancel }: { onDone: () => void; onCa
 
       <div className="space-y-1.5">
         <label className={labelCls}>Evento</label>
-        <div className="grid grid-cols-3 gap-2">
+        <select
+          value={eventType}
+          onChange={(e) => setEventType(e.target.value)}
+          className={cn(inputCls, "w-full border border-border bg-background px-3")}
+        >
           {HUBLA_EVENTS.map((e) => (
-            <button
-              key={e.id}
-              type="button"
-              onClick={() => setEventType(e.id)}
-              className={cn(
-                "h-10 rounded-xl text-xs font-medium px-2 border transition-all",
-                eventType === e.id
-                  ? "border-foreground bg-foreground/[0.04] text-foreground"
-                  : "border-border bg-background text-muted-foreground hover:bg-muted"
-              )}
-            >
-              {e.label}
-            </button>
+            <option key={e.id} value={e.id}>{e.label}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       <div className="space-y-1.5">
