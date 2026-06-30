@@ -31,7 +31,7 @@ import { KanbanCard } from "./KanbanCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Search, Filter, X, CalendarIcon, Zap, Webhook, GitBranch, LayoutGrid, Plus } from "lucide-react";
+import { Settings, Search, Filter, X, CalendarIcon, Zap, Webhook, GitBranch, LayoutGrid, Plus, Blocks } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +52,7 @@ import { cn } from "@/lib/utils";
 
 import { toast } from "sonner";
 import { AutomationsDropdown } from "./AutomationsDropdown";
+import { IntegrationsTab } from "./IntegrationsTab";
 import { EmailFlowBuilder } from "./EmailFlowBuilder";
 import { ViewTabs } from "./ViewTabs";
 
@@ -125,7 +126,7 @@ export function KanbanBoard() {
   const [emailEditingContext, setEmailEditingContext] = useState<EmailEditingContext | null>(null);
   const [automationsOpen, setAutomationsOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines">("automations");
+  const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines" | "integrations">("automations");
   const queryClient = useQueryClient();
   const { pushAction } = useUndo();
   const searchTimeoutRef = useRef<number | null>(null);
@@ -1605,6 +1606,18 @@ export function KanbanBoard() {
                     <Webhook className="w-[18px] h-[18px]" />
                     WebHook
                   </button>
+                  <button
+                    onClick={() => setSettingsTab("integrations")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
+                      settingsTab === "integrations"
+                        ? "border-orange-500 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Blocks className="w-[18px] h-[18px]" />
+                    Integrações
+                  </button>
                 </div>
               </div>
 
@@ -1659,6 +1672,12 @@ export function KanbanBoard() {
                       embedded={true}
                       embeddedTab="webhooks"
                     />
+                  </div>
+                )}
+
+                {settingsTab === "integrations" && (
+                  <div className="h-full">
+                    <IntegrationsTab />
                   </div>
                 )}
               </div>
