@@ -145,23 +145,24 @@ function HublaPage({
           <img src="/integrations/hubla.webp" alt="Hubla" className="h-9 w-9 rounded-lg object-cover" />
           <h3 className="text-lg font-bold">Hubla</h3>
         </div>
-        <Button onClick={onBack} className="h-9 gap-1.5 rounded-lg bg-white text-black hover:bg-white/90 border border-border">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
+        <div className="flex items-center gap-2">
+          {!form && (
+            <Button
+              onClick={() => setForm({ mode: "create" })}
+              className="h-9 gap-2 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold"
+            >
+              <Plus className="h-4 w-4" />
+              Criar Integração
+            </Button>
+          )}
+          <Button onClick={onBack} className="h-9 gap-1.5 rounded-lg bg-white text-black hover:bg-white/90 border border-border">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        {!form && (
-          <Button
-            onClick={() => setForm({ mode: "create" })}
-            className="h-10 gap-2 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold"
-          >
-            <Plus className="h-4 w-4" />
-            Criar Integração
-          </Button>
-        )}
-
         {form && (
           <IntegrationForm
             subOriginId={subOriginId}
