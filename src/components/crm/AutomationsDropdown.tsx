@@ -1768,16 +1768,6 @@ export function AutomationsDropdown({
                         </div>
                       </div>
                       {/* Show auto-tag badge if configured */}
-                      {(webhook as any).auto_tag_name && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span
-                            className="text-[10px] px-2 py-0.5 rounded-full font-semibold text-white uppercase"
-                            style={{ backgroundColor: (webhook as any).auto_tag_color || "#6366f1" }}
-                          >
-                            {(webhook as any).auto_tag_name}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
