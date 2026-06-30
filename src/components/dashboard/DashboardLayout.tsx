@@ -170,6 +170,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   // Sidebar dimensions
   const sidebarCollapsedWidth = 64;
   const submenuWidth = 256;
+  const sidebarMargin = 10; // gap around the floating menu (sides / top / bottom)
+  const topbarHeight = 60;
 
   return (
     <div className="min-h-screen bg-background px-3 pb-3">
@@ -195,11 +197,11 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         <aside
           ref={sidebarRef}
           style={{
-            left: 0,
-            top: '60px',
-            height: 'calc(100vh - 60px)',
+            left: sidebarMargin,
+            top: topbarHeight + sidebarMargin,
+            height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
           }}
-          className="group hidden lg:flex flex-col fixed bg-card border-r border-border overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
+          className="group hidden lg:flex flex-col fixed bg-card border border-border rounded-2xl shadow-sm overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
         >
           <div className="flex flex-col h-full relative">
             {/* Top spacing (logo removed) */}
@@ -233,9 +235,9 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {/* CRM Submenu Clip Container - clips the submenu animation */}
         <div
           style={{
-            left: sidebarCollapsedWidth - 16,
-            top: '60px',
-            height: 'calc(100vh - 60px)',
+            left: sidebarMargin + sidebarCollapsedWidth - 16,
+            top: topbarHeight + sidebarMargin,
+            height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
             width: submenuWidth + 16,
             zIndex: 39,
             pointerEvents: crmSubmenuOpen ? 'auto' : 'none',
@@ -255,7 +257,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
               animationsEnabled && "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
             )}
           >
-            <div className="h-full bg-background bg-clip-padding border border-border border-t-0 border-l-0 overflow-hidden">
+            <div className="h-full bg-background bg-clip-padding border border-border border-l-0 rounded-r-2xl overflow-hidden">
               <div
                 className={cn(
                   "h-full",
@@ -286,8 +288,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {isCRMActive && !crmSubmenuOpen && (
           <button
             onClick={() => setCrmSubmenuOpen(true)}
-            style={{ 
-              left: sidebarCollapsedWidth - 4,
+            style={{
+              left: sidebarMargin + sidebarCollapsedWidth - 4,
               zIndex: 40,
             }}
             className="hidden lg:flex fixed top-1/2 -translate-y-1/2 w-5 h-10 items-center justify-center bg-zinc-900 rounded-r-md hover:bg-zinc-800 transition-colors shadow-md"
@@ -361,8 +363,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
           <main 
             style={{ 
               left: crmSubmenuOpen
-                ? sidebarCollapsedWidth - 16 + submenuWidth + 16
-                : sidebarCollapsedWidth + 8,
+                ? sidebarMargin + sidebarCollapsedWidth - 16 + submenuWidth + 16
+                : sidebarMargin + sidebarCollapsedWidth + 8,
               top: '49px',
               right: 0,
               height: 'calc(100vh - 49px)',
