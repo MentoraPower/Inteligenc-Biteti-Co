@@ -75,7 +75,7 @@ export function AssignMemberDropdown({ leadId, assignedTo, onAssign, size = "def
               ? "w-5 h-5 rounded-full" 
               : "h-10 w-10 rounded-lg border border-input bg-background hover:bg-accent hover:text-accent-foreground",
             assignedTo 
-              ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700" 
+              ? "bg-gradient-to-br from-purple-700 to-purple-800 text-white hover:from-purple-800 hover:to-purple-900" 
               : size === "sm"
                 ? "bg-muted/60 hover:bg-muted text-muted-foreground"
                 : ""
@@ -152,7 +152,7 @@ export function AssignMemberDropdown({ leadId, assignedTo, onAssign, size = "def
                 )}
                 <span className="truncate flex-1 text-left">{member.name || member.email || "Sem nome"}</span>
                 {assignedTo === member.user_id && (
-                  <Check className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-purple-700 flex-shrink-0" />
                 )}
               </button>
             ))}

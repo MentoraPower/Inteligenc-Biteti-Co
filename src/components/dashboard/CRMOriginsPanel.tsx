@@ -383,11 +383,11 @@ function SortableOriginItem({
                     >
                       <Kanban className={cn(
                         "h-3 w-3 flex-shrink-0",
-                        isActive ? "text-orange-500" : "text-foreground/60"
+                        isActive ? "text-purple-700" : "text-foreground/60"
                       )} />
                       <span className={cn(
                         "truncate font-bold",
-                        isActive && "bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent"
+                        isActive && "bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent"
                       )}>{subOrigin.nome}</span>
                     </button>
                     
@@ -1064,10 +1064,10 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
           <div className="flex justify-center pt-4 pb-2 px-2">
             <button
               onClick={openCreateOriginDialog}
-              className="relative flex items-center justify-center gap-2 py-2.5 px-8 w-full rounded-lg text-xs font-medium transition-all duration-200 hover:scale-[1.02] group bg-transparent border border-dashed border-orange-500/50 hover:border-orange-400/70"
+              className="relative flex items-center justify-center gap-2 py-2.5 px-8 w-full rounded-lg text-xs font-medium transition-all duration-200 hover:scale-[1.02] group bg-transparent border border-dashed border-purple-700/50 hover:border-purple-700/70"
             >
-              <Plus className="h-4 w-4 text-orange-400 group-hover:text-orange-300 transition-colors" />
-              <span className="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent group-hover:from-orange-300 group-hover:to-amber-300 transition-all">
+              <Plus className="h-4 w-4 text-purple-700 group-hover:text-purple-600 transition-colors" />
+              <span className="bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-purple-700 transition-all">
                 Nova Origem
               </span>
             </button>
@@ -1106,17 +1106,17 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                       selectedTipo === 'tarefas'
-                        ? "border-orange-500 bg-orange-50"
+                        ? "border-purple-700 bg-purple-100"
                         : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                     )}
                   >
                     <ListTodo className={cn(
                       "h-6 w-6",
-                      selectedTipo === 'tarefas' ? "text-orange-500" : "text-muted-foreground"
+                      selectedTipo === 'tarefas' ? "text-purple-700" : "text-muted-foreground"
                     )} />
                     <span className={cn(
                       "text-sm font-medium",
-                      selectedTipo === 'tarefas' ? "text-orange-600" : "text-muted-foreground"
+                      selectedTipo === 'tarefas' ? "text-purple-800" : "text-muted-foreground"
                     )}>
                       Tarefas
                     </span>
@@ -1127,17 +1127,17 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                       selectedTipo === 'calendario'
-                        ? "border-orange-500 bg-orange-50"
+                        ? "border-purple-700 bg-purple-100"
                         : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                     )}
                   >
                     <CalendarDays className={cn(
                       "h-6 w-6",
-                      selectedTipo === 'calendario' ? "text-orange-500" : "text-muted-foreground"
+                      selectedTipo === 'calendario' ? "text-purple-700" : "text-muted-foreground"
                     )} />
                     <span className={cn(
                       "text-sm font-medium",
-                      selectedTipo === 'calendario' ? "text-orange-600" : "text-muted-foreground"
+                      selectedTipo === 'calendario' ? "text-purple-800" : "text-muted-foreground"
                     )}>
                       Calendário
                     </span>
@@ -1150,7 +1150,7 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-gradient-to-r from-orange-600 to-amber-500 text-white">
+            <Button onClick={handleSave} className="bg-gradient-to-r from-purple-700 to-purple-900 text-white">
               {dialogMode === 'create' ? 'Criar' : 'Salvar'}
             </Button>
           </DialogFooter>

@@ -109,7 +109,7 @@ const EntryNode = ({ data }: NodeProps) => {
         type="source"
         position={Position.Right}
         isConnectable
-        className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !cursor-crosshair !shadow-sm"
+        className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !cursor-crosshair !shadow-sm"
       />
     </div>
   );
@@ -126,7 +126,7 @@ const AnimatedConnectionLine = ({
     <g>
       <path
         fill="none"
-        stroke="#f97316"
+        stroke="#7e22ce"
         strokeWidth={2}
         strokeDasharray="8 4"
         strokeLinecap="round"
@@ -139,7 +139,7 @@ const AnimatedConnectionLine = ({
         cx={toX}
         cy={toY}
         r={6}
-        fill="#f97316"
+        fill="#7e22ce"
         stroke="white"
         strokeWidth={2}
       />
@@ -213,9 +213,9 @@ const TriggerNode = ({ data, id, selected }: NodeProps & { data: {
     const groupTrigger = GROUP_TRIGGER_TYPES.find(gt => gt.id === trigger.type);
     if (groupTrigger) {
       const Icon = groupTrigger.icon;
-      return <Icon className="w-4 h-4 text-orange-500" />;
+      return <Icon className="w-4 h-4 text-purple-700" />;
     }
-    return <Zap className="w-4 h-4 text-orange-500" />;
+    return <Zap className="w-4 h-4 text-purple-700" />;
   };
 
   const addTriggerWithPipeline = (pipelineId: string) => {
@@ -261,7 +261,7 @@ const TriggerNode = ({ data, id, selected }: NodeProps & { data: {
         type="target"
         position={Position.Left}
         isConnectable
-        className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !shadow-sm"
+        className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !shadow-sm"
       />
       <div 
         className="min-w-[280px] border border-border bg-card transition-all rounded-xl"
@@ -301,7 +301,7 @@ const TriggerNode = ({ data, id, selected }: NodeProps & { data: {
                 type="source"
                 position={Position.Right}
                 id={`trigger-handle-${index}`}
-                className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !shadow-sm"
+                className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !shadow-sm"
                 style={{ top: "50%", transform: "translateY(-50%)" }}
               />
             </div>
@@ -342,7 +342,7 @@ const TriggerNode = ({ data, id, selected }: NodeProps & { data: {
               className="w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-foreground"
               style={{ backgroundColor: '#ffffff' }}
             >
-              <Zap className="w-4 h-4 text-orange-500" />
+              <Zap className="w-4 h-4 text-purple-700" />
               <div className="flex-1">
                 <div className="font-medium">Entrou em Pipeline</div>
                 <div className="text-xs text-muted-foreground">Quando lead entra em uma pipeline</div>
@@ -357,7 +357,7 @@ const TriggerNode = ({ data, id, selected }: NodeProps & { data: {
               className="w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 text-foreground last:rounded-b-lg"
               style={{ backgroundColor: '#ffffff' }}
             >
-              <Users className="w-4 h-4 text-orange-500" />
+              <Users className="w-4 h-4 text-purple-700" />
               <div className="flex-1">
                 <div className="font-medium">Gatilhos de Grupo</div>
                 <div className="text-xs text-muted-foreground">Relacionados a grupos</div>
@@ -460,7 +460,7 @@ const StartNode = ({ data }: NodeProps) => {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !shadow-sm"
+        className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !shadow-sm"
       />
     </div>
   );
@@ -697,7 +697,7 @@ const EmailNode = ({ id, data, selected }: NodeProps) => {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !shadow-sm !z-10"
+        className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !shadow-sm !z-10"
       />
       <div className="w-[320px] border border-border bg-background shadow-sm transition-all rounded-lg overflow-hidden">
         {/* Orange gradient header with Gmail logo */}
@@ -764,7 +764,7 @@ const EmailNode = ({ id, data, selected }: NodeProps) => {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3.5 !h-3.5 !bg-orange-500 !border-[3px] !border-white !shadow-sm !z-10"
+        className="!w-3.5 !h-3.5 !bg-purple-700 !border-[3px] !border-white !shadow-sm !z-10"
       />
 
       {/* Action buttons - slide down from top */}
@@ -938,7 +938,7 @@ const AnalyticsNode = ({ id, data, selected }: NodeProps) => {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-4 !h-4 !bg-orange-500 !border-[3px] !border-white !shadow-md !z-10"
+        className="!w-4 !h-4 !bg-purple-700 !border-[3px] !border-white !shadow-md !z-10"
       />
       
       {/* Node Card - Wider and more modern */}
@@ -966,8 +966,8 @@ const AnalyticsNode = ({ id, data, selected }: NodeProps) => {
         <div className="p-4">
           {!hasAnyConnection ? (
             <div className="text-center py-6 text-muted-foreground">
-              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
-                <ChartPie className="w-6 h-6 text-orange-400" />
+              <div className="w-12 h-12 rounded-xl bg-purple-200 flex items-center justify-center mx-auto mb-3">
+                <ChartPie className="w-6 h-6 text-purple-700" />
               </div>
               <p className="text-sm font-medium">Nenhuma conexão detectada</p>
               <p className="text-xs mt-1 text-muted-foreground/70">
@@ -978,7 +978,7 @@ const AnalyticsNode = ({ id, data, selected }: NodeProps) => {
             <>
               {isLoading ? (
                 <div className="text-center py-6">
-                  <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full mx-auto border-orange-500" />
+                  <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full mx-auto border-purple-700" />
                   <p className="text-xs text-muted-foreground mt-2">Carregando...</p>
                 </div>
               ) : (
@@ -1202,8 +1202,8 @@ const CustomEdge = ({
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-7 h-7 rounded-full bg-background border-2 border-orange-400 shadow-md flex items-center justify-center hover:bg-orange-50 hover:scale-110 transition-all">
-                <Plus className="w-4 h-4 text-orange-500" />
+              <button className="w-7 h-7 rounded-full bg-background border-2 border-purple-700 shadow-md flex items-center justify-center hover:bg-purple-100 hover:scale-110 transition-all">
+                <Plus className="w-4 h-4 text-purple-700" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="w-40">
@@ -1876,8 +1876,8 @@ export function EmailFlowBuilder({
             }}
             className="flex items-center gap-3 cursor-grab active:cursor-grabbing hover:bg-muted/50 rounded-xl p-2.5 transition-colors border border-border w-full"
           >
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 border border-orange-200 flex-shrink-0">
-              <ChartPie className="w-4 h-4 text-orange-600" />
+            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-200 border border-purple-300 flex-shrink-0">
+              <ChartPie className="w-4 h-4 text-purple-800" />
             </div>
             <span className="text-sm text-foreground">Análise</span>
           </div>
@@ -1962,7 +1962,7 @@ export function EmailFlowBuilder({
                   onClick={() => addNodeFromConnection("analytics")}
                   className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
                 >
-                  <ChartPie className="w-4 h-4 text-orange-500" />
+                  <ChartPie className="w-4 h-4 text-purple-700" />
                   <span className="text-foreground">Análise</span>
                 </button>
                 <button

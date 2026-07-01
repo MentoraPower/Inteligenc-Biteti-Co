@@ -98,7 +98,7 @@ export function WorkspaceDropdown() {
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <button className="h-9 flex items-center gap-2 pl-1 pr-3 ml-3 rounded-full bg-black/10 dark:bg-white/10 transition-colors outline-none hover:bg-black/15 dark:hover:bg-white/15">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0">
+            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center flex-shrink-0">
               <span className="text-[11px] font-semibold text-white">
                 {getInitials(displayName)}
               </span>
@@ -114,7 +114,7 @@ export function WorkspaceDropdown() {
               Espaço atual
             </span>
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-card border border-border">
-              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <span className="text-sm font-bold text-white">
                   {currentWorkspace ? getInitials(currentWorkspace.name) : 'W'}
                 </span>
@@ -144,7 +144,7 @@ export function WorkspaceDropdown() {
                       onClick={() => { setIsDropdownOpen(false); switchWorkspace(workspace.id); }}
                       className="flex flex-1 items-center gap-3 min-w-0 outline-none"
                     >
-                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center flex-shrink-0">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-bold text-white">
                           {getInitials(workspace.name)}
                         </span>

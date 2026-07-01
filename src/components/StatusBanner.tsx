@@ -88,7 +88,7 @@ export const StatusBanner = memo(function StatusBanner({ className }: StatusBann
   return (
     <div
       className={cn(
-        "w-full bg-amber-500/90 backdrop-blur-sm text-amber-950 py-2 px-4 flex items-center justify-center gap-3 text-sm font-medium relative z-[100] animate-in slide-in-from-top duration-300",
+        "w-full bg-purple-800/90 backdrop-blur-sm text-purple-950 py-2 px-4 flex items-center justify-center gap-3 text-sm font-medium relative z-[100] animate-in slide-in-from-top duration-300",
         className
       )}
     >
@@ -107,7 +107,7 @@ export const StatusBanner = memo(function StatusBanner({ className }: StatusBann
       </a>
       <button
         onClick={handleDismiss}
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-amber-600/20 rounded transition-colors"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-purple-900/20 rounded transition-colors"
         aria-label="Fechar"
       >
         <X className="h-4 w-4" />

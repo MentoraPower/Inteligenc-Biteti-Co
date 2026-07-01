@@ -1612,7 +1612,7 @@ export function KanbanBoard() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
                       settingsTab === "automations"
-                        ? "border-orange-500 text-foreground"
+                        ? "border-purple-700 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1624,7 +1624,7 @@ export function KanbanBoard() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
                       settingsTab === "webhooks"
-                        ? "border-orange-500 text-foreground"
+                        ? "border-purple-700 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1636,7 +1636,7 @@ export function KanbanBoard() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
                       settingsTab === "integrations"
-                        ? "border-orange-500 text-foreground"
+                        ? "border-purple-700 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1648,7 +1648,7 @@ export function KanbanBoard() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
                       settingsTab === "import"
-                        ? "border-orange-500 text-foreground"
+                        ? "border-purple-700 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >

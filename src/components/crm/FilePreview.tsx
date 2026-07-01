@@ -30,7 +30,7 @@ function FileIcon({ type, className }: { type: string; className?: string }) {
     case "pdf": return <FileText className={cn("text-red-500", className)} />;
     case "doc": return <FileText className={cn("text-blue-600", className)} />;
     case "sheet": return <FileSpreadsheet className={cn("text-green-600", className)} />;
-    case "presentation": return <FileText className={cn("text-orange-500", className)} />;
+    case "presentation": return <FileText className={cn("text-purple-700", className)} />;
     default: return <File className={cn("text-muted-foreground", className)} />;
   }
 }

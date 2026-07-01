@@ -217,7 +217,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   className={cn(
                     "relative flex items-center h-10 rounded-lg transition-all duration-200",
                     activePanel === 'crm'
-                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
+                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
                       : "text-zinc-400 hover:bg-white/10 hover:text-white"
                   )}
                 >
@@ -320,7 +320,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   className={cn(
                     "relative flex items-center w-full rounded-xl transition-colors duration-200 px-4 py-3 gap-3",
                     isCRMActive
-                      ? "bg-white/10 text-white before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-orange-500 before:to-amber-500"
+                      ? "bg-white/10 text-white before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
                       : "text-white/60 hover:bg-white/5 hover:text-white"
                   )}
                 >

@@ -1796,7 +1796,7 @@ export function AutomationsDropdown({
             <span className="text-sm font-medium">Start</span>
           </Button>
           {(activeAutomationsCount + activeWebhooksCount) > 0 && (
-            <span className="absolute -top-1 -right-1 z-10 h-5 min-w-5 px-1 text-[10px] font-bold flex items-center justify-center bg-white text-orange-600 rounded-full pointer-events-none shadow-sm border border-orange-200">
+            <span className="absolute -top-1 -right-1 z-10 h-5 min-w-5 px-1 text-[10px] font-bold flex items-center justify-center bg-white text-purple-800 rounded-full pointer-events-none shadow-sm border border-purple-300">
               {activeAutomationsCount + activeWebhooksCount}
             </span>
           )}
