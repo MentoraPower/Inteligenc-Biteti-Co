@@ -1112,14 +1112,22 @@ const handler = async (req: Request): Promise<Response> => {
           // Fetch custom fields for this sub-origin (include field_type for file handling)
           const { data: customFields } = await supabase
             .from("sub_origin_custom_fields")
-            .select("id, field_key, field_type")
+            .select("id, field_key, field_label, field_type")
             .eq("sub_origin_id", targetSubOriginId);
 
           if (customFields && customFields.length > 0) {
             const customResponses: { lead_id: string; field_id: string; response_value: string }[] = [];
-            
+
             // Check for custom_fields object in payload (format: { custom_fields: { field_id: value } })
             const customFieldsPayload = rawPayload.custom_fields || rawPayload.customFields || payload.custom_fields || payload.customFields;
+
+            // Normalized lookup of the raw payload keys, so we can match a custom
+            // field by its field_key OR its field_label (e.g. the Elementor question
+            // text) regardless of accents/casing/spacing.
+            const normalizedRaw: Record<string, unknown> = {};
+            for (const [k, v] of Object.entries(rawPayload || {})) {
+              normalizedRaw[normalizeKey(String(k))] = v;
+            }
             
             for (const field of customFields) {
               let value: unknown = undefined;
@@ -1143,7 +1151,18 @@ const handler = async (req: Request): Promise<Response> => {
               if (value === undefined || value === null) {
                 value = rawPayload[field.field_key];
               }
-              
+
+              // Priority 5: Match by normalized field_key (accent/spacing tolerant)
+              if ((value === undefined || value === null) && field.field_key) {
+                value = normalizedRaw[normalizeKey(String(field.field_key))];
+              }
+
+              // Priority 6: Match by the field's LABEL (e.g. the Elementor question
+              // text) — lets labeled form questions auto-map with no config.
+              if ((value === undefined || value === null) && (field as any).field_label) {
+                value = normalizedRaw[normalizeKey(String((field as any).field_label))];
+              }
+
               if (value !== undefined && value !== null && String(value).trim() !== "") {
                 let responseValue = String(value);
                 
