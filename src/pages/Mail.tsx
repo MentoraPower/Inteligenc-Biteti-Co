@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings, ChevronDown } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -37,7 +37,6 @@ export default function Mail() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [domainCfg, setDomainCfg] = useState<Record<string, { is_active: boolean; sender_name: string }>>({});
-  const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
 
   // Domains registered in Resend (pulled via edge function).
   const { data: resendDomains = [], isLoading: domainsLoading, error: domainsError } = useQuery({
@@ -66,7 +65,6 @@ export default function Mail() {
       cfg[d.id] = { is_active: !!existing?.is_active, sender_name: existing?.sender_name || "" };
     });
     setDomainCfg(cfg);
-    setExpandedDomain(null);
     setSettingsOpen(true);
   };
 
@@ -256,7 +254,7 @@ export default function Mail() {
           <DialogHeader>
             <DialogTitle>Domínios de e-mail</DialogTitle>
           </DialogHeader>
-          <div className="py-2 flex-1 overflow-y-auto space-y-2.5">
+          <div className="py-2 flex-1 overflow-y-auto">
             {domainsLoading ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Carregando domínios...</p>
             ) : domainsError ? (
@@ -264,42 +262,39 @@ export default function Mail() {
             ) : resendDomains.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
             ) : (
-              resendDomains.map((d: any) => {
-                const cfg = domainCfg[d.id] || { is_active: false, sender_name: "" };
-                const verified = d.status === "verified";
-                const open = expandedDomain === d.id;
-                return (
-                  <div key={d.id} className="rounded-xl border border-border overflow-hidden">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3">
-                      <button className="flex items-center gap-3 min-w-0 text-left" onClick={() => setExpandedDomain(open ? null : d.id)}>
-                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`} />
+              <div className="rounded-xl border border-border overflow-hidden">
+                <div className="grid grid-cols-[1fr_1fr_130px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div>Domínio</div>
+                  <div>Nome do remetente</div>
+                  <div className="text-center">Status</div>
+                </div>
+                {resendDomains.map((d: any) => {
+                  const cfg = domainCfg[d.id] || { is_active: false, sender_name: "" };
+                  const verified = d.status === "verified";
+                  return (
+                    <div key={d.id} className="grid grid-cols-[1fr_1fr_130px] gap-2 items-center px-4 py-3 border-t border-border">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span className="font-semibold truncate">{d.name}</span>
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${verified ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                          {verified ? "Verificado" : "Não verificado"}
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${verified ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                          {verified ? "Verificado" : "Não verif."}
                         </span>
-                      </button>
-                      <Switch
-                        checked={cfg.is_active}
-                        onCheckedChange={(v) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, is_active: v } }))}
-                      />
-                    </div>
-                    {open && (
-                      <div className="px-4 pb-4 pt-1 border-t border-border bg-zinc-500/[0.03] space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">Nome do remetente</label>
-                        <Input
-                          value={cfg.sender_name}
-                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
-                          placeholder="Ex: Biteti & Co"
-                          className="h-11 rounded-xl"
-                        />
-                        {cfg.sender_name.trim() && (
-                          <p className="text-[11px] text-muted-foreground">Enviará como: <b>{cfg.sender_name}</b> &lt;contato@{d.name}&gt;</p>
-                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })
+                      <Input
+                        value={cfg.sender_name}
+                        onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
+                        placeholder="Nome do remetente"
+                        className="h-10 rounded-lg"
+                      />
+                      <div className="flex justify-center">
+                        <Switch
+                          checked={cfg.is_active}
+                          onCheckedChange={(v) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, is_active: v } }))}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
           <DialogFooter>
