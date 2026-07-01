@@ -133,11 +133,11 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         className={`flex-1 min-h-0 rounded-xl rounded-b-none border border-b-0 transition-colors duration-100 flex flex-col overflow-hidden ${
           isTargeted
             ? "bg-muted/70 border-black/10 dark:border-white/10 border-dashed"
-            : "bg-background border-black/[0.04] dark:border-white/[0.06]"
+            : "bg-[#EDF1FF] dark:bg-zinc-900 border-black/[0.04] dark:border-white/[0.06]"
         }`}
       >
-        {/* Header */}
-        <div className="px-4 pt-4 pb-2 border-b border-black/5 dark:border-white/[0.06] bg-black/[0.03] dark:bg-white/[0.04]">
+        {/* Header — white rounded block with margins, over the pipeline color */}
+        <div className="mx-2 mt-2 px-4 py-3 rounded-xl bg-white dark:bg-zinc-800 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-base">{pipeline.nome}</h2>
             <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-green-800 text-white text-[12px] font-bold">
@@ -148,9 +148,9 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         </div>
 
         {/* Virtualized Cards container - this is the scroll container */}
-        <div 
+        <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-4 py-3 kanban-scroll bg-[#EDF1FF] dark:bg-zinc-500/[0.03]"
+          className="flex-1 overflow-y-auto px-4 py-3 kanban-scroll"
           style={{ minHeight: 0 }} // Important for flex child scrolling
         >
           <SortableContext
