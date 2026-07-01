@@ -104,21 +104,21 @@ export default function Mail() {
           <h2 className="font-bold text-lg truncate">{editing.name}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl">
             <button
               onClick={() => toast.info("Disparo — em construção")}
-              className="h-80 rounded-lg border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
+              className="h-80 rounded-md border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
-              <Send className="h-5 w-5" />
-              <p className="text-xl font-bold">Disparo</p>
+              <Send className="h-6 w-6" />
+              <p className="text-2xl font-bold">Disparo</p>
             </button>
 
             <button
               onClick={() => toast.info("Fluxo — em construção")}
-              className="h-80 rounded-lg border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
+              className="h-80 rounded-md border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
-              <Workflow className="h-5 w-5" />
-              <p className="text-xl font-bold">Fluxo</p>
+              <Workflow className="h-6 w-6" />
+              <p className="text-2xl font-bold">Fluxo</p>
             </button>
           </div>
         </div>
