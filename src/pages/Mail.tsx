@@ -279,12 +279,15 @@ export default function Mail() {
                   return (
                     <div key={d.id} className="grid grid-cols-[1fr_1fr_130px_100px] gap-2 items-center px-4 py-3 border-t border-border">
                       <div className="font-semibold truncate">{d.name}</div>
-                      <Input
-                        value={cfg.sender_name}
-                        onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
-                        placeholder="Nome do remetente"
-                        className="h-10 rounded-lg"
-                      />
+                      <div className="flex items-center gap-1 min-w-0">
+                        <Input
+                          value={cfg.sender_name}
+                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value.replace(/[@\s]/g, "") } }))}
+                          placeholder="contato"
+                          className="h-10 rounded-lg w-28 flex-shrink-0"
+                        />
+                        <span className="text-sm text-muted-foreground truncate">@{d.name}</span>
+                      </div>
                       <div className="flex justify-center">
                         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${st.cls}`}>{st.label}</span>
                       </div>
