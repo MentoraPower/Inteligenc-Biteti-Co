@@ -37,6 +37,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -190,10 +200,10 @@ function SortableOriginItem({
   expandedOrigins: Set<string>;
   toggleOrigin: (id: string) => void;
   openEditOriginDialog: (origin: Origin) => void;
-  handleDeleteOrigin: (id: string) => void;
+  handleDeleteOrigin: (id: string, nome?: string) => void;
   openCreateSubOriginDialog: (originId: string) => void;
   openEditSubOriginDialog: (subOrigin: SubOrigin) => void;
-  handleDeleteSubOrigin: (id: string) => void;
+  handleDeleteSubOrigin: (id: string, nome?: string) => void;
   handleSubOriginClick: (id: string, tipo: 'tarefas' | 'calendario') => void;
   leadCounts: LeadCount[];
   currentSubOriginId: string | null;
@@ -310,7 +320,7 @@ function SortableOriginItem({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteOrigin(origin.id)}
+                  onClick={() => handleDeleteOrigin(origin.id, origin.nome)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Excluir
@@ -371,12 +381,12 @@ function SortableOriginItem({
                     />
                   </svg>
                   
-                  <div className="flex items-center group">
+                  <div className="relative flex items-center group">
                     <button
                       onClick={() => handleSubOriginClick(subOrigin.id, subOrigin.tipo)}
                       className={cn(
-                        "flex items-center gap-2 flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 ease-out text-[13px]",
-                        isActive 
+                        "flex items-center gap-2 flex-1 min-w-0 py-1.5 px-2 rounded-lg transition-all duration-200 ease-out text-[13px]",
+                        isActive
                           ? "bg-accent font-medium text-foreground"
                           : "text-foreground/70 hover:text-foreground hover:bg-accent"
                       )}
@@ -390,13 +400,13 @@ function SortableOriginItem({
                         isActive && "bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent"
                       )}>{subOrigin.nome}</span>
                     </button>
-                    
-                    {/* Sub-origin Actions */}
+
+                    {/* Sub-origin Actions — overlay on the right; long text passes under it */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button 
+                        <button
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out hover:bg-accent"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out bg-accent hover:bg-accent/70 shadow-[-8px_0_8px_-4px] shadow-accent"
                         >
                           <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </button>
@@ -450,7 +460,7 @@ function SortableOriginItem({
                             
                             <DropdownMenuItem 
                               className="gap-3 h-9 rounded-lg cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                              onClick={() => handleDeleteSubOrigin(subOrigin.id)}
+                              onClick={() => handleDeleteSubOrigin(subOrigin.id, subOrigin.nome)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="text-[13px]">Excluir</span>
@@ -527,6 +537,7 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
 
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'origin' | 'suborigin'; id: string; nome?: string } | null>(null);
   const [dialogType, setDialogType] = useState<'origin' | 'suborigin'>('origin');
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [editingItem, setEditingItem] = useState<{ id: string; nome: string; origin_id?: string; tipo?: string } | null>(null);
@@ -937,25 +948,35 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
     fetchData();
   };
 
-  const handleDeleteOrigin = async (originId: string) => {
-    const { error } = await supabase.from("crm_origins").delete().eq("id", originId);
-    if (error) {
-      console.error("Erro ao excluir origem:", error);
-      toast.error(`Erro ao excluir origem: ${error.message}`);
-      return;
-    }
-    toast.success("Origem excluída");
-    fetchData();
+  // Open the confirmation dialog; the real delete runs on confirm.
+  const handleDeleteOrigin = (originId: string, nome?: string) => {
+    setDeleteTarget({ type: "origin", id: originId, nome });
+  };
+  const handleDeleteSubOrigin = (subOriginId: string, nome?: string) => {
+    setDeleteTarget({ type: "suborigin", id: subOriginId, nome });
   };
 
-  const handleDeleteSubOrigin = async (subOriginId: string) => {
-    const { error } = await supabase.from("crm_sub_origins").delete().eq("id", subOriginId);
-    if (error) {
-      console.error("Erro ao excluir sub-origem:", error);
-      toast.error(`Erro ao excluir sub-origem: ${error.message}`);
-      return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { type, id } = deleteTarget;
+    setDeleteTarget(null);
+    if (type === "origin") {
+      const { error } = await supabase.from("crm_origins").delete().eq("id", id);
+      if (error) {
+        console.error("Erro ao excluir origem:", error);
+        toast.error(`Erro ao excluir origem: ${error.message}`);
+        return;
+      }
+      toast.success("Origem excluída");
+    } else {
+      const { error } = await supabase.from("crm_sub_origins").delete().eq("id", id);
+      if (error) {
+        console.error("Erro ao excluir sub-origem:", error);
+        toast.error(`Erro ao excluir sub-origem: ${error.message}`);
+        return;
+      }
+      toast.success("Sub-origem excluída");
     }
-    toast.success("Sub-origem excluída");
     fetchData();
   };
 
@@ -1156,6 +1177,27 @@ export function CRMOriginsPanel({ isOpen, onClose, sidebarWidth, embedded = fals
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation (origin / sub-origin) */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget?.type === 'origin' ? 'Excluir origem?' : 'Excluir sub-origem?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.nome ? <>Tem certeza que deseja excluir <b>"{deleteTarget.nome}"</b>? </> : 'Tem certeza que deseja excluir? '}
+              Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmDelete}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 
