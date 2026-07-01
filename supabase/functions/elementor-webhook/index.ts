@@ -41,6 +41,11 @@ serve(async (req) => {
     // which handles lead creation, dedupe, workspace, defaults and custom fields.
     const forwardBody = { ...body };
     delete forwardBody.token;
+    // Apply the integration's tag (if configured) to the created lead.
+    if (integration.tag_name) {
+      forwardBody._tag_name = integration.tag_name;
+      forwardBody._tag_color = integration.tag_color || "#6366f1";
+    }
 
     const params = new URLSearchParams({ sub_origin_id: integration.sub_origin_id });
     if (integration.pipeline_id) params.set("pipeline_id", integration.pipeline_id);

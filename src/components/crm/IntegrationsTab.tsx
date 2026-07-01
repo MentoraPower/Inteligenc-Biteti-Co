@@ -882,6 +882,8 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
 function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { subOriginId: string; pipelines: { id: string; nome: string }[]; editing?: PlatformIntegration; onDone: () => void; onCancel: () => void; }) {
   const [name, setName] = useState(editing?.name || "");
   const [pipelineId, setPipelineId] = useState(editing?.pipeline_id || "");
+  const [tagName, setTagName] = useState(editing?.tag_name || "");
+  const [tagColor, setTagColor] = useState(editing?.tag_color || "#6366f1");
   const [token, setToken] = useState(editing?.token || "");
   const [saving, setSaving] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -894,6 +896,21 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
       return (data || []) as { id: string; field_key: string; field_label: string }[];
     },
   });
+
+  const { data: savedTags = [] } = useQuery({
+    queryKey: ["integration-tags"],
+    queryFn: async () => {
+      const { data: tagsData } = await supabase.from("lead_tags").select("name, color").limit(2000);
+      const { data: webhookTags } = await supabase.from("crm_webhooks").select("auto_tag_name, auto_tag_color").not("auto_tag_name", "is", null);
+      const all: { name: string; color: string }[] = [...((tagsData || []) as any[])];
+      (webhookTags || []).forEach((t: any) => { if (t.auto_tag_name?.trim()) all.push({ name: t.auto_tag_name, color: t.auto_tag_color || "#6366f1" }); });
+      const map = new Map<string, string>();
+      all.forEach((t) => { const k = (t.name || "").trim().toLowerCase(); if (k && !map.has(k)) map.set(k, t.color); });
+      return Array.from(map.entries()).map(([nm, color]) => { const o = all.find((t) => (t.name || "").trim().toLowerCase() === nm); return { name: o?.name || nm, color }; });
+    },
+  });
+  const isNewTag = tagName.trim() !== "" && !savedTags.some((t) => t.name.toLowerCase() === tagName.toLowerCase().trim());
+  const tagSuggestions = savedTags.filter((t) => t.name.toLowerCase().includes(tagName.toLowerCase().trim()));
 
   // These are the exact names to type in each Elementor field's "Campo no CRM".
   const refFields = useMemo(
@@ -921,8 +938,9 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
     if (!name.trim()) return toast.error("Dê um nome à integração");
     if (!pipelineId) return toast.error("Escolha a pipeline");
     setSaving(true);
+    const tagFields = { tag_name: tagName.trim() || null, tag_color: tagName.trim() ? tagColor : null };
     if (editing) {
-      const { error } = await supabase.from("platform_integrations").update({ name: name.trim(), pipeline_id: pipelineId }).eq("id", editing.id);
+      const { error } = await supabase.from("platform_integrations").update({ name: name.trim(), pipeline_id: pipelineId, ...tagFields }).eq("id", editing.id);
       setSaving(false);
       if (error) return toast.error("Erro ao salvar");
       toast.success("Integração atualizada!");
@@ -930,7 +948,7 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
     } else {
       const { data, error } = await supabase
         .from("platform_integrations")
-        .insert({ platform: "elementor", name: name.trim(), event_type: "form_submit", sub_origin_id: subOriginId, pipeline_id: pipelineId, config: {} })
+        .insert({ platform: "elementor", name: name.trim(), event_type: "form_submit", sub_origin_id: subOriginId, pipeline_id: pipelineId, config: {}, ...tagFields })
         .select("token")
         .single();
       setSaving(false);
@@ -960,6 +978,37 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
             {pipelines.map((p) => (<SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className={labelCls}>Tag automática (opcional)</label>
+        <div className="flex items-center gap-2">
+          <Input
+            value={tagName}
+            onChange={(e) => {
+              const v = e.target.value;
+              setTagName(v);
+              const match = savedTags.find((t) => t.name.toLowerCase() === v.toLowerCase().trim());
+              if (match) setTagColor(match.color);
+            }}
+            placeholder="Digite ou escolha uma tag"
+            className={cn(inputCls, "flex-1")}
+          />
+          {isNewTag && (
+            <label className="h-11 w-11 rounded-xl ring-1 ring-black/10 relative overflow-hidden flex-shrink-0 cursor-pointer" style={{ background: tagColor }}>
+              <input type="color" value={tagColor} onChange={(e) => setTagColor(e.target.value)} className="absolute -inset-1 opacity-0 cursor-pointer" />
+            </label>
+          )}
+        </div>
+        {tagName.trim() && tagSuggestions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {tagSuggestions.slice(0, 10).map((t) => (
+              <button key={t.name} type="button" onClick={() => { setTagName(t.name); setTagColor(t.color); }} className="px-2.5 py-1 rounded-full text-white text-[11px] font-semibold hover:opacity-90" style={{ backgroundColor: t.color }}>
+                {t.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {token && (

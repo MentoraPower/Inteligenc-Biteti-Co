@@ -1115,6 +1115,27 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
+      // Apply an explicit tag passed in the payload (e.g. from an integration).
+      if (savedLeadId) {
+        try {
+          const tagName = String((rawPayload as any)?._tag_name || "").trim();
+          const tagColor = String((rawPayload as any)?._tag_color || "").trim() || "#6366f1";
+          if (tagName) {
+            const { data: existingTag } = await supabase
+              .from("lead_tags")
+              .select("id")
+              .eq("lead_id", savedLeadId)
+              .eq("name", tagName)
+              .maybeSingle();
+            if (!existingTag) {
+              await supabase.from("lead_tags").insert({ lead_id: savedLeadId, name: tagName, color: tagColor });
+            }
+          }
+        } catch (e) {
+          console.log("[Webhook] Error adding payload tag:", e);
+        }
+      }
+
       // Save custom field responses if any exist
       if (savedLeadId && targetSubOriginId) {
         try {
