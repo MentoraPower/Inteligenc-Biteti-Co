@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pipeline } from "@/types/crm";
-import { EmailFlowBuilder } from "@/components/crm/EmailFlowBuilder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -16,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -31,21 +29,11 @@ interface EmailAutomation {
   flow_steps: any[] | null;
 }
 
-type BuilderState = { mode: "create" | "edit"; automation?: EmailAutomation; name: string };
-
 export default function Mail() {
-  const [builder, setBuilder] = useState<BuilderState | null>(null);
+  const [editing, setEditing] = useState<EmailAutomation | null>(null);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
-
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ["mail-pipelines"],
-    queryFn: async () => {
-      const { data } = await supabase.from("pipelines").select("*").order("ordem", { ascending: true });
-      return (data || []) as Pipeline[];
-    },
-  });
 
   const { data: automations = [], refetch } = useQuery({
     queryKey: ["email-automations-all"],
@@ -59,28 +47,24 @@ export default function Mail() {
     },
   });
 
-  const pipelineName = (id: string | null) => pipelines.find((p) => p.id === id)?.nome || "—";
-
   const openCreate = () => { setNewName(""); setNameDialogOpen(true); };
-  const confirmCreate = () => {
+
+  const confirmCreate = async () => {
     if (!newName.trim()) return toast.error("Dê um nome à campanha");
-    setBuilder({ mode: "create", name: newName.trim() });
+    const { data, error } = await (supabase as any)
+      .from("email_automations")
+      .insert({ name: newName.trim(), is_active: true, subject: "", body_html: "" })
+      .select("*")
+      .single();
+    if (error) return toast.error("Erro ao criar campanha");
     setNameDialogOpen(false);
+    refetch();
+    setEditing(data as EmailAutomation); // open the blank builder page
   };
 
   const toggleActive = async (a: EmailAutomation) => {
     const { error } = await (supabase as any).from("email_automations").update({ is_active: !a.is_active }).eq("id", a.id);
     if (error) return toast.error("Erro ao atualizar");
-    refetch();
-  };
-
-  const doDelete = async () => {
-    if (!confirmDelete) return;
-    const id = confirmDelete.id;
-    setConfirmDelete(null);
-    const { error } = await (supabase as any).from("email_automations").delete().eq("id", id);
-    if (error) return toast.error("Erro ao remover");
-    toast.success("Campanha removida!");
     refetch();
   };
 
@@ -99,83 +83,27 @@ export default function Mail() {
     refetch();
   };
 
-  // Persist the visual flow — mirrors the CRM AutomationsDropdown save logic.
-  const handleSave = async (steps: any[]) => {
-    if (!builder) return;
-    const emailSteps = steps.filter((s) => s.type === "email");
-    if (emailSteps.length === 0) return toast.error("Adicione pelo menos um passo de e-mail");
-
-    const triggerStep = steps.find((s) => s.type === "trigger");
-    const triggers = triggerStep?.data?.triggers as Array<{ id: string; type: string; pipelineId?: string }> | undefined;
-    const hasTriggers = triggers && triggers.length > 0;
-    const hasLegacy = triggerStep?.data?.triggerPipelineId || builder.automation?.trigger_pipeline_id;
-    if (!hasTriggers && !hasLegacy) return toast.error("Selecione pelo menos um gatilho no nó de trigger");
-
-    const pipelineTrigger = triggers?.find((t) => t.type === "lead_entered_pipeline");
-    const extracted = pipelineTrigger?.pipelineId || triggerStep?.data?.triggerPipelineId || builder.automation?.trigger_pipeline_id || null;
-    const triggerPipelineIdForDb = extracted && String(extracted).trim() ? extracted : null;
-
-    const firstEmail = emailSteps[0];
-    const finalSubject = firstEmail.data.subject || builder.automation?.subject || "";
-    const finalBodyHtml = firstEmail.data.bodyHtml || builder.automation?.body_html || "";
-    if (!finalSubject.trim()) return toast.error("Digite o assunto do e-mail");
-    if (!finalBodyHtml.trim()) return toast.error("Digite o conteúdo do e-mail");
-
-    try {
-      if (builder.mode === "edit" && builder.automation) {
-        const { error } = await (supabase as any).from("email_automations").update({
-          name: builder.name,
-          trigger_pipeline_id: triggerPipelineIdForDb,
-          subject: finalSubject,
-          body_html: finalBodyHtml,
-          flow_steps: steps,
-        }).eq("id", builder.automation.id);
-        if (error) throw error;
-      } else {
-        const { error } = await (supabase as any).from("email_automations").insert({
-          name: builder.name,
-          trigger_pipeline_id: triggerPipelineIdForDb,
-          sub_origin_id: null,
-          subject: finalSubject,
-          body_html: finalBodyHtml,
-          is_active: true,
-          flow_steps: steps,
-        });
-        if (error) throw error;
-      }
-      toast.success(builder.mode === "edit" ? "Campanha atualizada!" : "Campanha criada!");
-      setBuilder(null);
-      refetch();
-    } catch (e: any) {
-      toast.error(e?.message ? `Erro ao salvar: ${e.message}` : "Erro ao salvar campanha");
-    }
+  const doDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete.id;
+    setConfirmDelete(null);
+    const { error } = await (supabase as any).from("email_automations").delete().eq("id", id);
+    if (error) return toast.error("Erro ao remover");
+    toast.success("Campanha removida!");
+    refetch();
   };
 
-  const initialSteps = (a?: EmailAutomation) => {
-    if (a?.flow_steps && a.flow_steps.length > 0) return a.flow_steps;
-    if (a) {
-      return [
-        { id: "trigger-1", type: "trigger", position: { x: 100, y: 200 }, data: { label: "Adicionar gatilhos", triggerType: "lead_entered_pipeline", triggerPipelineId: a.trigger_pipeline_id } },
-        { id: "email-1", type: "email", position: { x: 380, y: 200 }, data: { label: "Enviar e-mail", subject: a.subject, bodyHtml: a.body_html } },
-        { id: "end-1", type: "end", position: { x: 660, y: 200 }, data: { label: "Fluxo finalizado" } },
-      ];
-    }
-    return undefined;
-  };
-
-  // Full-screen flow builder
-  if (builder) {
+  // ── Blank campaign page (starting point — to be built next) ──
+  if (editing) {
     return (
-      <div className="relative flex flex-col h-full w-full overflow-hidden">
-        <EmailFlowBuilder
-          automationName={builder.name}
-          onSave={handleSave}
-          onCancel={() => setBuilder(null)}
-          initialSteps={initialSteps(builder.automation)}
-          pipelines={pipelines}
-          subOriginId={null}
-          automationId={builder.automation?.id}
-        />
+      <div className="h-full flex flex-col bg-white dark:bg-background">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => { setEditing(null); refetch(); }}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="font-bold text-lg truncate">{editing.name}</h2>
+        </div>
+        <div className="flex-1 bg-white dark:bg-background" />
       </div>
     );
   }
@@ -189,53 +117,51 @@ export default function Mail() {
         </Button>
       </div>
 
-      {(
-        <div className="rounded-2xl border border-border overflow-hidden">
-          <div className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            <div>Nome</div>
-            <div>Data de criação</div>
-            <div className="text-center">Status</div>
-            <div className="text-center">Ações</div>
-          </div>
-          {automations.length === 0 && (
-            <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
-              Nenhuma campanha ainda. Clique em <b>Criar campanha</b> para começar.
-            </div>
-          )}
-          {automations.map((a) => (
-            <div key={a.id} className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <Zap className="h-4 w-4 text-purple-700 flex-shrink-0" />
-                <span className="font-medium truncate">{a.name}</span>
-              </div>
-              <div className="text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR")}</div>
-              <div className="flex justify-center">
-                <Switch checked={a.is_active} onCheckedChange={() => toggleActive(a)} />
-              </div>
-              <div className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg"><MoreVertical className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setBuilder({ mode: "edit", automation: a, name: a.name })}>
-                      <Pencil className="h-4 w-4 mr-2" /> Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => duplicate(a)}>
-                      <Copy className="h-4 w-4 mr-2" /> Duplicar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setConfirmDelete(a)} className="text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          ))}
+      <div className="rounded-2xl border border-border overflow-hidden">
+        <div className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div>Nome</div>
+          <div>Data de criação</div>
+          <div className="text-center">Status</div>
+          <div className="text-center">Ações</div>
         </div>
-      )}
+        {automations.length === 0 && (
+          <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
+            Nenhuma campanha ainda. Clique em <b>Criar campanha</b> para começar.
+          </div>
+        )}
+        {automations.map((a) => (
+          <div key={a.id} className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
+            <div className="flex items-center gap-2 min-w-0">
+              <Zap className="h-4 w-4 text-purple-700 flex-shrink-0" />
+              <span className="font-medium truncate">{a.name}</span>
+            </div>
+            <div className="text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR")}</div>
+            <div className="flex justify-center">
+              <Switch checked={a.is_active} onCheckedChange={() => toggleActive(a)} />
+            </div>
+            <div className="flex justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg"><MoreVertical className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditing(a)}>
+                    <Pencil className="h-4 w-4 mr-2" /> Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => duplicate(a)}>
+                    <Copy className="h-4 w-4 mr-2" /> Duplicar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmDelete(a)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Name dialog before opening the builder */}
+      {/* Name dialog before opening the campaign page */}
       <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nova campanha de e-mail</DialogTitle></DialogHeader>
