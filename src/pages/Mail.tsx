@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, ArrowRight, Send, Workflow, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -36,7 +36,7 @@ export default function Mail() {
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [domainCfg, setDomainCfg] = useState<Record<string, { is_active: boolean; sender_name: string }>>({});
+  const [domainCfg, setDomainCfg] = useState<Record<string, { is_active: boolean; sender_name: string; sender_local: string }>>({});
 
   // Domains registered in Resend (pulled via edge function).
   const { data: resendDomains = [], isLoading: domainsLoading, error: domainsError } = useQuery({
@@ -58,12 +58,19 @@ export default function Mail() {
     },
   });
 
+  const skipAutoSave = useRef(true);
+
   const openSettings = () => {
-    const cfg: Record<string, { is_active: boolean; sender_name: string }> = {};
+    const cfg: Record<string, { is_active: boolean; sender_name: string; sender_local: string }> = {};
     resendDomains.forEach((d: any) => {
       const existing = domainConfigs.find((c: any) => c.resend_id === d.id);
-      cfg[d.id] = { is_active: !!existing?.is_active, sender_name: existing?.sender_name || "" };
+      cfg[d.id] = {
+        is_active: !!existing?.is_active,
+        sender_name: existing?.sender_name || "",
+        sender_local: existing?.sender_local || "",
+      };
     });
+    skipAutoSave.current = true;
     setDomainCfg(cfg);
     setSettingsOpen(true);
   };
@@ -75,14 +82,24 @@ export default function Mail() {
       domain: d.name,
       is_active: domainCfg[d.id]?.is_active || false,
       sender_name: domainCfg[d.id]?.sender_name || "",
+      sender_local: domainCfg[d.id]?.sender_local || "",
     }));
     const { error } = await (supabase as any).from("email_domains").upsert(rows, { onConflict: "resend_id" });
     setSavingSettings(false);
     if (error) return toast.error(`Erro ao salvar: ${error.message}`);
-    toast.success("Configuração salva!");
     refetchDomainCfg();
-    setSettingsOpen(false);
   };
+
+  // Auto-save on any change (debounced), skipping the initial populate on open.
+  useEffect(() => {
+    if (!settingsOpen) return;
+    if (skipAutoSave.current) {
+      skipAutoSave.current = false;
+      return;
+    }
+    const t = setTimeout(() => { saveSettings(); }, 600);
+    return () => clearTimeout(t);
+  }, [domainCfg, settingsOpen]);
 
   const { data: automations = [], refetch } = useQuery({
     queryKey: ["email-automations-all"],
@@ -250,10 +267,17 @@ export default function Mail() {
 
       {/* Email configuration — Resend domains (large popup) */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="sm:max-w-6xl min-h-[600px] flex flex-col">
+        <DialogContent className="sm:max-w-6xl max-h-[85vh] flex flex-col [&>button:last-child]:hidden">
           <DialogHeader>
             <DialogTitle>Domínios de e-mail</DialogTitle>
           </DialogHeader>
+          <Button
+            size="sm"
+            onClick={() => setSettingsOpen(false)}
+            className="absolute right-4 top-4 h-8 bg-black text-white hover:bg-black/90"
+          >
+            Voltar <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
           <div className="py-2 flex-1 overflow-y-auto">
             {domainsLoading ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Carregando domínios...</p>
@@ -263,30 +287,37 @@ export default function Mail() {
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
-                <div className="grid grid-cols-[1fr_1fr_130px_100px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <div>Domínio</div>
+                <div className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div>E-mail de envio</div>
                   <div>Nome do remetente</div>
                   <div className="text-center">Verificação</div>
                   <div className="text-center">Ativado</div>
                 </div>
                 {resendDomains.map((d: any) => {
-                  const cfg = domainCfg[d.id] || { is_active: false, sender_name: "" };
+                  const cfg = domainCfg[d.id] || { is_active: false, sender_name: "", sender_local: "" };
                   const st = d.status === "verified"
                     ? { label: "Verificado", cls: "bg-green-800 text-white" }
                     : (d.status === "failed" || d.status === "failure" || d.status === "temporary_failure")
                       ? { label: "Falhou", cls: "bg-red-600 text-white" }
                       : { label: "Pendente", cls: "bg-yellow-400 text-black" };
                   return (
-                    <div key={d.id} className="grid grid-cols-[1fr_1fr_130px_100px] gap-2 items-center px-4 py-3 border-t border-border">
-                      <div className="font-semibold truncate">{d.name}</div>
+                    <div key={d.id} className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 items-center px-4 py-3 border-t border-border">
                       <div className="flex items-center gap-1 min-w-0">
                         <Input
-                          value={cfg.sender_name}
-                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value.replace(/[@\s]/g, "") } }))}
+                          value={cfg.sender_local}
+                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_local: e.target.value.replace(/[@\s]/g, "") } }))}
                           placeholder="contato"
                           className="h-10 rounded-lg w-28 flex-shrink-0"
                         />
-                        <span className="text-sm text-muted-foreground truncate">@{d.name}</span>
+                        <span className="text-sm text-muted-foreground font-semibold truncate">@{d.name}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <Input
+                          value={cfg.sender_name}
+                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
+                          placeholder="Ex: Mentora Beauty Academy"
+                          className="h-10 rounded-lg w-full"
+                        />
                       </div>
                       <div className="flex justify-center">
                         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${st.cls}`}>{st.label}</span>
@@ -303,12 +334,11 @@ export default function Mail() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
-            <Button onClick={saveSettings} disabled={savingSettings} className="bg-gradient-to-r from-purple-700 to-purple-900 text-white border-0">
-              {savingSettings ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
+          {savingSettings && (
+            <DialogFooter>
+              <span className="text-xs text-muted-foreground">Salvando...</span>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
