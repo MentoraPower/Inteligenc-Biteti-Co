@@ -167,15 +167,15 @@ export default function Mail() {
   return (
     <div className="h-full flex flex-col p-6 w-full">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Mail</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-10 w-10 rounded-xl">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl font-bold">Mail</h1>
+          <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-9 w-9 rounded-lg">
             <Settings className="h-4 w-4" />
           </Button>
-          <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
-            <Plus className="h-4 w-4" /> Criar campanha
-          </Button>
         </div>
+        <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
+          <Plus className="h-4 w-4" /> Criar campanha
+        </Button>
       </div>
 
       <div className="rounded-2xl border border-border overflow-hidden">
@@ -238,9 +238,9 @@ export default function Mail() {
 
       {/* Email configuration (large popup) */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-4xl min-h-[600px] flex flex-col">
           <DialogHeader><DialogTitle>Configuração de e-mail</DialogTitle></DialogHeader>
-          <div className="py-2 space-y-4">
+          <div className="py-2 space-y-4 flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Nome do remetente</label>
@@ -257,7 +257,7 @@ export default function Mail() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Assinatura</label>
-              <Textarea value={settings.signature_html} onChange={(e) => setSettings((s) => ({ ...s, signature_html: e.target.value }))} placeholder="Sua assinatura de e-mail..." className="min-h-[120px] rounded-xl" />
+              <Textarea value={settings.signature_html} onChange={(e) => setSettings((s) => ({ ...s, signature_html: e.target.value }))} placeholder="Sua assinatura de e-mail..." className="min-h-[240px] rounded-xl" />
             </div>
           </div>
           <DialogFooter>
