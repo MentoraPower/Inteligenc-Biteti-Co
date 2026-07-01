@@ -1050,6 +1050,16 @@ const handler = async (req: Request): Promise<Response> => {
           if (error) console.log("[Webhook] Tracking insert failed:", error.message);
         });
 
+        // Fire the received lead to any active Unnichat integrations (outbound).
+        fetch(`${supabaseUrl}/functions/v1/unnichat-dispatch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}` },
+          body: JSON.stringify({
+            lead: { name: leadData.name, email: leadData.email, whatsapp: leadData.whatsapp },
+            sub_origin_id: targetSubOriginId,
+          }),
+        }).catch((e) => console.log("[Webhook] Unnichat dispatch failed:", String(e)));
+
         // Check for auto-tag configuration in webhooks for this sub_origin
         try {
           const { data: webhooksWithAutoTag } = await supabase

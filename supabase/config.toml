@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.hubla-webhook]
 verify_jwt = false
+
+[functions.unnichat-dispatch]
+verify_jwt = false
