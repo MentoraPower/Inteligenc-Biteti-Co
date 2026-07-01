@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -36,38 +36,53 @@ export default function Mail() {
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [settings, setSettings] = useState({ sender_name: "", from_email: "", reply_to: "", signature_html: "" });
+  const [domainCfg, setDomainCfg] = useState<Record<string, { is_active: boolean; sender_name: string }>>({});
+  const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
 
-  const { data: settingsRow, refetch: refetchSettings } = useQuery({
-    queryKey: ["email-settings"],
+  // Domains registered in Resend (pulled via edge function).
+  const { data: resendDomains = [], isLoading: domainsLoading, error: domainsError } = useQuery({
+    queryKey: ["resend-domains"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("email_settings").select("*").limit(1).maybeSingle();
-      return (data || null) as any;
+      const { data, error } = await supabase.functions.invoke("resend-domains");
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return ((data as any)?.domains || []) as any[];
+    },
+  });
+
+  // Local per-domain config (active + sender name).
+  const { data: domainConfigs = [], refetch: refetchDomainCfg } = useQuery({
+    queryKey: ["email-domains"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("email_domains").select("*");
+      return (data || []) as any[];
     },
   });
 
   const openSettings = () => {
-    setSettings({
-      sender_name: settingsRow?.sender_name || "",
-      from_email: settingsRow?.from_email || "",
-      reply_to: settingsRow?.reply_to || "",
-      signature_html: settingsRow?.signature_html || "",
+    const cfg: Record<string, { is_active: boolean; sender_name: string }> = {};
+    resendDomains.forEach((d: any) => {
+      const existing = domainConfigs.find((c: any) => c.resend_id === d.id);
+      cfg[d.id] = { is_active: !!existing?.is_active, sender_name: existing?.sender_name || "" };
     });
+    setDomainCfg(cfg);
+    setExpandedDomain(null);
     setSettingsOpen(true);
   };
 
   const saveSettings = async () => {
     setSavingSettings(true);
-    let error;
-    if (settingsRow?.id) {
-      ({ error } = await (supabase as any).from("email_settings").update({ ...settings, updated_at: new Date().toISOString() }).eq("id", settingsRow.id));
-    } else {
-      ({ error } = await (supabase as any).from("email_settings").insert({ ...settings }));
-    }
+    const rows = resendDomains.map((d: any) => ({
+      resend_id: d.id,
+      domain: d.name,
+      is_active: domainCfg[d.id]?.is_active || false,
+      sender_name: domainCfg[d.id]?.sender_name || "",
+    }));
+    const { error } = await (supabase as any).from("email_domains").upsert(rows, { onConflict: "resend_id" });
     setSavingSettings(false);
-    if (error) return toast.error("Erro ao salvar configuração");
+    if (error) return toast.error(`Erro ao salvar: ${error.message}`);
     toast.success("Configuração salva!");
-    refetchSettings();
+    refetchDomainCfg();
     setSettingsOpen(false);
   };
 
@@ -166,15 +181,15 @@ export default function Mail() {
   return (
     <div className="h-full flex flex-col p-6 w-full">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-xl font-bold">Mail</h1>
-          <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-9 w-9 rounded-lg">
+        <h1 className="text-xl font-bold">Mail</h1>
+        <div className="flex items-center gap-2">
+          <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
+            <Plus className="h-4 w-4" /> Criar campanha
+          </Button>
+          <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-10 w-10 rounded-xl">
             <Settings className="h-4 w-4" />
           </Button>
         </div>
-        <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
-          <Plus className="h-4 w-4" /> Criar campanha
-        </Button>
       </div>
 
       <div className="rounded-2xl border border-border overflow-hidden">
@@ -235,25 +250,58 @@ export default function Mail() {
         </DialogContent>
       </Dialog>
 
-      {/* Email configuration (large popup) */}
+      {/* Email configuration — Resend domains (large popup) */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="sm:max-w-6xl min-h-[600px] flex flex-col">
-          <DialogHeader><DialogTitle>Configuração de e-mail</DialogTitle></DialogHeader>
-          <div className="py-2 space-y-4 flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Nome do remetente</label>
-                <Input value={settings.sender_name} onChange={(e) => setSettings((s) => ({ ...s, sender_name: e.target.value }))} placeholder="Ex: Biteti & Co" className="h-11 rounded-xl" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">E-mail do remetente</label>
-                <Input value={settings.from_email} onChange={(e) => setSettings((s) => ({ ...s, from_email: e.target.value }))} placeholder="contato@seudominio.com" className="h-11 rounded-xl" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">E-mail de resposta (reply-to)</label>
-              <Input value={settings.reply_to} onChange={(e) => setSettings((s) => ({ ...s, reply_to: e.target.value }))} placeholder="respostas@seudominio.com" className="h-11 rounded-xl" />
-            </div>
+          <DialogHeader>
+            <DialogTitle>Domínios de e-mail (Resend)</DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">Ative os domínios que quer usar na plataforma e defina o nome do remetente de cada um.</p>
+          </DialogHeader>
+          <div className="py-2 flex-1 overflow-y-auto space-y-2.5">
+            {domainsLoading ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Carregando domínios...</p>
+            ) : domainsError ? (
+              <p className="text-sm text-destructive py-8 text-center">Erro ao carregar domínios da Resend.</p>
+            ) : resendDomains.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
+            ) : (
+              resendDomains.map((d: any) => {
+                const cfg = domainCfg[d.id] || { is_active: false, sender_name: "" };
+                const verified = d.status === "verified";
+                const open = expandedDomain === d.id;
+                return (
+                  <div key={d.id} className="rounded-xl border border-border overflow-hidden">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      <button className="flex items-center gap-3 min-w-0 text-left" onClick={() => setExpandedDomain(open ? null : d.id)}>
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`} />
+                        <span className="font-semibold truncate">{d.name}</span>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${verified ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                          {verified ? "Verificado" : "Não verificado"}
+                        </span>
+                      </button>
+                      <Switch
+                        checked={cfg.is_active}
+                        onCheckedChange={(v) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, is_active: v } }))}
+                      />
+                    </div>
+                    {open && (
+                      <div className="px-4 pb-4 pt-1 border-t border-border bg-zinc-500/[0.03] space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">Nome do remetente</label>
+                        <Input
+                          value={cfg.sender_name}
+                          onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
+                          placeholder="Ex: Biteti & Co"
+                          className="h-11 rounded-xl"
+                        />
+                        {cfg.sender_name.trim() && (
+                          <p className="text-[11px] text-muted-foreground">Enviará como: <b>{cfg.sender_name}</b> &lt;contato@{d.name}&gt;</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
