@@ -103,14 +103,16 @@ export function ImportContactsTab({ subOriginId, pipelines, onImportingChange }:
     setFileName(file.name);
     setHeaders(hdrs);
     setRows(body);
-    // Auto-guess mapping by header name.
+    // Auto-guess mapping by header name — each field only once.
     const guess: Record<number, string> = {};
+    const used = new Set<string>();
+    const pick = (key: string) => (used.has(key) ? "ignore" : (used.add(key), key));
     hdrs.forEach((h, i) => {
       const l = h.toLowerCase();
-      if (/insta|@/.test(l)) guess[i] = "instagram";
-      else if (/nome|name/.test(l)) guess[i] = "name";
-      else if (/mail/.test(l)) guess[i] = "email";
-      else if (/tel|phone|whats|celular|fone/.test(l)) guess[i] = "whatsapp";
+      if (/insta/.test(l)) guess[i] = pick("instagram");
+      else if (/nome|name/.test(l)) guess[i] = pick("name");
+      else if (/mail/.test(l)) guess[i] = pick("email");
+      else if (/tel|phone|whats|celular|fone/.test(l)) guess[i] = pick("whatsapp");
       else guess[i] = "ignore";
     });
     setMapping(guess);
