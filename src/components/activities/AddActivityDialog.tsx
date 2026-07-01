@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { LeadActivity } from "@/hooks/use-lead-activities";
 
@@ -137,28 +138,33 @@ function AddActivityDialogComponent({
           {/* Tipo */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo *</label>
-            <div className="grid grid-cols-2 gap-2.5">
-              {activityTypes.map((typeOption) => {
-                const Icon = typeOption.icon;
-                const isSelected = tipo === typeOption.id;
-                return (
-                  <button
-                    key={typeOption.id}
-                    type="button"
-                    onClick={() => setTipo(typeOption.id)}
-                    className={cn(
-                      "flex items-center justify-center gap-2 h-12 rounded-xl border text-sm font-medium transition-all",
-                      isSelected
-                        ? "border-foreground bg-foreground/[0.04] text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {typeOption.label}
-                  </button>
-                );
-              })}
-            </div>
+            <TooltipProvider delayDuration={150}>
+              <div className="flex items-center gap-2.5">
+                {activityTypes.map((typeOption) => {
+                  const Icon = typeOption.icon;
+                  const isSelected = tipo === typeOption.id;
+                  return (
+                    <Tooltip key={typeOption.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => setTipo(typeOption.id)}
+                          className={cn(
+                            "flex items-center justify-center h-12 w-12 rounded-xl border transition-all",
+                            isSelected
+                              ? "border-foreground bg-foreground/[0.04] text-foreground"
+                              : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{typeOption.label}</TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
           </div>
 
           {/* Data e hora */}
