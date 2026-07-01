@@ -752,9 +752,6 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
   const [form, setForm] = useState<FormState>(null);
   const [confirmDelete, setConfirmDelete] = useState<PlatformIntegration | null>(null);
 
-  const endpoint = `${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor`;
-  const [copied, setCopied] = useState(false);
-
   const { data: integrations = [] } = useQuery({
     queryKey: ["platform-integrations", "elementor", subOriginId],
     enabled: !!subOriginId,
@@ -813,19 +810,6 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        {!form && (
-          <div className="rounded-xl bg-zinc-500/[0.06] p-4 space-y-2">
-            <p className="text-sm font-semibold">URL do plugin (WordPress)</p>
-            <p className="text-xs text-muted-foreground">No plugin "CRM Elementor", cole esta URL. Ela vale pra todos os formulários — o vínculo é pelo <b>Form ID</b>.</p>
-            <div className="flex items-center gap-2">
-              <Input value={endpoint} readOnly className="flex-1 h-9 text-xs font-mono rounded-lg" />
-              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={() => { navigator.clipboard.writeText(endpoint); setCopied(true); toast.success("URL copiada!"); setTimeout(() => setCopied(false), 2000); }}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-        )}
-
         {form && (
           <ElementorForm
             subOriginId={subOriginId}
@@ -981,17 +965,26 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
       {token && (
         <>
           <div className="space-y-1.5">
-            <label className={labelCls}>Token de Conexão (cole no formulário do Elementor)</label>
+            <label className={labelCls}>URL de Conexão (cole no formulário do Elementor → Conexão Biteti)</label>
             <div className="flex items-center gap-2">
-              <Input value={token} readOnly className={cn(inputCls, "flex-1 font-mono text-xs")} />
-              <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl flex-shrink-0" onClick={() => copy(token, "__token__")}>
-                {copiedKey === "__token__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              <Input
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor?token=${token}`}
+                readOnly
+                className={cn(inputCls, "flex-1 font-mono text-xs")}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-11 w-11 rounded-xl flex-shrink-0"
+                onClick={() => copy(`${window.location.origin}/api/integrations/elementor?token=${token}`, "__url__")}
+              >
+                {copiedKey === "__url__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className={labelCls}>Nomes dos campos (use no "Campo no CRM" de cada campo do Elementor)</label>
+            <label className={labelCls}>Nomes dos campos (use no campo "Biteti" de cada campo do Elementor)</label>
             <div className="rounded-xl border border-border overflow-hidden">
               {refFields.map((f) => (
                 <div key={f.key} className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border last:border-b-0 text-sm">

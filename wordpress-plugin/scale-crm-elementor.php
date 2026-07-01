@@ -9,11 +9,8 @@
 if (!defined('ABSPATH')) exit;
 
 class Biteti_CRM_Elementor {
-    const OPT_URL = 'biteti_crm_endpoint_url';
-
     public function __construct() {
         add_action('admin_menu', [$this, 'menu']);
-        add_action('admin_init', [$this, 'settings']);
 
         // Add a "Campo no CRM" control to each form field (below Placeholder).
         add_action('elementor/element/form/section_form_fields/before_section_end', [$this, 'add_field_control'], 10, 2);
@@ -25,32 +22,17 @@ class Biteti_CRM_Elementor {
 
     /* ---------------- Admin: endpoint URL ---------------- */
     public function menu() {
-        add_menu_page('CRM Elementor', 'CRM Elementor', 'manage_options', 'biteti-crm-elementor', [$this, 'page'], 'dashicons-share-alt2', 58);
+        add_menu_page('Biteti', 'Biteti', 'manage_options', 'biteti-crm-elementor', [$this, 'page'], 'dashicons-share-alt2', 58);
     }
-    public function settings() { register_setting('biteti_crm', self::OPT_URL); }
     public function page() { ?>
         <div class="wrap">
-            <h1>Biteti CRM — Integração Elementor</h1>
-            <form method="post" action="options.php">
-                <?php settings_fields('biteti_crm'); ?>
-                <table class="form-table">
-                    <tr>
-                        <th><label>URL do endpoint da plataforma</label></th>
-                        <td>
-                            <input type="url" name="<?php echo self::OPT_URL; ?>" value="<?php echo esc_attr(get_option(self::OPT_URL)); ?>" class="regular-text" style="width:640px" placeholder="https://sua-plataforma/api/integrations/elementor" />
-                            <p class="description">Copie em: Plataforma → Configurações → Integrações → <b>Elementor</b>. Vale pra todos os formulários.</p>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button('Salvar'); ?>
-            </form>
-            <hr>
+            <h1>Biteti — Integração Elementor</h1>
+            <p>Não precisa configurar nada aqui. Toda a conexão é feita direto no formulário do Elementor.</p>
             <h2>Como usar</h2>
             <ol>
-                <li>Cole a URL do endpoint acima e salve.</li>
-                <li>Na plataforma, crie a integração <b>Elementor</b> e copie o <b>Token</b> + os nomes dos campos.</li>
-                <li>No formulário do Elementor: em <b>Conteúdo → Conexão CRM</b>, cole o <b>Token</b>.</li>
-                <li>Em cada campo, no fim das opções, preencha <b>"Campo no CRM"</b> com o nome (ex: <code>name</code>, <code>email</code>, <code>phone</code>, <code>instagram</code> ou o id de um campo personalizado).</li>
+                <li>Na plataforma: <b>Configurações → Integrações → Elementor</b> → crie a integração e copie a <b>URL de Conexão</b> e os <b>nomes dos campos</b>.</li>
+                <li>No formulário do Elementor: em <b>Conteúdo → Conexão Biteti</b>, cole a <b>URL de Conexão</b>.</li>
+                <li>Em cada campo, no fim das opções, preencha <b>"Biteti"</b> com o nome (ex: <code>name</code>, <code>email</code>, <code>phone</code>, <code>instagram</code> ou o id de um campo personalizado).</li>
             </ol>
         </div>
     <?php }
@@ -64,7 +46,7 @@ class Biteti_CRM_Elementor {
 
         $new_field = [
             'name' => 'crm_field',
-            'label' => 'Campo no CRM (Biteti)',
+            'label' => 'Biteti',
             'type' => \Elementor\Controls_Manager::TEXT,
             'placeholder' => 'name, email, phone, instagram ou id do campo',
             'description' => 'Nome que a plataforma aceita (veja na integração).',
@@ -92,26 +74,24 @@ class Biteti_CRM_Elementor {
     /* ---------------- Elementor: token section ---------------- */
     public function add_token_section($element, $args) {
         $element->start_controls_section('biteti_crm_section', [
-            'label' => 'Conexão CRM (Biteti)',
+            'label' => 'Conexão Biteti',
             'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
         ]);
-        $element->add_control('biteti_crm_token', [
-            'label' => 'Token de Conexão',
+        $element->add_control('biteti_crm_url', [
+            'label' => 'URL de Conexão Biteti',
             'type' => \Elementor\Controls_Manager::TEXT,
-            'placeholder' => 'Cole o token gerado na plataforma',
-            'description' => 'Plataforma → Integrações → Elementor → gere e copie o token.',
+            'placeholder' => 'Cole a URL de conexão gerada na plataforma',
+            'description' => 'Plataforma → Integrações → Elementor → crie a integração e copie a URL de conexão.',
         ]);
         $element->end_controls_section();
     }
 
     /* ---------------- On submit ---------------- */
     public function on_submit($record, $handler) {
-        $endpoint = get_option(self::OPT_URL);
-        if (!$endpoint) return;
-
         $form_settings = $record->get('form_settings');
-        $token = isset($form_settings['biteti_crm_token']) ? trim($form_settings['biteti_crm_token']) : '';
-        if (!$token) return; // Este formulário não tem conexão configurada.
+        // The connection URL (with the token) is pasted per-form in the editor.
+        $url = isset($form_settings['biteti_crm_url']) ? trim($form_settings['biteti_crm_url']) : '';
+        if (!$url) return; // Este formulário não tem conexão configurada.
 
         // Map each field id -> "Campo no CRM" from the field definitions.
         $defs = isset($form_settings['form_fields']) ? $form_settings['form_fields'] : [];
@@ -139,9 +119,7 @@ class Biteti_CRM_Elementor {
         }
 
         if (empty($body)) return;
-        $body['token'] = $token;
 
-        $url = add_query_arg('token', rawurlencode($token), $endpoint);
         wp_remote_post($url, [
             'timeout'  => 15,
             'blocking' => false,
