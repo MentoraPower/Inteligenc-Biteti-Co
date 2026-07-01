@@ -1,159 +1,113 @@
 <?php
 /**
  * Plugin Name: Biteti CRM — Integração Elementor
- * Description: Adiciona em cada campo do formulário Elementor um controle "Campo no CRM" e um Token de Conexão. No envio, manda os dados já com os nomes que a plataforma aceita, identificando pelo token.
- * Version: 3.3.0
+ * Description: Envia submissões de formulários do Elementor para o CRM pelo Form ID. NÃO altera o editor do Elementor (seguro). O mapeamento dos campos e a pipeline são configurados na plataforma.
+ * Version: 4.0.0
  * Author: Biteti & Co Inteligenc
  */
 
 if (!defined('ABSPATH')) exit;
 
 class Biteti_CRM_Elementor {
+    const OPT_URL  = 'biteti_crm_endpoint_url';
+    const OPT_LAST = 'biteti_crm_last_fields';
+    const OPT_LASTFORM = 'biteti_crm_last_form';
+
     public function __construct() {
         add_action('admin_menu', [$this, 'menu']);
-
-        // Add a "Campo no CRM" control to each form field (below Placeholder).
-        add_action('elementor/element/form/section_form_fields/before_section_end', [$this, 'add_field_control'], 10, 2);
-        // Add a "Conexão CRM" section (token) to the Form widget.
-        add_action('elementor/element/form/section_form_fields/after_section_end', [$this, 'add_token_section'], 10, 2);
-
+        add_action('admin_init', [$this, 'settings']);
+        // Only listens to submissions — never touches the Elementor editor.
         add_action('elementor_pro/forms/new_record', [$this, 'on_submit'], 10, 2);
     }
 
-    /* ---------------- Admin: endpoint URL ---------------- */
     public function menu() {
         add_menu_page('Biteti', 'Biteti', 'manage_options', 'biteti-crm-elementor', [$this, 'page'], 'dashicons-share-alt2', 58);
     }
-    public function page() { ?>
+    public function settings() { register_setting('biteti_crm', self::OPT_URL); }
+
+    public function page() {
+        $last = get_option(self::OPT_LAST, []);
+        $lastForm = get_option(self::OPT_LASTFORM, []);
+        ?>
         <div class="wrap">
             <h1>Biteti — Integração Elementor</h1>
-            <p>Não precisa configurar nada aqui. Toda a conexão é feita direto no formulário do Elementor.</p>
-            <h2>Como usar</h2>
-            <ol>
-                <li>Na plataforma: <b>Configurações → Integrações → Elementor</b> → crie a integração e copie a <b>URL de Conexão</b> e os <b>nomes dos campos</b>.</li>
-                <li>No formulário do Elementor: em <b>Conteúdo → Conexão Biteti</b>, cole a <b>URL de Conexão</b>.</li>
-                <li>Em cada campo, no fim das opções, preencha <b>"Biteti"</b> com o nome (ex: <code>name</code>, <code>email</code>, <code>phone</code>, <code>instagram</code> ou o id de um campo personalizado).</li>
-            </ol>
+            <form method="post" action="options.php">
+                <?php settings_fields('biteti_crm'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th><label>URL do endpoint da plataforma</label></th>
+                        <td>
+                            <input type="url" name="<?php echo self::OPT_URL; ?>" value="<?php echo esc_attr(get_option(self::OPT_URL)); ?>" class="regular-text" style="width:640px" placeholder="https://sua-plataforma/api/integrations/elementor" />
+                            <p class="description">Copie em: Plataforma → Configurações → Integrações → <b>Elementor</b>.</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button('Salvar'); ?>
+            </form>
+
+            <hr>
+            <h2>Última submissão recebida</h2>
+            <p class="description">Envie o formulário uma vez e recarregue esta página. Copie o <b>Form ID</b> e os <b>IDs dos campos</b> para criar a integração na plataforma.</p>
+            <?php if (empty($last)) : ?>
+                <p><em>Nenhuma submissão recebida ainda.</em></p>
+            <?php else : ?>
+                <p><b>Form ID:</b> <code><?php echo esc_html($lastForm['id'] ?? '—'); ?></code> &nbsp; <b>Nome:</b> <?php echo esc_html($lastForm['name'] ?? '—'); ?></p>
+                <table class="widefat striped" style="max-width:820px">
+                    <thead><tr><th>ID do campo</th><th>Pergunta / Label</th><th>Exemplo de valor</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($last as $f) : ?>
+                            <tr>
+                                <td><code><?php echo esc_html($f['id']); ?></code></td>
+                                <td><?php echo esc_html($f['label']); ?></td>
+                                <td><?php echo esc_html(mb_strimwidth((string)$f['value'], 0, 60, '…')); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
-    <?php }
-
-    /* ---------------- Elementor: per-field control ---------------- */
-    public function add_field_control($element, $args) {
-      try {
-        if (!class_exists('\ElementorPro\Plugin')) return;
-        $elementor = \ElementorPro\Plugin::elementor();
-        $control_data = $elementor->controls_manager->get_control_from_stack($element->get_unique_name(), 'form_fields');
-        if (is_wp_error($control_data) || empty($control_data['fields']) || !is_array($control_data['fields'])) return;
-
-        $new_field = [
-            'name' => 'crm_field',
-            'label' => 'Biteti',
-            'type' => \Elementor\Controls_Manager::TEXT,
-            'placeholder' => 'name, email, phone, instagram ou id do campo',
-            'description' => 'Nome que a plataforma aceita (veja na integração).',
-            'tab' => 'content',
-            'inner_tab' => 'form_fields_content_tab',
-            'tabs_wrapper' => 'form_fields_tabs',
-        ];
-
-        // Insert right after the "placeholder" control.
-        $fields = $control_data['fields'];
-        $out = [];
-        $inserted = false;
-        foreach ($fields as $f) {
-            $out[] = $f;
-            if (!$inserted && isset($f['name']) && $f['name'] === 'placeholder') {
-                $out[] = $new_field;
-                $inserted = true;
-            }
-        }
-        if (!$inserted) $out[] = $new_field;
-        $control_data['fields'] = $out;
-        $element->update_control('form_fields', $control_data);
-      } catch (\Throwable $e) { /* never break the editor */ }
+        <?php
     }
 
-    /* ---------------- Elementor: token section ---------------- */
-    public function add_token_section($element, $args) {
-      try {
-        $element->start_controls_section('biteti_crm_section', [
-            'label' => 'Conexão Biteti',
-            'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
-        ]);
-        $element->add_control('biteti_crm_url', [
-            'label' => 'URL de Conexão Biteti',
-            'type' => \Elementor\Controls_Manager::TEXT,
-            'placeholder' => 'Cole a URL de conexão gerada na plataforma',
-            'description' => 'Plataforma → Integrações → Elementor → crie a integração e copie a URL de conexão.',
-        ]);
-        $element->end_controls_section();
-      } catch (\Throwable $e) { /* never break the editor */ }
-    }
-
-    /* ---------------- On submit ---------------- */
     public function on_submit($record, $handler) {
       try {
-        $form_settings = $record->get('form_settings');
-        // The connection URL (with the token) is pasted per-form in the editor.
-        $url = isset($form_settings['biteti_crm_url']) ? trim($form_settings['biteti_crm_url']) : '';
-        if (!$url) return; // Este formulário não tem conexão configurada.
+        $url = get_option(self::OPT_URL);
 
-        // Map each field id -> "Campo no CRM" from the field definitions.
-        $defs = isset($form_settings['form_fields']) ? $form_settings['form_fields'] : [];
-        $crm_map = [];
-        foreach ($defs as $fd) {
-            $crm = isset($fd['crm_field']) ? trim($fd['crm_field']) : '';
-            if ($crm === '') continue;
-            if (!empty($fd['custom_id'])) $crm_map[$fd['custom_id']] = $crm;
-            if (!empty($fd['_id']))       $crm_map[$fd['_id']] = $crm;
+        $fields = $record->get('fields');
+        $settings = $record->get('form_settings');
+        $formId = isset($settings['id']) ? $settings['id'] : (isset($settings['form_id']) ? $settings['form_id'] : '');
+        $formName = isset($settings['form_name']) ? $settings['form_name'] : '';
+
+        $out = [];
+        foreach ($fields as $id => $field) {
+            $out[] = ['id' => $id, 'label' => isset($field['title']) ? $field['title'] : '', 'value' => isset($field['value']) ? $field['value'] : ''];
         }
 
-        $lookup = function ($id) use ($crm_map) {
-            if (isset($crm_map[$id])) return $crm_map[$id];
-            $stripped = preg_replace('/^field_/', '', (string) $id);
-            if (isset($crm_map[$stripped])) return $crm_map[$stripped];
-            if (isset($crm_map['field_' . $id])) return $crm_map['field_' . $id];
-            return null;
-        };
+        // Remember for the admin screen (helps copy the Form ID + field ids).
+        update_option(self::OPT_LAST, $out);
+        update_option(self::OPT_LASTFORM, ['id' => $formId, 'name' => $formName]);
 
-        $body = [];
-        foreach ($record->get('fields') as $id => $field) {
-            $value = isset($field['value']) ? $field['value'] : '';
-            $crm = $lookup($id);
-            if ($crm !== null) $body[$crm] = $value;
-        }
+        if (!$url) return;
 
-        // Auto-capture UTMs from the page URL (no field mapping needed).
+        // Page URL (for UTMs + lead history), from the record meta or referer.
         $meta = $record->get('meta');
         $page_url = '';
         if (is_array($meta)) {
-            if (isset($meta['page_url']['value']))      $page_url = $meta['page_url']['value'];
-            elseif (isset($meta['page_url']))           $page_url = is_array($meta['page_url']) ? '' : $meta['page_url'];
+            if (isset($meta['page_url']['value'])) $page_url = $meta['page_url']['value'];
+            elseif (isset($meta['page_url']) && !is_array($meta['page_url'])) $page_url = $meta['page_url'];
         }
         if (!$page_url && !empty($_SERVER['HTTP_REFERER'])) $page_url = $_SERVER['HTTP_REFERER'];
-        if ($page_url) {
-            $parts = wp_parse_url($page_url);
-            if (!empty($parts['query'])) {
-                parse_str($parts['query'], $q);
-                foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as $u) {
-                    if (!empty($q[$u]) && !isset($body[$u])) $body[$u] = trim($q[$u]);
-                }
-            }
-        }
-
-        if (empty($body)) return;
-
-        // Source markers for the lead history (integration + page).
-        $body['_source'] = 'elementor';
-        if ($page_url) $body['_page_url'] = $page_url;
-        $form_name = isset($form_settings['form_name']) ? $form_settings['form_name'] : '';
-        if ($form_name) $body['_form'] = $form_name;
 
         wp_remote_post($url, [
             'timeout'  => 15,
             'blocking' => false,
             'headers'  => ['Content-Type' => 'application/json'],
-            'body'     => wp_json_encode($body),
+            'body'     => wp_json_encode([
+                'form_id'   => (string) $formId,
+                'form_name' => (string) $formName,
+                'page_url'  => (string) $page_url,
+                'fields'    => $out,
+            ]),
         ]);
       } catch (\Throwable $e) { /* never break the form submission */ }
     }

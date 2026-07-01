@@ -810,6 +810,19 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {!form && (
+          <div className="rounded-xl bg-zinc-500/[0.06] p-4 space-y-2">
+            <p className="text-sm font-semibold">URL do endpoint (cole no plugin do WordPress)</p>
+            <p className="text-xs text-muted-foreground">No WordPress, menu <b>Biteti</b> → cole esta URL. Vale pra todos os formulários — só vira lead o Form ID que você cadastrar abaixo.</p>
+            <div className="flex items-center gap-2">
+              <Input value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor`} readOnly className="flex-1 h-9 text-xs font-mono rounded-lg" />
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/api/integrations/elementor`); toast.success("URL copiada!"); }}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {form && (
           <ElementorForm
             subOriginId={subOriginId}
@@ -880,13 +893,16 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
 }
 
 function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { subOriginId: string; pipelines: { id: string; nome: string }[]; editing?: PlatformIntegration; onDone: () => void; onCancel: () => void; }) {
+  const cfg = (editing?.config || {}) as any;
   const [name, setName] = useState(editing?.name || "");
+  const [formId, setFormId] = useState(cfg.form_id || "");
   const [pipelineId, setPipelineId] = useState(editing?.pipeline_id || "");
   const [tagName, setTagName] = useState(editing?.tag_name || "");
   const [tagColor, setTagColor] = useState(editing?.tag_color || "#6366f1");
-  const [token, setToken] = useState(editing?.token || "");
+  const [rows, setRows] = useState<{ source: string; target: string }[]>(
+    Array.isArray(cfg.field_map) && cfg.field_map.length ? cfg.field_map : [{ source: "", target: "name" }]
+  );
   const [saving, setSaving] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const { data: customFields = [] } = useQuery({
     queryKey: ["elementor-cf", subOriginId],
@@ -912,14 +928,13 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
   const isNewTag = tagName.trim() !== "" && !savedTags.some((t) => t.name.toLowerCase() === tagName.toLowerCase().trim());
   const tagSuggestions = savedTags.filter((t) => t.name.toLowerCase().includes(tagName.toLowerCase().trim()));
 
-  // These are the exact names to type in each Elementor field's "Campo no CRM".
-  const refFields = useMemo(
+  const targets = useMemo(
     () => [
-      { label: "Nome", key: "name" },
-      { label: "Email", key: "email" },
-      { label: "Telefone / WhatsApp", key: "phone" },
-      { label: "Instagram", key: "instagram" },
-      ...customFields.map((cf) => ({ label: cf.field_label, key: cf.field_key || cf.id })),
+      { key: "name", label: "Nome" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Telefone / WhatsApp" },
+      { key: "instagram", label: "Instagram" },
+      ...customFields.map((cf) => ({ key: cf.field_key || cf.id, label: cf.field_label })),
     ],
     [customFields]
   );
@@ -927,42 +942,35 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
   const inputCls = "h-11 rounded-xl text-sm";
   const labelCls = "text-xs font-medium text-muted-foreground";
 
-  const copy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    toast.success("Copiado!");
-    setTimeout(() => setCopiedKey(null), 1500);
-  };
-
   const save = async () => {
     if (!name.trim()) return toast.error("Dê um nome à integração");
+    if (!formId.trim()) return toast.error("Informe o Form ID do formulário");
     if (!pipelineId) return toast.error("Escolha a pipeline");
+    const field_map = rows.filter((r) => r.source.trim() && r.target);
     setSaving(true);
-    const tagFields = { tag_name: tagName.trim() || null, tag_color: tagName.trim() ? tagColor : null };
-    if (editing) {
-      const { error } = await supabase.from("platform_integrations").update({ name: name.trim(), pipeline_id: pipelineId, ...tagFields }).eq("id", editing.id);
-      setSaving(false);
-      if (error) return toast.error("Erro ao salvar");
-      toast.success("Integração atualizada!");
-      onDone();
-    } else {
-      const { data, error } = await supabase
-        .from("platform_integrations")
-        .insert({ platform: "elementor", name: name.trim(), event_type: "form_submit", sub_origin_id: subOriginId, pipeline_id: pipelineId, config: {}, ...tagFields })
-        .select("token")
-        .single();
-      setSaving(false);
-      if (error) return toast.error("Erro ao criar integração");
-      setToken(data.token);
-      toast.success("Integração criada!");
-    }
+    const payload = {
+      name: name.trim(),
+      event_type: "form_submit",
+      sub_origin_id: subOriginId,
+      pipeline_id: pipelineId,
+      config: { form_id: formId.trim(), field_map },
+      tag_name: tagName.trim() || null,
+      tag_color: tagName.trim() ? tagColor : null,
+    };
+    let error;
+    if (editing) ({ error } = await supabase.from("platform_integrations").update(payload).eq("id", editing.id));
+    else ({ error } = await supabase.from("platform_integrations").insert({ platform: "elementor", ...payload }));
+    setSaving(false);
+    if (error) return toast.error("Erro ao salvar");
+    toast.success(editing ? "Integração atualizada!" : "Integração criada!");
+    onDone();
   };
 
   return (
     <div className="rounded-2xl bg-zinc-500/[0.06] p-4 space-y-4">
       <div>
-        <h4 className="font-semibold text-[15px]">{editing || token ? "Integração Elementor" : "Nova integração Elementor"}</h4>
-        <p className="text-xs text-muted-foreground mt-0.5">Gera um token de conexão. Cole no formulário do Elementor e mapeie cada campo com os nomes abaixo.</p>
+        <h4 className="font-semibold text-[15px]">{editing ? "Editar integração" : "Nova integração Elementor"}</h4>
+        <p className="text-xs text-muted-foreground mt-0.5">É opcional e por formulário: só o formulário cujo <b>Form ID</b> você cadastrar aqui vira lead. Os outros são ignorados.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -970,14 +978,20 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Landing Mesa de Negócios" className={inputCls} autoFocus />
       </div>
 
-      <div className="space-y-1.5">
-        <label className={labelCls}>Pipeline onde o lead vai cair</label>
-        <Select value={pipelineId} onValueChange={setPipelineId}>
-          <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione a pipeline..." /></SelectTrigger>
-          <SelectContent className="z-[10000]">
-            {pipelines.map((p) => (<SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className={labelCls}>Form ID</label>
+          <Input value={formId} onChange={(e) => setFormId(e.target.value)} placeholder="Ex: f011583" className={inputCls} />
+        </div>
+        <div className="space-y-1.5">
+          <label className={labelCls}>Pipeline de entrada</label>
+          <Select value={pipelineId} onValueChange={setPipelineId}>
+            <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione..." /></SelectTrigger>
+            <SelectContent className="z-[10000]">
+              {pipelines.map((p) => (<SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -1011,49 +1025,38 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
         )}
       </div>
 
-      {token && (
-        <>
-          <div className="space-y-1.5">
-            <label className={labelCls}>URL de Conexão (cole no formulário do Elementor → Conexão Biteti)</label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor?token=${token}`}
-                readOnly
-                className={cn(inputCls, "flex-1 font-mono text-xs")}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-11 w-11 rounded-xl flex-shrink-0"
-                onClick={() => copy(`${window.location.origin}/api/integrations/elementor?token=${token}`, "__url__")}
-              >
-                {copiedKey === "__url__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
+      <div className="space-y-2">
+        <label className={labelCls}>Mapeamento dos campos</label>
+        <p className="text-[11px] text-muted-foreground -mt-1">Esquerda: ID ou pergunta do campo no Elementor (veja na página do plugin). Direita: pra onde vai.</p>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              value={row.source}
+              onChange={(e) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, source: e.target.value } : r))}
+              placeholder="field_ccbb416 ou a pergunta"
+              className="h-10 rounded-lg text-sm flex-1"
+            />
+            <Select value={row.target} onValueChange={(v) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, target: v } : r))}>
+              <SelectTrigger className="h-10 rounded-lg text-sm w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="z-[10000]">
+                {targets.map((t) => (<SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg flex-shrink-0 text-muted-foreground" onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <label className={labelCls}>Nomes dos campos (use no campo "Biteti" de cada campo do Elementor)</label>
-            <div className="rounded-xl border border-border overflow-hidden">
-              {refFields.map((f) => (
-                <div key={f.key} className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border last:border-b-0 text-sm">
-                  <span className="truncate">{f.label}</span>
-                  <button onClick={() => copy(f.key, f.key)} className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground flex-shrink-0">
-                    <code className="truncate max-w-[180px]">{f.key}</code>
-                    {copiedKey === f.key ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+        ))}
+        <Button variant="outline" className="h-9 rounded-lg gap-2 text-sm" onClick={() => setRows((rs) => [...rs, { source: "", target: "name" }])}>
+          <Plus className="h-4 w-4" /> Adicionar campo
+        </Button>
+      </div>
 
       <div className="flex gap-2 pt-1">
-        <Button onClick={token && !editing ? onDone : save} disabled={saving} className="flex-1 h-10 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold">
-          {saving ? "Salvando..." : token && !editing ? "Concluir" : editing ? "Salvar alterações" : "Criar e gerar token"}
+        <Button onClick={save} disabled={saving} className="flex-1 h-10 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold">
+          {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar integração"}
         </Button>
-        <Button onClick={onCancel} variant="outline" className="h-10 rounded-xl">{token && !editing ? "Fechar" : "Cancelar"}</Button>
+        <Button onClick={onCancel} variant="outline" className="h-10 rounded-xl">Cancelar</Button>
       </div>
     </div>
   );
