@@ -13,6 +13,10 @@
       "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/hubla-webhook"
     },
     {
+      "source": "/api/integrations/elementor",
+      "destination": "https://ytdfwkchsumgdvcroaqg.supabase.co/functions/v1/elementor-webhook"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

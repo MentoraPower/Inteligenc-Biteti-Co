@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.import-leads]
 verify_jwt = false
+
+[functions.elementor-webhook]
+verify_jwt = false

@@ -34,6 +34,7 @@ const eventLabel = (id: string) => HUBLA_EVENTS.find((e) => e.id === id)?.label 
 const PLATFORMS = [
   { id: "hubla", name: "Hubla", logo: "/integrations/hubla.webp", desc: "Webhook de vendas" },
   { id: "unnichat", name: "Unnichat", logo: "/integrations/unnichat.png", desc: "Enviar lead recebido" },
+  { id: "elementor", name: "Elementor", logo: "/integrations/elementor.svg", desc: "Formulários do WordPress" },
 ];
 
 interface PlatformIntegration {
@@ -64,6 +65,9 @@ export function IntegrationsTab({ subOriginId, pipelines }: IntegrationsTabProps
   }
   if (openPlatform === "unnichat") {
     return <UnnichatPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} pipelines={pipelines} />;
+  }
+  if (openPlatform === "elementor") {
+    return <ElementorPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} pipelines={pipelines} />;
   }
 
   return (
@@ -729,6 +733,278 @@ function UnnichatForm({
       <div className="space-y-1.5">
         <label className={labelCls}>Tag (opcional)</label>
         <Input value={tagId} onChange={(e) => setTagId(e.target.value)} placeholder="tag_id da Unnichat" className={inputCls} />
+      </div>
+
+      <div className="flex gap-2 pt-1">
+        <Button onClick={save} disabled={saving} className="flex-1 h-10 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold">
+          {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar integração"}
+        </Button>
+        <Button onClick={onCancel} variant="outline" className="h-10 rounded-xl">Cancelar</Button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================ Elementor ============================ */
+
+function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void; subOriginId: string; pipelines: { id: string; nome: string }[] }) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<FormState>(null);
+  const [confirmDelete, setConfirmDelete] = useState<PlatformIntegration | null>(null);
+
+  const endpoint = `${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor`;
+  const [copied, setCopied] = useState(false);
+
+  const { data: integrations = [] } = useQuery({
+    queryKey: ["platform-integrations", "elementor", subOriginId],
+    enabled: !!subOriginId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_integrations")
+        .select("*")
+        .eq("platform", "elementor")
+        .eq("sub_origin_id", subOriginId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as PlatformIntegration[];
+    },
+  });
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["platform-integrations", "elementor"] });
+
+  const deleteIntegration = async (id: string) => {
+    const { error } = await supabase.from("platform_integrations").delete().eq("id", id);
+    if (error) return toast.error("Erro ao excluir");
+    refresh();
+    toast.success("Integração excluída");
+  };
+
+  const duplicate = async (it: PlatformIntegration) => {
+    const { error } = await supabase.from("platform_integrations").insert({
+      platform: "elementor",
+      name: `${it.name} (cópia)`,
+      event_type: "form_submit",
+      sub_origin_id: it.sub_origin_id,
+      pipeline_id: it.pipeline_id,
+      config: it.config || {},
+    });
+    if (error) return toast.error("Erro ao duplicar");
+    refresh();
+    toast.success("Integração duplicada");
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <img src="/integrations/elementor.svg" alt="Elementor" className="h-9 w-9 rounded-lg object-cover" />
+          <h3 className="text-lg font-bold">Elementor</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          {!form && (
+            <Button onClick={() => setForm({ mode: "create" })} className="h-9 gap-2 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-semibold">
+              <Plus className="h-4 w-4" /> Criar Integração
+            </Button>
+          )}
+          <Button onClick={onBack} className="h-9 gap-1.5 rounded-lg bg-white text-black hover:bg-white/90 border border-border">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {!form && (
+          <div className="rounded-xl bg-zinc-500/[0.06] p-4 space-y-2">
+            <p className="text-sm font-semibold">URL do plugin (WordPress)</p>
+            <p className="text-xs text-muted-foreground">No plugin "CRM Elementor", cole esta URL. Ela vale pra todos os formulários — o vínculo é pelo <b>Form ID</b>.</p>
+            <div className="flex items-center gap-2">
+              <Input value={endpoint} readOnly className="flex-1 h-9 text-xs font-mono rounded-lg" />
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" onClick={() => { navigator.clipboard.writeText(endpoint); setCopied(true); toast.success("URL copiada!"); setTimeout(() => setCopied(false), 2000); }}>
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {form && (
+          <ElementorForm
+            subOriginId={subOriginId}
+            pipelines={pipelines}
+            editing={form.mode === "edit" ? form.integration : undefined}
+            onDone={() => { setForm(null); refresh(); }}
+            onCancel={() => setForm(null)}
+          />
+        )}
+
+        {!form && (
+          integrations.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic py-2">Nenhuma integração criada ainda.</p>
+          ) : (
+            <div className="rounded-xl overflow-hidden border border-border">
+              <div className="grid grid-cols-[1fr_140px_110px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <div>Nome</div>
+                <div>Form ID</div>
+                <div>Data</div>
+                <div />
+              </div>
+              {integrations.map((it) => (
+                <div key={it.id} className="grid grid-cols-[1fr_140px_110px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
+                  <div className="font-medium truncate">{it.name}</div>
+                  <div className="text-muted-foreground truncate font-mono text-xs">{(it.config as any)?.form_id || "—"}</div>
+                  <div className="text-muted-foreground">{new Date(it.created_at).toLocaleDateString("pt-BR")}</div>
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg"><MoreVertical className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[150px] rounded-xl">
+                        <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg" onClick={() => setForm({ mode: "edit", integration: it })}>
+                          <Pencil className="h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg" onClick={() => duplicate(it)}>
+                          <Files className="h-4 w-4" /> Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg text-destructive focus:text-destructive" onClick={() => setConfirmDelete(it)}>
+                          <Trash2 className="h-4 w-4" /> Apagar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar integração</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apagar a integração <span className="font-semibold text-foreground">{confirmDelete?.name}</span>? Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { if (confirmDelete) deleteIntegration(confirmDelete.id); setConfirmDelete(null); }}>
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { subOriginId: string; pipelines: { id: string; nome: string }[]; editing?: PlatformIntegration; onDone: () => void; onCancel: () => void; }) {
+  const cfg = (editing?.config || {}) as any;
+  const [name, setName] = useState(editing?.name || "");
+  const [formId, setFormId] = useState(cfg.form_id || "");
+  const [pipelineId, setPipelineId] = useState(editing?.pipeline_id || "");
+  const [rows, setRows] = useState<{ source: string; target: string }[]>(
+    Array.isArray(cfg.field_map) && cfg.field_map.length ? cfg.field_map : [{ source: "", target: "name" }]
+  );
+  const [saving, setSaving] = useState(false);
+
+  const { data: customFields = [] } = useQuery({
+    queryKey: ["elementor-cf", subOriginId],
+    enabled: !!subOriginId,
+    queryFn: async () => {
+      const { data } = await supabase.from("sub_origin_custom_fields").select("id, field_label").eq("sub_origin_id", subOriginId).order("ordem");
+      return (data || []) as { id: string; field_label: string }[];
+    },
+  });
+
+  const targets = useMemo(
+    () => [
+      { key: "name", label: "Nome" },
+      { key: "email", label: "Email" },
+      { key: "whatsapp", label: "Telefone / WhatsApp" },
+      { key: "instagram", label: "Instagram" },
+      ...customFields.map((cf) => ({ key: cf.id, label: cf.field_label })),
+    ],
+    [customFields]
+  );
+
+  const inputCls = "h-11 rounded-xl text-sm";
+  const labelCls = "text-xs font-medium text-muted-foreground";
+
+  const save = async () => {
+    if (!name.trim()) return toast.error("Dê um nome à integração");
+    if (!formId.trim()) return toast.error("Informe o Form ID do Elementor");
+    if (!pipelineId) return toast.error("Escolha a pipeline");
+    const field_map = rows.filter((r) => r.source.trim() && r.target);
+    setSaving(true);
+    const payload = {
+      name: name.trim(),
+      event_type: "form_submit",
+      sub_origin_id: subOriginId,
+      pipeline_id: pipelineId,
+      config: { form_id: formId.trim(), field_map },
+    };
+    let error;
+    if (editing) ({ error } = await supabase.from("platform_integrations").update(payload).eq("id", editing.id));
+    else ({ error } = await supabase.from("platform_integrations").insert({ platform: "elementor", ...payload }));
+    setSaving(false);
+    if (error) return toast.error("Erro ao salvar");
+    toast.success(editing ? "Integração atualizada!" : "Integração criada!");
+    onDone();
+  };
+
+  return (
+    <div className="rounded-2xl bg-zinc-500/[0.06] p-4 space-y-4">
+      <div>
+        <h4 className="font-semibold text-[15px]">{editing ? "Editar integração" : "Nova integração Elementor"}</h4>
+        <p className="text-xs text-muted-foreground mt-0.5">Cole o Form ID (aparece na tabela do plugin no WordPress) e mapeie cada campo.</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className={labelCls}>Nome da integração</label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Landing Mesa de Negócios" className={inputCls} autoFocus />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className={labelCls}>Form ID</label>
+          <Input value={formId} onChange={(e) => setFormId(e.target.value)} placeholder="Ex: f011583" className={inputCls} />
+        </div>
+        <div className="space-y-1.5">
+          <label className={labelCls}>Pipeline de entrada</label>
+          <Select value={pipelineId} onValueChange={setPipelineId}>
+            <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione..." /></SelectTrigger>
+            <SelectContent className="z-[10000]">
+              {pipelines.map((p) => (<SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className={labelCls}>Mapeamento dos campos</label>
+        <p className="text-[11px] text-muted-foreground -mt-1">Esquerda: ID ou pergunta do campo no Elementor. Direita: pra onde vai.</p>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              value={row.source}
+              onChange={(e) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, source: e.target.value } : r))}
+              placeholder="field_ccbb416 ou a pergunta"
+              className="h-10 rounded-lg text-sm flex-1"
+            />
+            <Select value={row.target} onValueChange={(v) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, target: v } : r))}>
+              <SelectTrigger className="h-10 rounded-lg text-sm w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="z-[10000]">
+                {targets.map((t) => (<SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg flex-shrink-0 text-muted-foreground" onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" className="h-9 rounded-lg gap-2 text-sm" onClick={() => setRows((rs) => [...rs, { source: "", target: "name" }])}>
+          <Plus className="h-4 w-4" /> Adicionar campo
+        </Button>
       </div>
 
       <div className="flex gap-2 pt-1">
