@@ -208,7 +208,7 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); onToggleSelect(lead.id); }}
-                className={`h-5 w-5 rounded-md border flex items-center justify-center
+                className={`h-5 w-5 rounded-[4px] border flex items-center justify-center
                   ${isSelected ? "bg-primary border-primary text-white" : "bg-white dark:bg-zinc-900 border-black/25 dark:border-white/25 hover:bg-muted"}`}
                 title={isSelected ? "Desmarcar" : "Selecionar"}
               >

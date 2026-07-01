@@ -94,6 +94,18 @@ interface EmailBuilderState {
 
 type CRMView = "quadro";
 
+// Single source of truth for a pipeline's card order. MUST match the display
+// order in `leadsByPipeline` exactly, otherwise drag-reorder computes gaps/indexes
+// against a different order than what's on screen and cards jump around.
+const sortLeadsForDisplay = (arr: Lead[]): Lead[] => {
+  const hasManualOrder = arr.some((l) => (l.ordem ?? 0) !== 0);
+  return [...arr].sort((a, b) =>
+    hasManualOrder
+      ? (a.ordem ?? 0) - (b.ordem ?? 0)
+      : new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+};
+
 export function KanbanBoard() {
   const { currentWorkspace } = useWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -786,9 +798,7 @@ export function KanbanBoard() {
         // drag direction. A tiny move up/down opens the adjacent gap, and it never
         // targets the dragged card itself (which used to drop it at the end).
         if (overId === (active.id as string)) {
-          const pipeLeads = localLeads
-            .filter((l) => l.pipeline_id === overLead.pipeline_id)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          const pipeLeads = sortLeadsForDisplay(localLeads.filter((l) => l.pipeline_id === overLead.pipeline_id));
           const idx = pipeLeads.findIndex((l) => l.id === overId);
           if (position === "top" && idx > 0) {
             targetLeadId = pipeLeads[idx - 1].id;
@@ -862,9 +872,7 @@ export function KanbanBoard() {
 
       // Same pipeline - handle reordering
       if (newPipelineId === activeLead.pipeline_id && overLead) {
-        const pipelineLeads = localLeads
-          .filter((l) => l.pipeline_id === newPipelineId)
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const pipelineLeads = sortLeadsForDisplay(localLeads.filter((l) => l.pipeline_id === newPipelineId));
 
         const oldIndex = pipelineLeads.findIndex((l) => l.id === activeId);
         const targetIndex = pipelineLeads.findIndex((l) => l.id === overId);
@@ -942,9 +950,7 @@ export function KanbanBoard() {
 
       // Same pipeline - dropped on the column (not directly on a card)
       if (newPipelineId === activeLead.pipeline_id && !overLead) {
-        const pipelineLeads = localLeads
-          .filter((l) => l.pipeline_id === newPipelineId)
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const pipelineLeads = sortLeadsForDisplay(localLeads.filter((l) => l.pipeline_id === newPipelineId));
 
         const oldIndex = pipelineLeads.findIndex((l) => l.id === activeId);
         if (oldIndex === -1) {
@@ -1297,18 +1303,9 @@ export function KanbanBoard() {
       }
     });
     
-    // Sort each pipeline's leads
-    map.forEach((pipelineLeads) => {
-      const hasManualOrder = pipelineLeads.some((l) => (l.ordem ?? 0) !== 0);
-
-      pipelineLeads.sort((a, b) => {
-        // If manual order exists in this pipeline, always respect ordem (including 0)
-        if (hasManualOrder) {
-          return (a.ordem ?? 0) - (b.ordem ?? 0);
-        }
-        // Otherwise, sort by created_at (newest first)
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
+    // Sort each pipeline's leads with the SAME rule the drag logic uses.
+    map.forEach((pipelineLeads, pid) => {
+      map.set(pid, sortLeadsForDisplay(pipelineLeads));
     });
     
     // Sort orphan leads by created_at (newest first)
