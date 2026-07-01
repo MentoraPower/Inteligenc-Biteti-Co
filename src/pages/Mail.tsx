@@ -104,10 +104,10 @@ export default function Mail() {
           <h2 className="font-bold text-lg truncate">{editing.name}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-3xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
             <button
               onClick={() => toast.info("Disparo — em construção")}
-              className="h-60 rounded-2xl border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
+              className="h-80 rounded-lg border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
               <Send className="h-5 w-5" />
               <p className="text-xl font-bold">Disparo</p>
@@ -115,7 +115,7 @@ export default function Mail() {
 
             <button
               onClick={() => toast.info("Fluxo — em construção")}
-              className="h-60 rounded-2xl border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
+              className="h-80 rounded-lg border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
               <Workflow className="h-5 w-5" />
               <p className="text-xl font-bold">Fluxo</p>
