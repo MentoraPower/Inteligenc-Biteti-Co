@@ -4,31 +4,34 @@ import { StatusBanner } from "@/components/StatusBanner";
 import { WorkspaceDropdown } from "@/components/workspace/WorkspaceDropdown";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileBlock } from "@/components/MobileBlock";
 import { isMobilePhone } from "@/lib/device";
+import { ProfileDialog } from "@/components/profile/ProfileDialog";
 
 function TopNavbar() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>("");
+  const [photoUrl, setPhotoUrl] = useState<string>("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const fetchUserInfo = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, photo_url')
+      .eq('id', user.id)
+      .single();
+    setUserName(profile?.name || user.email?.split('@')[0] || "Usuário");
+    setPhotoUrl(profile?.photo_url || "");
+  };
+
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user.id)
-        .single();
-      
-      setUserName(profile?.name || user.email?.split('@')[0] || "Usuário");
-    };
     fetchUserInfo();
   }, []);
 
@@ -61,9 +64,13 @@ function TopNavbar() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+              className="w-8 h-8 rounded-full bg-muted overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-border transition-all"
             >
-              <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+              )}
             </button>
             
             {/* Dropdown */}
@@ -79,6 +86,13 @@ function TopNavbar() {
               
               <div className="p-1">
                 <button
+                  onClick={() => { setProfileMenuOpen(false); setProfileDialogOpen(true); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground rounded-lg transition-colors"
+                >
+                  <Settings2 className="h-4 w-4" />
+                  Perfil
+                </button>
+                <button
                   onClick={async () => {
                     await supabase.auth.signOut();
                     navigate("/auth");
@@ -93,6 +107,8 @@ function TopNavbar() {
           </div>
         </div>
       </div>
+
+      <ProfileDialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen} onUpdated={fetchUserInfo} />
     </>
   );
 }
