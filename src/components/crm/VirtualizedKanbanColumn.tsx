@@ -1,4 +1,5 @@
-import { memo, useRef, useCallback, useEffect } from "react";
+import { memo, useRef, useCallback, useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -46,7 +47,25 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
   
 }: VirtualizedKanbanColumnProps) {
   const displayCount = leadCount !== undefined ? leadCount : leads.length;
-  
+
+  // Multi-select of cards in this column.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const someSelected = selectedIds.size > 0;
+  const allSelected = leads.length > 0 && leads.every((l) => selectedIds.has(l.id));
+  const toggleAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const all = leads.length > 0 && leads.every((l) => prev.has(l.id));
+      return all ? new Set() : new Set(leads.map((l) => l.id));
+    });
+  }, [leads]);
+  const toggleOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }, []);
+
   // Separate refs for droppable and scroll container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -137,14 +156,32 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
         }`}
       >
         {/* Header — white rounded block with margins, over the pipeline color */}
-        <div className="mx-2 mt-2 px-4 py-3 rounded-xl bg-white dark:bg-zinc-800 shadow-sm">
+        <div className="group mx-2 mt-2 px-4 py-3 rounded-xl bg-white dark:bg-zinc-800 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-base">{pipeline.nome}</h2>
             <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-green-800 text-white text-[12px] font-bold">
               {displayCount.toLocaleString('pt-BR')}
             </span>
           </div>
-          <InlineAddContact pipelineId={pipeline.id} subOriginId={subOriginId || null} />
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <InlineAddContact pipelineId={pipeline.id} subOriginId={subOriginId || null} />
+            </div>
+            {leads.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleAll}
+                title={allSelected ? "Desmarcar todos" : "Selecionar todos"}
+                className={`h-8 w-8 flex-shrink-0 rounded-lg border flex items-center justify-center transition-all
+                  ${someSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
+                  ${allSelected
+                    ? "bg-primary border-primary text-white"
+                    : "bg-white dark:bg-zinc-900 border-black/20 dark:border-white/20 text-muted-foreground hover:bg-muted"}`}
+              >
+                <Check className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Virtualized Cards container - this is the scroll container */}
@@ -201,7 +238,8 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
                         lead={lead}
                         subOriginId={subOriginId}
                         tags={tagsMap?.get(lead.id) || []}
-
+                        isSelected={selectedIds.has(lead.id)}
+                        onToggleSelect={toggleOne}
                       />
                     </div>
                   );

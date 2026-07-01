@@ -3,7 +3,7 @@ import { useSortable, AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Lead, LeadTag } from "@/types/crm";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Clock } from "lucide-react";
+import { Mail, Clock, Check } from "lucide-react";
 import { getAvatarForName } from "@/lib/avatar";
 import WhatsApp from "@/components/icons/WhatsApp";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -26,7 +26,8 @@ interface KanbanCardProps {
   isDragging?: boolean;
   subOriginId?: string | null;
   tags?: LeadTag[];
-  
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 // Custom animateLayoutChanges - disable animations after drop for instant positioning
@@ -103,7 +104,7 @@ const formatTimeAgo = (date: Date): string => {
   return "agora";
 };
 
-export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggingOverlay, subOriginId, tags = [] }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggingOverlay, subOriginId, tags = [], isSelected = false, onToggleSelect }: KanbanCardProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -188,14 +189,27 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
       {...attributes}
       data-lead-id={lead.id}
       className={`
-        cursor-grab active:cursor-grabbing bg-white dark:bg-zinc-950 shadow-none select-none touch-none
-        border-0 dark:border dark:border-white/[0.05] rounded-xl h-full
+        group/card relative cursor-grab active:cursor-grabbing bg-white dark:bg-zinc-950 shadow-none select-none touch-none
+        rounded-xl h-full
+        ${isSelected ? "ring-2 ring-primary border-0" : "border-0 dark:border dark:border-white/[0.05]"}
         ${isBeingDragged ? "opacity-100 scale-[1.02]" : ""}
       `}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onClick={handleClick}
     >
+      {onToggleSelect && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(lead.id); }}
+          className={`absolute top-2 left-2 z-20 h-5 w-5 rounded-md border flex items-center justify-center transition-opacity
+            ${isSelected ? "opacity-100 bg-primary border-primary text-white" : "opacity-0 group-hover/card:opacity-100 bg-white dark:bg-zinc-900 border-black/20 dark:border-white/20"}`}
+          title={isSelected ? "Desmarcar" : "Selecionar"}
+        >
+          {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+        </button>
+      )}
       <CardContent className="p-4 flex flex-col h-full">
         {/* Top: avatar (left) + name + contact (right) */}
         <div className="flex items-start gap-3 min-w-0">
