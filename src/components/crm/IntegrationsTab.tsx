@@ -63,7 +63,7 @@ export function IntegrationsTab({ subOriginId, pipelines }: IntegrationsTabProps
     return <HublaPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} pipelines={pipelines} />;
   }
   if (openPlatform === "unnichat") {
-    return <UnnichatPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} />;
+    return <UnnichatPage onBack={() => setOpenPlatform(null)} subOriginId={subOriginId} pipelines={pipelines} />;
   }
 
   return (
@@ -471,7 +471,7 @@ function IntegrationForm({
 
 /* ============================ Unnichat ============================ */
 
-function UnnichatPage({ onBack, subOriginId }: { onBack: () => void; subOriginId: string }) {
+function UnnichatPage({ onBack, subOriginId, pipelines }: { onBack: () => void; subOriginId: string; pipelines: { id: string; nome: string }[] }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(null);
   const [confirmDelete, setConfirmDelete] = useState<PlatformIntegration | null>(null);
@@ -539,6 +539,7 @@ function UnnichatPage({ onBack, subOriginId }: { onBack: () => void; subOriginId
         {form && (
           <UnnichatForm
             subOriginId={subOriginId}
+            pipelines={pipelines}
             editing={form.mode === "edit" ? form.integration : undefined}
             onDone={() => { setForm(null); refresh(); }}
             onCancel={() => setForm(null)}
@@ -560,7 +561,7 @@ function UnnichatPage({ onBack, subOriginId }: { onBack: () => void; subOriginId
                 <div key={it.id} className="grid grid-cols-[1fr_120px_140px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
                   <div className="font-medium truncate">{it.name}</div>
                   <div className="text-muted-foreground">{new Date(it.created_at).toLocaleDateString("pt-BR")}</div>
-                  <div className="text-muted-foreground truncate">Recebeu lead</div>
+                  <div className="text-muted-foreground truncate">{it.event_type === "lead_pipeline" ? "Add à pipeline" : "Recebeu lead"}</div>
                   <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -613,17 +614,21 @@ function UnnichatPage({ onBack, subOriginId }: { onBack: () => void; subOriginId
 
 function UnnichatForm({
   subOriginId,
+  pipelines,
   editing,
   onDone,
   onCancel,
 }: {
   subOriginId: string;
+  pipelines: { id: string; nome: string }[];
   editing?: PlatformIntegration;
   onDone: () => void;
   onCancel: () => void;
 }) {
   const cfg = (editing?.config || {}) as Record<string, any>;
   const [name, setName] = useState(editing?.name || "");
+  const [eventType, setEventType] = useState(editing?.event_type || "lead_recebido");
+  const [triggerPipelineId, setTriggerPipelineId] = useState(editing?.pipeline_id || "");
   const [apiToken, setApiToken] = useState(cfg.api_token || "");
   const [crmId, setCrmId] = useState(cfg.crm_id || "");
   const [columnId, setColumnId] = useState(cfg.column_id || "");
@@ -635,14 +640,16 @@ function UnnichatForm({
 
   const save = async () => {
     if (!name.trim()) return toast.error("Dê um nome à integração");
+    if (eventType === "lead_pipeline" && !triggerPipelineId) return toast.error("Escolha a pipeline do gatilho");
     if (!apiToken.trim()) return toast.error("Informe o Token da API");
     if (!crmId.trim()) return toast.error("Informe o ID do CRM");
     if (!columnId.trim()) return toast.error("Informe a Pipeline (coluna)");
     setSaving(true);
     const payload = {
       name: name.trim(),
-      event_type: "lead_recebido",
+      event_type: eventType,
       sub_origin_id: subOriginId,
+      pipeline_id: eventType === "lead_pipeline" ? triggerPipelineId : null,
       config: {
         api_token: apiToken.trim(),
         crm_id: crmId.trim(),
@@ -673,6 +680,31 @@ function UnnichatForm({
         <label className={labelCls}>Nome da integração</label>
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Leads → Unnichat" className={inputCls} autoFocus />
       </div>
+
+      <div className="space-y-1.5">
+        <label className={labelCls}>Disparar quando</label>
+        <Select value={eventType} onValueChange={(v) => { setEventType(v); if (v === "lead_recebido") setTriggerPipelineId(""); }}>
+          <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+          <SelectContent className="z-[10000]">
+            <SelectItem value="lead_recebido">Lead recebido</SelectItem>
+            <SelectItem value="lead_pipeline">Lead adicionado a uma pipeline</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {eventType === "lead_pipeline" && (
+        <div className="space-y-1.5">
+          <label className={labelCls}>Qual pipeline (deste CRM)</label>
+          <Select value={triggerPipelineId} onValueChange={setTriggerPipelineId}>
+            <SelectTrigger className={inputCls}><SelectValue placeholder="Selecione a pipeline..." /></SelectTrigger>
+            <SelectContent className="z-[10000]">
+              {pipelines.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <label className={labelCls}>Token API da conta</label>

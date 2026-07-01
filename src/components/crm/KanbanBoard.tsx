@@ -1101,6 +1101,16 @@ export function KanbanBoard() {
             toPipelineId: newPipelineId,
           }).catch(console.error);
 
+          // Fire "lead added to pipeline" Unnichat integrations (outbound).
+          supabase.functions.invoke("unnichat-dispatch", {
+            body: {
+              lead: { name: activeLead.name, email: (activeLead as any).email, whatsapp: (activeLead as any).whatsapp },
+              sub_origin_id: subOriginId,
+              pipeline_id: newPipelineId,
+              trigger: "pipeline",
+            },
+          }).catch(() => {});
+
           // Email automations are handled server-side by the trigger-webhook edge function.
 
           // Register the move for Cmd+Z / Cmd+Y

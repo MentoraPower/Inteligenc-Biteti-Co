@@ -1057,6 +1057,8 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             lead: { name: leadData.name, email: leadData.email, whatsapp: leadData.whatsapp },
             sub_origin_id: targetSubOriginId,
+            pipeline_id: targetPipelineId,
+            trigger: "received",
           }),
         }).catch((e) => console.log("[Webhook] Unnichat dispatch failed:", String(e)));
 

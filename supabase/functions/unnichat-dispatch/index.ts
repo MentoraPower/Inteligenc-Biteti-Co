@@ -27,19 +27,27 @@ function normalizePhone(raw: string): string {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    // Internal payload: { lead: { name, email, whatsapp }, sub_origin_id }
-    const { lead, sub_origin_id } = await req.json();
+    // Internal payload: { lead, sub_origin_id, pipeline_id?, trigger: 'received' | 'pipeline' }
+    const { lead, sub_origin_id, pipeline_id, trigger } = await req.json();
     if (!lead || !sub_origin_id) return json({ error: "missing lead/sub_origin_id" }, 400);
 
     const supabase = createClient(supabaseUrl, serviceKey);
-    const { data: integrations } = await supabase
+    const { data: allIntegrations } = await supabase
       .from("platform_integrations")
       .select("*")
       .eq("platform", "unnichat")
       .eq("sub_origin_id", sub_origin_id)
       .eq("is_active", true);
 
-    if (!integrations || integrations.length === 0) return json({ ok: true, dispatched: 0 });
+    // Match the trigger: "lead_recebido" fires on a received lead; "lead_pipeline"
+    // fires when the lead is in/added to the integration's configured pipeline.
+    const integrations = (allIntegrations || []).filter((it: any) => {
+      if (it.event_type === "lead_recebido") return trigger === "received";
+      if (it.event_type === "lead_pipeline") return it.pipeline_id && it.pipeline_id === pipeline_id;
+      return false;
+    });
+
+    if (integrations.length === 0) return json({ ok: true, dispatched: 0 });
 
     const results: any[] = [];
     for (const it of integrations) {
