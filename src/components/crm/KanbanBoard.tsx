@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -64,7 +64,7 @@ const ManagePipelinesDialog = lazy(() =>
 );
 
 
-import { resolveOriginParam, originIdToSlug } from "@/lib/origin-slugs";
+import { resolveOriginParam, originIdToSlug, subscribeOriginSlugs, getOriginSlugsVersion, hasRegisteredSlugs } from "@/lib/origin-slugs";
 
 
 interface EmailEditingContext {
@@ -97,6 +97,9 @@ type CRMView = "quadro";
 export function KanbanBoard() {
   const { currentWorkspace } = useWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Re-render whenever the slug registry (re)loads, so a slug in the URL resolves
+  // to its real id after the sub-origins finish loading (keeps the selection on reload).
+  useSyncExternalStore(subscribeOriginSlugs, getOriginSlugsVersion, getOriginSlugsVersion);
   const originParam = searchParams.get("origin");
   const subOriginId = resolveOriginParam(originParam) || originParam;
   const urlSearchQuery = searchParams.get("search") || "";
@@ -641,6 +644,14 @@ export function KanbanBoard() {
   useEffect(() => {
     const autoSelectFirstSubOrigin = async () => {
       if (!currentWorkspace?.id) return;
+
+      // Reload guard: if the URL has a slug that hasn't resolved to a real id yet
+      // (the slug registry is still loading), wait — don't auto-select the first
+      // sub-origin, which would drop the CRM the user was on.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (originParam && !UUID_RE.test(subOriginId || "") && !hasRegisteredSlugs()) {
+        return;
+      }
 
       // If we have a subOriginId, validate it belongs to current workspace
       if (subOriginId) {

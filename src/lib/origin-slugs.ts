@@ -11,6 +11,21 @@ const idToSlugMap = new Map<string, string>();
 // UUID regex for backward compatibility
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Reactive registry: bump a version + notify subscribers whenever slugs are
+// (re)registered, so components can re-resolve the URL param after data loads.
+let registryVersion = 0;
+const registryListeners = new Set<() => void>();
+export function subscribeOriginSlugs(cb: () => void) {
+  registryListeners.add(cb);
+  return () => registryListeners.delete(cb);
+}
+export function getOriginSlugsVersion() {
+  return registryVersion;
+}
+export function hasRegisteredSlugs() {
+  return slugToIdMap.size > 0;
+}
+
 /**
  * Convert a name to a URL-friendly slug
  */
@@ -48,6 +63,9 @@ export function registerSubOrigins(subOrigins: { id: string; nome: string }[]) {
     slugToIdMap.set(slug, so.id);
     idToSlugMap.set(so.id, slug);
   }
+
+  registryVersion++;
+  registryListeners.forEach((l) => l());
 }
 
 /**
