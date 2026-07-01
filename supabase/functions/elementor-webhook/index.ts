@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const cfg = (integration.config || {}) as any;
     const fieldMap: { source: string; target: string }[] = Array.isArray(cfg.field_map) ? cfg.field_map : [];
-    const rawFields: { id?: string; label?: string; value?: any }[] = Array.isArray(body?.fields) ? body.fields : [];
+    const rawFields: { id?: string; label?: string; value?: any; crm?: string }[] = Array.isArray(body?.fields) ? body.fields : [];
 
     // Lookup submitted values by normalized id AND label.
     const byKey: Record<string, any> = {};
@@ -53,13 +53,22 @@ serve(async (req) => {
 
     const forwardBody: Record<string, any> = {};
 
-    // Explicit platform mapping (by field id or label).
+    // 1) Per-field "Biteti" name typed in the Elementor editor (highest priority).
+    for (const f of rawFields) {
+      const crm = String(f?.crm || "").trim();
+      if (!crm) continue;
+      const t = crm.toLowerCase();
+      forwardBody[CORE.includes(t) ? (t === "phone" ? "whatsapp" : t) : crm] = f.value;
+    }
+
+    // 2) Explicit platform mapping (by field id or label) — does not override (1).
     for (const m of fieldMap) {
       if (!m?.source || !m?.target) continue;
       const value = byKey[norm(m.source)];
       if (value === undefined || value === null || String(value).trim() === "") continue;
       const t = m.target.toLowerCase();
-      forwardBody[CORE.includes(t) ? (t === "phone" ? "whatsapp" : t) : m.target] = value;
+      const key = CORE.includes(t) ? (t === "phone" ? "whatsapp" : t) : m.target;
+      if (forwardBody[key] === undefined) forwardBody[key] = value;
     }
 
     // Also pass raw fields (by label and id) so receive-webhook aliases/labels auto-map extras.
