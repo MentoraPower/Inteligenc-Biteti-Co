@@ -24,6 +24,17 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Resolve workspace_id from sub_origin -> origin (leads are scoped by workspace).
+    let workspaceId: string | null = null;
+    try {
+      const { data: so } = await supabase.from("crm_sub_origins").select("origin_id").eq("id", sub_origin_id).maybeSingle();
+      if (so?.origin_id) {
+        const { data: origin } = await supabase.from("crm_origins").select("workspace_id").eq("id", so.origin_id).maybeSingle();
+        workspaceId = origin?.workspace_id || null;
+      }
+    } catch { /* ignore */ }
+
     const chunkSize = 300;
     let inserted = 0;
     let responsesInserted = 0;
@@ -32,7 +43,7 @@ serve(async (req) => {
     const REQUIRED_TEXT = ["email", "service_area", "monthly_billing", "weekly_attendance", "workspace_type", "years_experience"];
 
     const buildLead = (raw: any) => {
-      const lead: any = { ...raw, sub_origin_id, pipeline_id };
+      const lead: any = { ...raw, sub_origin_id, pipeline_id, workspace_id: workspaceId };
       for (const k of REQUIRED_TEXT) {
         if (lead[k] == null) lead[k] = "";
       }
