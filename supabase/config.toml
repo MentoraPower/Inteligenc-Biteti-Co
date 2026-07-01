@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.unnichat-dispatch]
 verify_jwt = false
+
+[functions.import-leads]
+verify_jwt = false

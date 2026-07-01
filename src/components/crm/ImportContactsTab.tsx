@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 interface ImportContactsTabProps {
   subOriginId: string;
   pipelines: { id: string; nome: string }[];
+  onImportingChange?: (importing: boolean) => void;
 }
 
 // Minimal CSV parser (handles quoted fields, escaped quotes, commas & newlines).
@@ -48,7 +49,7 @@ const CORE_TARGETS = [
   { key: "instagram", label: "Instagram" },
 ];
 
-export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabProps) {
+export function ImportContactsTab({ subOriginId, pipelines, onImportingChange }: ImportContactsTabProps) {
   const [step, setStep] = useState<"upload" | "preview" | "map">("upload");
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
@@ -147,31 +148,24 @@ export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabP
         return { lead, custom };
       });
 
-      const chunkSize = 300;
-      let inserted = 0;
-      for (let i = 0; i < items.length; i += chunkSize) {
-        const chunk = items.slice(i, i + chunkSize);
-        const { data: insertedLeads, error } = await supabase
-          .from("leads")
-          .insert(chunk.map((c) => c.lead))
-          .select("id");
-        if (error) throw error;
-
-        // Custom field responses, matched by insertion order.
-        const responses: { lead_id: string; field_id: string; response_value: string }[] = [];
-        (insertedLeads || []).forEach((l, idx) => {
-          chunk[idx].custom.forEach((c) => responses.push({ lead_id: l.id, ...c }));
-        });
-        if (responses.length) {
-          await supabase.from("lead_custom_field_responses").insert(responses);
-        }
-
-        inserted += chunk.length;
-        setProgress(Math.round((inserted / items.length) * 100));
-      }
-
-      toast.success(`${items.length} contato(s) importado(s)!`);
+      // Run the import server-side (service role → bypasses RLS, and finishes even
+      // if the user leaves the platform). Shows a bar above the pipelines meanwhile.
+      onImportingChange?.(true);
+      const total = items.length;
+      const targetPipeline = pipelineId;
       reset();
+      toast.info(`Subindo ${total} contato(s)…`);
+
+      const { data, error } = await supabase.functions.invoke("import-leads", {
+        body: { sub_origin_id: subOriginId, pipeline_id: targetPipeline, items },
+      });
+      onImportingChange?.(false);
+
+      if (error || (data as any)?.error) {
+        toast.error(`Erro ao importar: ${(data as any)?.error || error?.message || "falha"}`);
+        return;
+      }
+      toast.success(`${(data as any)?.inserted ?? total} contato(s) importado(s)!`);
     } catch (e: any) {
       console.error(e);
       toast.error(`Erro ao importar: ${e.message || e}`);

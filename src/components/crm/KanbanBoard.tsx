@@ -127,6 +127,7 @@ export function KanbanBoard() {
   const [emailEditingContext, setEmailEditingContext] = useState<EmailEditingContext | null>(null);
   const [automationsOpen, setAutomationsOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [importingLeads, setImportingLeads] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines" | "integrations" | "import">("automations");
   const queryClient = useQueryClient();
   const { pushAction } = useUndo();
@@ -1681,7 +1682,11 @@ export function KanbanBoard() {
 
                 {settingsTab === "import" && (
                   <div className="h-full">
-                    <ImportContactsTab subOriginId={subOriginId} pipelines={pipelines} />
+                    <ImportContactsTab
+                      subOriginId={subOriginId}
+                      pipelines={pipelines}
+                      onImportingChange={(v) => { setImportingLeads(v); if (!v) { queryClient.invalidateQueries({ queryKey: ["crm-leads-with-tags", subOriginId] }); } }}
+                    />
                   </div>
                 )}
               </div>
@@ -1724,6 +1729,12 @@ export function KanbanBoard() {
               <CRMColumnsSkeleton count={skeletonColumnCount} />
             ) : (
               <TooltipProvider delayDuration={300}>
+                {/* Thin green gradient bar while a contact import is running server-side */}
+                {importingLeads && (
+                  <div className="h-1 w-full overflow-hidden bg-emerald-500/10 flex-shrink-0 mb-1 rounded-full">
+                    <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 animate-[loading-progress_1.2s_ease-in-out_infinite]" />
+                  </div>
+                )}
                 <div className="flex gap-4 overflow-x-auto overflow-y-hidden flex-1 pb-0 min-h-0 board-scroll-x">
                   {/* Orphan leads column (leads with null or invalid pipeline_id) */}
                   {orphanPipeline && (
