@@ -1039,16 +1039,25 @@ const handler = async (req: Request): Promise<Response> => {
         savedLeadId = data.id;
         console.log(`[Webhook] Lead created: ${savedLeadId}`);
 
-        // Add tracking for creation
-        await supabase.from("lead_tracking").insert({
-          lead_id: savedLeadId,
-          tipo: "webhook",
-          titulo: "Lead recebido via Webhook",
-          descricao: "Lead criado via webhook externo",
-          origem: "webhook",
-        }).then(({ error }) => {
-          if (error) console.log("[Webhook] Tracking insert failed:", error.message);
-        });
+        // Add tracking for creation (note the source integration + page).
+        {
+          const src = String((rawPayload as any)?._source || "").toLowerCase();
+          const pageUrl = String((rawPayload as any)?._page_url || "");
+          const formName = String((rawPayload as any)?._form || "");
+          const isElementor = src === "elementor";
+          await supabase.from("lead_tracking").insert({
+            lead_id: savedLeadId,
+            tipo: "webhook",
+            titulo: isElementor ? "Lead recebido — Integração Elementor" : "Lead recebido via Webhook",
+            descricao: isElementor
+              ? ([formName ? `Formulário: ${formName}` : "", pageUrl ? `Página: ${pageUrl}` : ""].filter(Boolean).join(" · ") || "Formulário do Elementor")
+              : "Lead criado via webhook externo",
+            origem: isElementor ? "Elementor" : "webhook",
+            dados: isElementor ? { source: "elementor", form: formName || null, page_url: pageUrl || null } : null,
+          }).then(({ error }) => {
+            if (error) console.log("[Webhook] Tracking insert failed:", error.message);
+          });
+        }
 
         // Fire the received lead to any active Unnichat integrations (outbound).
         fetch(`${supabaseUrl}/functions/v1/unnichat-dispatch`, {

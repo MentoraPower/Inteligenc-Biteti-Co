@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Biteti CRM — Integração Elementor
  * Description: Adiciona em cada campo do formulário Elementor um controle "Campo no CRM" e um Token de Conexão. No envio, manda os dados já com os nomes que a plataforma aceita, identificando pelo token.
- * Version: 3.1.0
+ * Version: 3.2.0
  * Author: Biteti & Co Inteligenc
  */
 
@@ -137,6 +137,12 @@ class Biteti_CRM_Elementor {
         }
 
         if (empty($body)) return;
+
+        // Source markers for the lead history (integration + page).
+        $body['_source'] = 'elementor';
+        if ($page_url) $body['_page_url'] = $page_url;
+        $form_name = isset($form_settings['form_name']) ? $form_settings['form_name'] : '';
+        if ($form_name) $body['_form'] = $form_name;
 
         wp_remote_post($url, [
             'timeout'  => 15,
