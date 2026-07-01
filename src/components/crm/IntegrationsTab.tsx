@@ -880,10 +880,14 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
 }
 
 function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { subOriginId: string; pipelines: { id: string; nome: string }[]; editing?: PlatformIntegration; onDone: () => void; onCancel: () => void; }) {
+  const cfg = (editing?.config || {}) as any;
   const [name, setName] = useState(editing?.name || "");
   const [pipelineId, setPipelineId] = useState(editing?.pipeline_id || "");
   const [tagName, setTagName] = useState(editing?.tag_name || "");
   const [tagColor, setTagColor] = useState(editing?.tag_color || "#6366f1");
+  const [rows, setRows] = useState<{ source: string; target: string }[]>(
+    Array.isArray(cfg.field_map) && cfg.field_map.length ? cfg.field_map : [{ source: "", target: "name" }]
+  );
   const [token, setToken] = useState(editing?.token || "");
   const [saving, setSaving] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -912,14 +916,13 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
   const isNewTag = tagName.trim() !== "" && !savedTags.some((t) => t.name.toLowerCase() === tagName.toLowerCase().trim());
   const tagSuggestions = savedTags.filter((t) => t.name.toLowerCase().includes(tagName.toLowerCase().trim()));
 
-  // Names to type in each Elementor field's "Biteti" control.
-  const refFields = useMemo(
+  const targets = useMemo(
     () => [
-      { label: "Nome", key: "name" },
-      { label: "Email", key: "email" },
-      { label: "Telefone / WhatsApp", key: "phone" },
-      { label: "Instagram", key: "instagram" },
-      ...customFields.map((cf) => ({ label: cf.field_label, key: cf.field_key || cf.id })),
+      { key: "name", label: "Nome" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Telefone / WhatsApp" },
+      { key: "instagram", label: "Instagram" },
+      ...customFields.map((cf) => ({ key: cf.field_key || cf.id, label: cf.field_label })),
     ],
     [customFields]
   );
@@ -938,9 +941,10 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
     if (!name.trim()) return toast.error("Dê um nome à integração");
     if (!pipelineId) return toast.error("Escolha a pipeline");
     setSaving(true);
+    const field_map = rows.filter((r) => r.source.trim() && r.target);
     const tagFields = { tag_name: tagName.trim() || null, tag_color: tagName.trim() ? tagColor : null };
     if (editing) {
-      const { error } = await supabase.from("platform_integrations").update({ name: name.trim(), pipeline_id: pipelineId, ...tagFields }).eq("id", editing.id);
+      const { error } = await supabase.from("platform_integrations").update({ name: name.trim(), pipeline_id: pipelineId, config: { field_map }, ...tagFields }).eq("id", editing.id);
       setSaving(false);
       if (error) return toast.error("Erro ao salvar");
       toast.success("Integração atualizada!");
@@ -948,7 +952,7 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
     } else {
       const { data, error } = await supabase
         .from("platform_integrations")
-        .insert({ platform: "elementor", name: name.trim(), event_type: "form_submit", sub_origin_id: subOriginId, pipeline_id: pipelineId, config: {}, ...tagFields })
+        .insert({ platform: "elementor", name: name.trim(), event_type: "form_submit", sub_origin_id: subOriginId, pipeline_id: pipelineId, config: { field_map }, ...tagFields })
         .select("token")
         .single();
       setSaving(false);
@@ -962,7 +966,7 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
     <div className="rounded-2xl bg-zinc-500/[0.06] p-4 space-y-4">
       <div>
         <h4 className="font-semibold text-[15px]">{editing || token ? "Integração Elementor" : "Nova integração Elementor"}</h4>
-        <p className="text-xs text-muted-foreground mt-0.5">Gera uma URL de conexão. No formulário do Elementor, ligue "Ativar Biteti", cole a URL, e mapeie cada campo com os nomes abaixo.</p>
+        <p className="text-xs text-muted-foreground mt-0.5">No formulário do Elementor, ligue "Ativar Biteti" e cole a URL. Nomeie cada campo pelo <b>ID nativo</b> (aba Avançado → ID) e mapeie aqui.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -1011,37 +1015,47 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
         )}
       </div>
 
-      {token && (
-        <>
-          <div className="space-y-1.5">
-            <label className={labelCls}>URL de Conexão (cole no formulário → Conexão Biteti)</label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor?token=${token}`}
-                readOnly
-                className={cn(inputCls, "flex-1 font-mono text-xs")}
-              />
-              <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl flex-shrink-0" onClick={() => copy(`${window.location.origin}/api/integrations/elementor?token=${token}`, "__url__")}>
-                {copiedKey === "__url__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
+      <div className="space-y-2">
+        <label className={labelCls}>Mapeamento dos campos</label>
+        <p className="text-[11px] text-muted-foreground -mt-1">Esquerda: o <b>ID</b> do campo no Elementor (aba Avançado → ID) ou a pergunta/Label. Direita: pra onde vai no CRM.</p>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              value={row.source}
+              onChange={(e) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, source: e.target.value } : r))}
+              placeholder="ID do campo (ex: email) ou a pergunta"
+              className="h-10 rounded-lg text-sm flex-1"
+            />
+            <Select value={row.target} onValueChange={(v) => setRows((rs) => rs.map((r, idx) => idx === i ? { ...r, target: v } : r))}>
+              <SelectTrigger className="h-10 rounded-lg text-sm w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="z-[10000]">
+                {targets.map((t) => (<SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg flex-shrink-0 text-muted-foreground" onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
+        ))}
+        <Button variant="outline" className="h-9 rounded-lg gap-2 text-sm" onClick={() => setRows((rs) => [...rs, { source: "", target: "name" }])}>
+          <Plus className="h-4 w-4" /> Adicionar campo
+        </Button>
+      </div>
 
-          <div className="space-y-2">
-            <label className={labelCls}>Nomes dos campos (use no controle "Biteti" de cada campo)</label>
-            <div className="rounded-xl border border-border overflow-hidden">
-              {refFields.map((f) => (
-                <div key={f.key} className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border last:border-b-0 text-sm">
-                  <span className="truncate">{f.label}</span>
-                  <button onClick={() => copy(f.key, f.key)} className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground flex-shrink-0">
-                    <code className="truncate max-w-[180px]">{f.key}</code>
-                    {copiedKey === f.key ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              ))}
-            </div>
+      {token && (
+        <div className="space-y-1.5">
+          <label className={labelCls}>URL de Conexão (cole no formulário → Conexão Biteti)</label>
+          <div className="flex items-center gap-2">
+            <Input
+              value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor?token=${token}`}
+              readOnly
+              className={cn(inputCls, "flex-1 font-mono text-xs")}
+            />
+            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl flex-shrink-0" onClick={() => copy(`${window.location.origin}/api/integrations/elementor?token=${token}`, "__url__")}>
+              {copiedKey === "__url__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            </Button>
           </div>
-        </>
+        </div>
       )}
 
       <div className="flex gap-2 pt-1">
