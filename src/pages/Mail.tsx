@@ -103,7 +103,7 @@ export default function Mail() {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+        <div className="flex-1 flex flex-col items-center justify-start p-6 pt-16 gap-10">
           <h3 className="text-4xl font-bold text-center">O que você quer fazer?</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl">
             <button
