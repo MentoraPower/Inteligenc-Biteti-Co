@@ -16,7 +16,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail as MailIcon, Plus, MoreVertical, Pencil, Trash2, Zap } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -81,6 +81,21 @@ export default function Mail() {
     const { error } = await (supabase as any).from("email_automations").delete().eq("id", id);
     if (error) return toast.error("Erro ao remover");
     toast.success("Campanha removida!");
+    refetch();
+  };
+
+  const duplicate = async (a: EmailAutomation) => {
+    const { error } = await (supabase as any).from("email_automations").insert({
+      name: `${a.name} (cópia)`,
+      trigger_pipeline_id: a.trigger_pipeline_id,
+      sub_origin_id: a.sub_origin_id,
+      subject: a.subject,
+      body_html: a.body_html,
+      is_active: false,
+      flow_steps: a.flow_steps,
+    });
+    if (error) return toast.error("Erro ao duplicar");
+    toast.success("Campanha duplicada!");
     refetch();
   };
 
@@ -174,29 +189,26 @@ export default function Mail() {
         </Button>
       </div>
 
-      {automations.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-20">
-          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
-            <MailIcon className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">Nenhuma campanha de e-mail ainda.</p>
-          <Button onClick={openCreate} variant="outline" className="rounded-xl gap-2"><Plus className="h-4 w-4" /> Criar a primeira</Button>
-        </div>
-      ) : (
+      {(
         <div className="rounded-2xl border border-border overflow-hidden">
-          <div className="grid grid-cols-[1fr_180px_90px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             <div>Nome</div>
-            <div>Gatilho (pipeline)</div>
-            <div className="text-center">Ativa</div>
-            <div />
+            <div>Data de criação</div>
+            <div className="text-center">Status</div>
+            <div className="text-center">Ações</div>
           </div>
+          {automations.length === 0 && (
+            <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
+              Nenhuma campanha ainda. Clique em <b>Criar campanha</b> para começar.
+            </div>
+          )}
           {automations.map((a) => (
-            <div key={a.id} className="grid grid-cols-[1fr_180px_90px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
+            <div key={a.id} className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
               <div className="flex items-center gap-2 min-w-0">
                 <Zap className="h-4 w-4 text-purple-700 flex-shrink-0" />
                 <span className="font-medium truncate">{a.name}</span>
               </div>
-              <div className="text-muted-foreground truncate">{pipelineName(a.trigger_pipeline_id)}</div>
+              <div className="text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR")}</div>
               <div className="flex justify-center">
                 <Switch checked={a.is_active} onCheckedChange={() => toggleActive(a)} />
               </div>
@@ -208,6 +220,9 @@ export default function Mail() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setBuilder({ mode: "edit", automation: a, name: a.name })}>
                       <Pencil className="h-4 w-4 mr-2" /> Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => duplicate(a)}>
+                      <Copy className="h-4 w-4 mr-2" /> Duplicar
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setConfirmDelete(a)} className="text-destructive focus:text-destructive">
                       <Trash2 className="h-4 w-4 mr-2" /> Excluir
