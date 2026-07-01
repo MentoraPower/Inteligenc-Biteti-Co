@@ -156,9 +156,8 @@ const AnimatedConnectionLine = ({
   );
 };
 
-const GROUP_TRIGGER_TYPES = [
-  { id: "registered_no_group", label: "Cadastrou mas não entrou", icon: UserX, description: "Lead se cadastrou mas não entrou no grupo em 2 min" },
-];
+// Group triggers removed — only lead-moved automations are supported.
+const GROUP_TRIGGER_TYPES: { id: string; label: string; icon: any; description: string }[] = [];
 
 // Trigger Node Component - Main entry point with multiple triggers
 const TriggerNode = ({ data, id, selected }: NodeProps & { data: { 

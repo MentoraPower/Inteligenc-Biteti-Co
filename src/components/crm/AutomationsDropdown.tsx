@@ -1241,18 +1241,6 @@ export function AutomationsDropdown({
                                   Lead movido para pipeline
                                 </div>
                               </SelectItem>
-                              <SelectItem value="grupo_entrada">
-                                <div className="flex items-center gap-2">
-                                  <UserPlus className="h-4 w-4" />
-                                  Entrou no grupo
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="grupo_saida">
-                                <div className="flex items-center gap-2">
-                                  <UserMinus className="h-4 w-4" />
-                                  Saiu do grupo
-                                </div>
-                              </SelectItem>
                             </SelectContent>
                           </Select>
 
@@ -1939,18 +1927,6 @@ export function AutomationsDropdown({
                                 <div className="flex items-center gap-2">
                                   <ArrowRight className="h-4 w-4" />
                                   Lead movido para pipeline
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="grupo_entrada">
-                                <div className="flex items-center gap-2">
-                                  <UserPlus className="h-4 w-4" />
-                                  Entrou no grupo
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="grupo_saida">
-                                <div className="flex items-center gap-2">
-                                  <UserMinus className="h-4 w-4" />
-                                  Saiu do grupo
                                 </div>
                               </SelectItem>
                             </SelectContent>
