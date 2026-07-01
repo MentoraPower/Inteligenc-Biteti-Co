@@ -198,26 +198,29 @@ export const KanbanCard = memo(function KanbanCard({ lead, isDragging: isDraggin
       onPointerMove={handlePointerMove}
       onClick={handleClick}
     >
-      {onToggleSelect && (
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); onToggleSelect(lead.id); }}
-          className={`absolute top-2 left-2 z-20 h-5 w-5 rounded-md border flex items-center justify-center transition-opacity
-            ${isSelected ? "opacity-100 bg-primary border-primary text-white" : "opacity-0 group-hover/card:opacity-100 bg-white dark:bg-zinc-900 border-black/20 dark:border-white/20"}`}
-          title={isSelected ? "Desmarcar" : "Selecionar"}
-        >
-          {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-        </button>
-      )}
       <CardContent className="p-4 flex flex-col h-full">
-        {/* Top: avatar (left) + name + contact (right) */}
-        <div className="flex items-start gap-3 min-w-0">
+        {/* Top: [checkbox] avatar (left) + name + contact (right) */}
+        <div className="flex items-start min-w-0">
+          {onToggleSelect && (
+            <div className={`self-center flex-shrink-0 overflow-hidden transition-all
+              ${isSelected ? "w-5 mr-2.5" : "w-0 mr-0 group-hover/card:w-5 group-hover/card:mr-2.5"}`}>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(lead.id); }}
+                className={`h-5 w-5 rounded-md border flex items-center justify-center
+                  ${isSelected ? "bg-primary border-primary text-white" : "bg-white dark:bg-zinc-900 border-black/25 dark:border-white/25 hover:bg-muted"}`}
+                title={isSelected ? "Desmarcar" : "Selecionar"}
+              >
+                {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+              </button>
+            </div>
+          )}
           <img
             src={getAvatarForName(lead.name)}
             alt=""
             loading="lazy"
-            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 select-none pointer-events-none"
+            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 select-none pointer-events-none mr-3"
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-[15px] leading-tight truncate">{lead.name}</h3>
