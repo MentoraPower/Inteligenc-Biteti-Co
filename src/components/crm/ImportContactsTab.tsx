@@ -81,6 +81,12 @@ export function ImportContactsTab({ subOriginId, pipelines, onImportingChange }:
     [customFields]
   );
 
+  // Each platform field can only be mapped once — track the ones already in use.
+  const usedTargets = useMemo(
+    () => new Set(Object.values(mapping).filter((v) => v && v !== "ignore")),
+    [mapping]
+  );
+
   const handleFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith(".csv")) {
       toast.error("Apenas arquivos CSV são aceitos");
@@ -284,9 +290,11 @@ export function ImportContactsTab({ subOriginId, pipelines, onImportingChange }:
                 <SelectTrigger className="h-11 rounded-xl text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent className="z-[10000]">
                   <SelectItem value="ignore">Ignorar</SelectItem>
-                  {targets.map((t) => (
-                    <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
-                  ))}
+                  {targets
+                    .filter((t) => t.key === mapping[i] || !usedTargets.has(t.key))
+                    .map((t) => (
+                      <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

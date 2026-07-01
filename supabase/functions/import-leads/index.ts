@@ -28,11 +28,23 @@ serve(async (req) => {
     let inserted = 0;
     let responsesInserted = 0;
 
+    // Columns that are NOT NULL without a default — must be present as "".
+    const REQUIRED_TEXT = ["email", "service_area", "monthly_billing", "weekly_attendance", "workspace_type", "years_experience"];
+
+    const buildLead = (raw: any) => {
+      const lead: any = { ...raw, sub_origin_id, pipeline_id };
+      for (const k of REQUIRED_TEXT) {
+        if (lead[k] == null) lead[k] = "";
+      }
+      if (!lead.name || !String(lead.name).trim()) lead.name = lead.email || "Contato";
+      return lead;
+    };
+
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunk = items.slice(i, i + chunkSize);
       const { data: insertedLeads, error } = await supabase
         .from("leads")
-        .insert(chunk.map((c: any) => ({ ...c.lead, sub_origin_id, pipeline_id })))
+        .insert(chunk.map((c: any) => buildLead(c.lead)))
         .select("id");
       if (error) return json({ error: error.message, insertedSoFar: inserted }, 500);
 
