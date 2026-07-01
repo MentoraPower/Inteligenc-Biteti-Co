@@ -103,7 +103,8 @@ export default function Mail() {
           </Button>
           <h2 className="font-bold text-lg truncate">{editing.name}</h2>
         </div>
-        <div className="flex-1 flex items-center justify-center p-6">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+          <h3 className="text-xl font-semibold text-center">O que você quer fazer?</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl">
             <button
               onClick={() => toast.info("Disparo — em construção")}
