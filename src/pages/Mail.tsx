@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -14,7 +15,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -34,6 +35,42 @@ export default function Mail() {
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settings, setSettings] = useState({ sender_name: "", from_email: "", reply_to: "", signature_html: "" });
+
+  const { data: settingsRow, refetch: refetchSettings } = useQuery({
+    queryKey: ["email-settings"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("email_settings").select("*").limit(1).maybeSingle();
+      return (data || null) as any;
+    },
+  });
+
+  const openSettings = () => {
+    setSettings({
+      sender_name: settingsRow?.sender_name || "",
+      from_email: settingsRow?.from_email || "",
+      reply_to: settingsRow?.reply_to || "",
+      signature_html: settingsRow?.signature_html || "",
+    });
+    setSettingsOpen(true);
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    let error;
+    if (settingsRow?.id) {
+      ({ error } = await (supabase as any).from("email_settings").update({ ...settings, updated_at: new Date().toISOString() }).eq("id", settingsRow.id));
+    } else {
+      ({ error } = await (supabase as any).from("email_settings").insert({ ...settings }));
+    }
+    setSavingSettings(false);
+    if (error) return toast.error("Erro ao salvar configuração");
+    toast.success("Configuração salva!");
+    refetchSettings();
+    setSettingsOpen(false);
+  };
 
   const { data: automations = [], refetch } = useQuery({
     queryKey: ["email-automations-all"],
@@ -131,9 +168,14 @@ export default function Mail() {
     <div className="h-full flex flex-col p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Mail</h1>
-        <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
-          <Plus className="h-4 w-4" /> Criar campanha
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-10 w-10 rounded-xl">
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
+            <Plus className="h-4 w-4" /> Criar campanha
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-border overflow-hidden">
@@ -190,6 +232,39 @@ export default function Mail() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setNameDialogOpen(false)}>Cancelar</Button>
             <Button onClick={confirmCreate} className="bg-gradient-to-r from-purple-700 to-purple-900 text-white border-0">Continuar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email configuration (large popup) */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>Configuração de e-mail</DialogTitle></DialogHeader>
+          <div className="py-2 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Nome do remetente</label>
+                <Input value={settings.sender_name} onChange={(e) => setSettings((s) => ({ ...s, sender_name: e.target.value }))} placeholder="Ex: Biteti & Co" className="h-11 rounded-xl" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">E-mail do remetente</label>
+                <Input value={settings.from_email} onChange={(e) => setSettings((s) => ({ ...s, from_email: e.target.value }))} placeholder="contato@seudominio.com" className="h-11 rounded-xl" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">E-mail de resposta (reply-to)</label>
+              <Input value={settings.reply_to} onChange={(e) => setSettings((s) => ({ ...s, reply_to: e.target.value }))} placeholder="respostas@seudominio.com" className="h-11 rounded-xl" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Assinatura</label>
+              <Textarea value={settings.signature_html} onChange={(e) => setSettings((s) => ({ ...s, signature_html: e.target.value }))} placeholder="Sua assinatura de e-mail..." className="min-h-[120px] rounded-xl" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
+            <Button onClick={saveSettings} disabled={savingSettings} className="bg-gradient-to-r from-purple-700 to-purple-900 text-white border-0">
+              {savingSettings ? "Salvando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
