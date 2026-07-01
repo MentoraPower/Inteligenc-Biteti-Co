@@ -90,6 +90,11 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     }
   }, [location.pathname, isCRMActive, isSettingsActive]);
 
+  // The CRM submenu (Espaços) only belongs to the CRM page — close it elsewhere.
+  useEffect(() => {
+    if (!isCRMActive) setCrmSubmenuOpen(false);
+  }, [isCRMActive]);
+
 
   // Sync with global state and localStorage (without affecting submenu)
   useEffect(() => {
@@ -217,7 +222,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   onClick={() => handleNavClick('crm')}
                   className={cn(
                     "relative flex items-center h-10 rounded-lg transition-all duration-200",
-                    activePanel === 'crm'
+                    isCRMActive
                       ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
                       : "text-zinc-400 hover:bg-white/10 hover:text-white"
                   )}

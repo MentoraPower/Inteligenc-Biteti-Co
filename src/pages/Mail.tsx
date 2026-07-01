@@ -168,15 +168,7 @@ export default function Mail() {
   return (
     <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center">
-            <MailIcon className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">Mail</h1>
-            <p className="text-sm text-muted-foreground">Fluxos de automação de e-mail</p>
-          </div>
-        </div>
+        <h1 className="text-xl font-bold">Mail</h1>
         <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
           <Plus className="h-4 w-4" /> Criar automação
         </Button>
