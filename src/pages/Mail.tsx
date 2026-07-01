@@ -97,11 +97,11 @@ export default function Mail() {
   if (editing) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-background">
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-border flex-shrink-0">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => { setEditing(null); refetch(); }}>
-            <ArrowLeft className="h-4 w-4" />
+        <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
+          <h1 className="text-xl font-bold">Mail</h1>
+          <Button onClick={() => { setEditing(null); refetch(); }} className="h-9 gap-1.5 rounded-lg bg-white text-black hover:bg-neutral-100 border border-border font-medium">
+            <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
-          <h2 className="font-bold text-lg truncate">{editing.name}</h2>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
           <h3 className="text-4xl font-bold text-center">O que você quer fazer?</h3>
