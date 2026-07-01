@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, Send, Workflow } from "lucide-react";
 import { toast } from "sonner";
 
 interface EmailAutomation {
@@ -103,7 +103,35 @@ export default function Mail() {
           </Button>
           <h2 className="font-bold text-lg truncate">{editing.name}</h2>
         </div>
-        <div className="flex-1 bg-white dark:bg-background" />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-3xl">
+            <button
+              onClick={() => toast.info("Disparo — em construção")}
+              className="group h-60 rounded-2xl border-2 border-border hover:border-purple-700 hover:bg-purple-700/[0.03] transition-all flex flex-col items-center justify-center gap-4 text-center px-6"
+            >
+              <div className="h-16 w-16 rounded-2xl bg-purple-700/10 group-hover:bg-purple-700/15 flex items-center justify-center">
+                <Send className="h-7 w-7 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">Disparo</p>
+                <p className="text-sm text-muted-foreground mt-1">Enviar um e-mail único agora</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => toast.info("Fluxo — em construção")}
+              className="group h-60 rounded-2xl border-2 border-border hover:border-purple-700 hover:bg-purple-700/[0.03] transition-all flex flex-col items-center justify-center gap-4 text-center px-6"
+            >
+              <div className="h-16 w-16 rounded-2xl bg-purple-700/10 group-hover:bg-purple-700/15 flex items-center justify-center">
+                <Workflow className="h-7 w-7 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">Fluxo</p>
+                <p className="text-sm text-muted-foreground mt-1">Automação com gatilhos e etapas</p>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
