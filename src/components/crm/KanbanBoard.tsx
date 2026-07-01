@@ -31,7 +31,7 @@ import { KanbanCard } from "./KanbanCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, Search, Filter, X, CalendarIcon, Zap, Webhook, GitBranch, LayoutGrid, Plus, Blocks } from "lucide-react";
+import { Settings, Search, Filter, X, CalendarIcon, Zap, Webhook, GitBranch, LayoutGrid, Plus, Blocks, Upload } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +53,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AutomationsDropdown } from "./AutomationsDropdown";
 import { IntegrationsTab } from "./IntegrationsTab";
+import { ImportContactsTab } from "./ImportContactsTab";
 import { EmailFlowBuilder } from "./EmailFlowBuilder";
 import { ViewTabs } from "./ViewTabs";
 
@@ -126,7 +127,7 @@ export function KanbanBoard() {
   const [emailEditingContext, setEmailEditingContext] = useState<EmailEditingContext | null>(null);
   const [automationsOpen, setAutomationsOpen] = useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines" | "integrations">("automations");
+  const [settingsTab, setSettingsTab] = useState<"automations" | "webhooks" | "pipelines" | "integrations" | "import">("automations");
   const queryClient = useQueryClient();
   const { pushAction } = useUndo();
   const searchTimeoutRef = useRef<number | null>(null);
@@ -1603,6 +1604,18 @@ export function KanbanBoard() {
                     <Blocks className="w-[18px] h-[18px]" />
                     Integrações
                   </button>
+                  <button
+                    onClick={() => setSettingsTab("import")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 text-base font-medium border-b-2 transition-colors",
+                      settingsTab === "import"
+                        ? "border-orange-500 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Upload className="w-[18px] h-[18px]" />
+                    Importar contatos
+                  </button>
                 </div>
               </div>
 
@@ -1663,6 +1676,12 @@ export function KanbanBoard() {
                 {settingsTab === "integrations" && (
                   <div className="h-full">
                     <IntegrationsTab subOriginId={subOriginId} pipelines={pipelines} />
+                  </div>
+                )}
+
+                {settingsTab === "import" && (
+                  <div className="h-full">
+                    <ImportContactsTab subOriginId={subOriginId} pipelines={pipelines} />
                   </div>
                 )}
               </div>
