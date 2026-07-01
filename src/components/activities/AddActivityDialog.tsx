@@ -210,7 +210,7 @@ function AddActivityDialogComponent({
           <Button
             onClick={handleSubmit}
             disabled={!isValid}
-            className="w-full h-11 rounded-xl bg-white text-neutral-900 border border-neutral-200 hover:bg-neutral-100 shadow-sm font-semibold"
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 shadow-sm font-semibold"
           >
             {editingActivity ? "Salvar" : "Criar atividade"}
           </Button>
