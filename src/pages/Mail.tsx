@@ -107,28 +107,18 @@ export default function Mail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-3xl">
             <button
               onClick={() => toast.info("Disparo — em construção")}
-              className="group h-60 rounded-2xl border-2 border-border hover:border-purple-700 hover:bg-purple-700/[0.03] transition-all flex flex-col items-center justify-center gap-4 text-center px-6"
+              className="h-60 rounded-2xl border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
-              <div className="h-16 w-16 rounded-2xl bg-purple-700/10 group-hover:bg-purple-700/15 flex items-center justify-center">
-                <Send className="h-7 w-7 text-purple-700" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">Disparo</p>
-                <p className="text-sm text-muted-foreground mt-1">Enviar um e-mail único agora</p>
-              </div>
+              <Send className="h-5 w-5" />
+              <p className="text-xl font-bold">Disparo</p>
             </button>
 
             <button
               onClick={() => toast.info("Fluxo — em construção")}
-              className="group h-60 rounded-2xl border-2 border-border hover:border-purple-700 hover:bg-purple-700/[0.03] transition-all flex flex-col items-center justify-center gap-4 text-center px-6"
+              className="h-60 rounded-2xl border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
             >
-              <div className="h-16 w-16 rounded-2xl bg-purple-700/10 group-hover:bg-purple-700/15 flex items-center justify-center">
-                <Workflow className="h-7 w-7 text-purple-700" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">Fluxo</p>
-                <p className="text-sm text-muted-foreground mt-1">Automação com gatilhos e etapas</p>
-              </div>
+              <Workflow className="h-5 w-5" />
+              <p className="text-xl font-bold">Fluxo</p>
             </button>
           </div>
         </div>
