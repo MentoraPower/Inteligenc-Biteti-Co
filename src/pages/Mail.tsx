@@ -254,8 +254,7 @@ export default function Mail() {
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="sm:max-w-6xl min-h-[600px] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Domínios de e-mail (Resend)</DialogTitle>
-            <p className="text-xs text-muted-foreground mt-1">Ative os domínios que quer usar na plataforma e defina o nome do remetente de cada um.</p>
+            <DialogTitle>Domínios de e-mail</DialogTitle>
           </DialogHeader>
           <div className="py-2 flex-1 overflow-y-auto space-y-2.5">
             {domainsLoading ? (
