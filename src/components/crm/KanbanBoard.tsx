@@ -729,6 +729,16 @@ export function KanbanBoard() {
 
     const overId = over.id as string;
 
+    // The live pointer Y = where the drag started + how far it moved. Using the
+    // pointer (not the dragged card's center) makes the drop marker follow the
+    // cursor precisely — so moving up opens the gap above the card right away.
+    const activator = event.activatorEvent as any;
+    let pointerY: number | null = null;
+    if (activator) {
+      if (typeof activator.clientY === "number") pointerY = activator.clientY + event.delta.y;
+      else if (activator.touches?.[0]) pointerY = activator.touches[0].clientY + event.delta.y;
+    }
+
     // Check if hovering over a top drop zone
     if (overId.endsWith("-top-zone")) {
       const pipelineId = overId.replace("-top-zone", "");
@@ -747,10 +757,10 @@ export function KanbanBoard() {
       const activeRect = active.rect.current.translated;
 
       let position: "top" | "bottom" = "top";
-      if (overRect && activeRect) {
+      if (overRect) {
         const overCenter = overRect.top + overRect.height / 2;
-        const activeCenter = activeRect.top + activeRect.height / 2;
-        position = activeCenter > overCenter ? "bottom" : "top";
+        const ref = pointerY != null ? pointerY : (activeRect ? activeRect.top + activeRect.height / 2 : overCenter);
+        position = ref > overCenter ? "bottom" : "top";
       }
 
       setDropIndicator({
@@ -763,22 +773,20 @@ export function KanbanBoard() {
     // Check if hovering over a lead card
     const overLead = localLeads.find((l) => l.id === overId);
     if (overLead && overLead.pipeline_id) {
-      // Calculate position based on mouse/drag position relative to the card
       const overRect = over.rect;
-      const activeRect = active.rect.current.translated;
-      
-      if (overRect && activeRect) {
+      if (overRect) {
         const overCenter = overRect.top + overRect.height / 2;
-        const activeCenter = activeRect.top + activeRect.height / 2;
-        const position = activeCenter < overCenter ? "top" : "bottom";
-        
+        // Prefer the real pointer; fall back to the dragged card's center.
+        const activeRect = active.rect.current.translated;
+        const ref = pointerY != null ? pointerY : (activeRect ? activeRect.top + activeRect.height / 2 : overCenter);
+        const position = ref < overCenter ? "top" : "bottom";
+
         setDropIndicator({
           pipelineId: overLead.pipeline_id,
           position,
           targetLeadId: overId,
         });
       } else {
-        // Fallback to top if no rects available
         setDropIndicator({
           pipelineId: overLead.pipeline_id,
           position: "top",
