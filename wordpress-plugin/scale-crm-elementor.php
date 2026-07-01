@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Biteti CRM — Integração Elementor
  * Description: Adiciona em cada campo do formulário Elementor um controle "Campo no CRM" e um Token de Conexão. No envio, manda os dados já com os nomes que a plataforma aceita, identificando pelo token.
- * Version: 3.2.0
+ * Version: 3.3.0
  * Author: Biteti & Co Inteligenc
  */
 
@@ -39,10 +39,11 @@ class Biteti_CRM_Elementor {
 
     /* ---------------- Elementor: per-field control ---------------- */
     public function add_field_control($element, $args) {
+      try {
         if (!class_exists('\ElementorPro\Plugin')) return;
         $elementor = \ElementorPro\Plugin::elementor();
         $control_data = $elementor->controls_manager->get_control_from_stack($element->get_unique_name(), 'form_fields');
-        if (is_wp_error($control_data)) return;
+        if (is_wp_error($control_data) || empty($control_data['fields']) || !is_array($control_data['fields'])) return;
 
         $new_field = [
             'name' => 'crm_field',
@@ -69,10 +70,12 @@ class Biteti_CRM_Elementor {
         if (!$inserted) $out[] = $new_field;
         $control_data['fields'] = $out;
         $element->update_control('form_fields', $control_data);
+      } catch (\Throwable $e) { /* never break the editor */ }
     }
 
     /* ---------------- Elementor: token section ---------------- */
     public function add_token_section($element, $args) {
+      try {
         $element->start_controls_section('biteti_crm_section', [
             'label' => 'Conexão Biteti',
             'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
@@ -84,10 +87,12 @@ class Biteti_CRM_Elementor {
             'description' => 'Plataforma → Integrações → Elementor → crie a integração e copie a URL de conexão.',
         ]);
         $element->end_controls_section();
+      } catch (\Throwable $e) { /* never break the editor */ }
     }
 
     /* ---------------- On submit ---------------- */
     public function on_submit($record, $handler) {
+      try {
         $form_settings = $record->get('form_settings');
         // The connection URL (with the token) is pasted per-form in the editor.
         $url = isset($form_settings['biteti_crm_url']) ? trim($form_settings['biteti_crm_url']) : '';
@@ -150,6 +155,7 @@ class Biteti_CRM_Elementor {
             'headers'  => ['Content-Type' => 'application/json'],
             'body'     => wp_json_encode($body),
         ]);
+      } catch (\Throwable $e) { /* never break the form submission */ }
     }
 }
 
