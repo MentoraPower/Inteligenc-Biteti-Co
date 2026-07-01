@@ -13,8 +13,20 @@ interface ImportContactsTabProps {
   onImportingChange?: (importing: boolean) => void;
 }
 
-// Minimal CSV parser (handles quoted fields, escaped quotes, commas & newlines).
-function parseCSV(text: string): string[][] {
+// Detect the delimiter from the header line (BR CSVs often use ";").
+function detectDelimiter(text: string): string {
+  const firstLine = (text.split(/\r?\n/)[0] || "");
+  const counts: Record<string, number> = { ",": 0, ";": 0, "\t": 0 };
+  let inQ = false;
+  for (const c of firstLine) {
+    if (c === '"') inQ = !inQ;
+    else if (!inQ && counts[c] !== undefined) counts[c]++;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] || ",";
+}
+
+// Minimal CSV parser (handles quoted fields, escaped quotes, custom delimiter & newlines).
+function parseCSV(text: string, delimiter = ","): string[][] {
   const rows: string[][] = [];
   let cur: string[] = [];
   let field = "";
@@ -28,7 +40,7 @@ function parseCSV(text: string): string[][] {
       } else field += c;
     } else {
       if (c === '"') inQuotes = true;
-      else if (c === ",") { cur.push(field); field = ""; }
+      else if (c === delimiter) { cur.push(field); field = ""; }
       else if (c === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
       else if (c === "\r") { /* ignore */ }
       else field += c;
@@ -93,7 +105,7 @@ export function ImportContactsTab({ subOriginId, pipelines, onImportingChange }:
       return;
     }
     const text = await file.text();
-    const parsed = parseCSV(text);
+    const parsed = parseCSV(text, detectDelimiter(text));
     if (parsed.length < 2) {
       toast.error("CSV vazio ou sem linhas de dados");
       return;
