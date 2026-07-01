@@ -1421,51 +1421,29 @@ export function KanbanBoard() {
           {/* Filters - Modern Style */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant={hasActiveFilters ? "default" : "outline"}
-                size="icon"
-                className={hasActiveFilters
-                  ? "h-9 w-9 bg-gradient-to-r from-[#f97316] to-[#fb923c] text-white border-0 relative"
-                  : "h-9 w-9 relative"
-                }
-              >
+              <Button variant="outline" size="icon" className="h-9 w-9 relative">
                 <Filter className="w-4 h-4" />
-                {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-[10px] font-semibold bg-foreground text-background rounded-full flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={8} className="w-[600px] bg-popover z-[9999] p-0 overflow-hidden rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-black/[0.06] dark:border-white/[0.08]">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold">Filtros</span>
-                  {activeFilterCount > 0 && (
-                    <span className="text-[10px] font-semibold px-1.5 h-4 inline-flex items-center rounded-full bg-foreground text-background">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </div>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Limpar
-                  </button>
-                )}
-              </div>
-
-              <div className="flex">
-                {/* Left: quick presets */}
-                <div className="w-52 shrink-0 p-3 border-r border-black/[0.06] dark:border-white/[0.08] space-y-1.5">
-                  <span className="block px-1 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <DropdownMenuContent align="end" sideOffset={8} className="w-[340px] bg-popover z-[9999] p-0 overflow-hidden rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-2xl">
+              {/* Quick presets on top */}
+              <div className="p-3 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Período
                   </span>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
                   {[
+                    { key: "all", label: "Máximo" },
                     { key: "today", label: "Hoje" },
                     { key: "yesterday", label: "Ontem" },
                     { key: "7days", label: "Últimos 7 dias" },
@@ -1481,7 +1459,7 @@ export function KanbanBoard() {
                         setEndDate(undefined);
                       }}
                       className={cn(
-                        "w-full px-3 py-2 text-sm font-medium rounded-lg border text-left transition-all",
+                        "w-full px-3 py-2 text-sm font-medium rounded-lg border text-center transition-all",
                         datePreset === preset.key
                           ? "bg-foreground text-background border-foreground"
                           : "bg-background border-black/[0.08] dark:border-white/[0.08] hover:bg-muted hover:border-black/20 dark:hover:border-white/20"
@@ -1491,22 +1469,23 @@ export function KanbanBoard() {
                     </button>
                   ))}
                 </div>
+              </div>
 
-                {/* Right: custom range calendar (início + fim in one) */}
-                <div className="flex-1 p-3">
-                  <div className="flex items-center justify-between px-1 pb-1.5">
-                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Personalizado
-                    </span>
-                    <span className={cn(
-                      "text-xs font-medium",
-                      datePreset === "custom" && (startDate || endDate) ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {startDate ? format(startDate, "dd/MM/yy", { locale: ptBR }) : "Início"}
-                      {"  —  "}
-                      {endDate ? format(endDate, "dd/MM/yy", { locale: ptBR }) : "Fim"}
-                    </span>
-                  </div>
+              {/* Calendar below */}
+              <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.08]">
+                <div className="flex items-center justify-between px-1 pb-1.5">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Personalizado
+                  </span>
+                  <span className={cn(
+                    "text-xs font-medium",
+                    datePreset === "custom" && (startDate || endDate) ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {startDate ? format(startDate, "dd/MM/yy", { locale: ptBR }) : "Início"}
+                    {"  —  "}
+                    {endDate ? format(endDate, "dd/MM/yy", { locale: ptBR }) : "Fim"}
+                  </span>
+                </div>
                   <Calendar
                     mode="range"
                     selected={{ from: startDate, to: endDate } as DateRange}
@@ -1530,7 +1509,6 @@ export function KanbanBoard() {
                     }}
                   />
                 </div>
-              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
