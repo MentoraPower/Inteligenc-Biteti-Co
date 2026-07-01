@@ -172,13 +172,13 @@ export const VirtualizedKanbanColumn = memo(function VirtualizedKanbanColumn({
                 type="button"
                 onClick={toggleAll}
                 title={allSelected ? "Desmarcar todos" : "Selecionar todos"}
-                className={`h-8 w-8 flex-shrink-0 rounded-[6px] border flex items-center justify-center transition-all
+                className={`h-7 w-7 flex-shrink-0 rounded-[5px] border flex items-center justify-center transition-all
                   ${someSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
                   ${allSelected
                     ? "bg-primary border-primary text-white"
                     : "bg-white dark:bg-zinc-900 border-black/20 dark:border-white/20 text-muted-foreground hover:bg-muted"}`}
               >
-                <Check className="h-4 w-4" strokeWidth={2.5} />
+                <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
               </button>
             )}
           </div>
