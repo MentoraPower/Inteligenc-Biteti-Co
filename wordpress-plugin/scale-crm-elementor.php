@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Biteti CRM — Integração Elementor
  * Description: Adiciona em cada campo do formulário Elementor um controle "Campo no CRM" e um Token de Conexão. No envio, manda os dados já com os nomes que a plataforma aceita, identificando pelo token.
- * Version: 3.0.0
+ * Version: 3.1.0
  * Author: Biteti & Co Inteligenc
  */
 
@@ -116,6 +116,24 @@ class Biteti_CRM_Elementor {
             $value = isset($field['value']) ? $field['value'] : '';
             $crm = $lookup($id);
             if ($crm !== null) $body[$crm] = $value;
+        }
+
+        // Auto-capture UTMs from the page URL (no field mapping needed).
+        $meta = $record->get('meta');
+        $page_url = '';
+        if (is_array($meta)) {
+            if (isset($meta['page_url']['value']))      $page_url = $meta['page_url']['value'];
+            elseif (isset($meta['page_url']))           $page_url = is_array($meta['page_url']) ? '' : $meta['page_url'];
+        }
+        if (!$page_url && !empty($_SERVER['HTTP_REFERER'])) $page_url = $_SERVER['HTTP_REFERER'];
+        if ($page_url) {
+            $parts = wp_parse_url($page_url);
+            if (!empty($parts['query'])) {
+                parse_str($parts['query'], $q);
+                foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as $u) {
+                    if (!empty($q[$u]) && !isset($body[$u])) $body[$u] = trim($q[$u]);
+                }
+            }
         }
 
         if (empty($body)) return;
