@@ -263,28 +263,31 @@ export default function Mail() {
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
-                <div className="grid grid-cols-[1fr_1fr_130px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <div className="grid grid-cols-[1fr_1fr_130px_100px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   <div>Domínio</div>
                   <div>Nome do remetente</div>
-                  <div className="text-center">Status</div>
+                  <div className="text-center">Verificação</div>
+                  <div className="text-center">Ativado</div>
                 </div>
                 {resendDomains.map((d: any) => {
                   const cfg = domainCfg[d.id] || { is_active: false, sender_name: "" };
-                  const verified = d.status === "verified";
+                  const st = d.status === "verified"
+                    ? { label: "Verificado", cls: "bg-green-800 text-white" }
+                    : (d.status === "failed" || d.status === "failure" || d.status === "temporary_failure")
+                      ? { label: "Falhou", cls: "bg-red-600 text-white" }
+                      : { label: "Pendente", cls: "bg-yellow-400 text-black" };
                   return (
-                    <div key={d.id} className="grid grid-cols-[1fr_1fr_130px] gap-2 items-center px-4 py-3 border-t border-border">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-semibold truncate">{d.name}</span>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${verified ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                          {verified ? "Verificado" : "Não verif."}
-                        </span>
-                      </div>
+                    <div key={d.id} className="grid grid-cols-[1fr_1fr_130px_100px] gap-2 items-center px-4 py-3 border-t border-border">
+                      <div className="font-semibold truncate">{d.name}</div>
                       <Input
                         value={cfg.sender_name}
                         onChange={(e) => setDomainCfg((prev) => ({ ...prev, [d.id]: { ...cfg, sender_name: e.target.value } }))}
                         placeholder="Nome do remetente"
                         className="h-10 rounded-lg"
                       />
+                      <div className="flex justify-center">
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${st.cls}`}>{st.label}</span>
+                      </div>
                       <div className="flex justify-center">
                         <Switch
                           checked={cfg.is_active}
