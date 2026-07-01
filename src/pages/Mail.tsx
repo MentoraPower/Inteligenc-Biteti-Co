@@ -63,7 +63,7 @@ export default function Mail() {
 
   const openCreate = () => { setNewName(""); setNameDialogOpen(true); };
   const confirmCreate = () => {
-    if (!newName.trim()) return toast.error("Dê um nome à automação");
+    if (!newName.trim()) return toast.error("Dê um nome à campanha");
     setBuilder({ mode: "create", name: newName.trim() });
     setNameDialogOpen(false);
   };
@@ -80,7 +80,7 @@ export default function Mail() {
     setConfirmDelete(null);
     const { error } = await (supabase as any).from("email_automations").delete().eq("id", id);
     if (error) return toast.error("Erro ao remover");
-    toast.success("Automação removida!");
+    toast.success("Campanha removida!");
     refetch();
   };
 
@@ -128,11 +128,11 @@ export default function Mail() {
         });
         if (error) throw error;
       }
-      toast.success(builder.mode === "edit" ? "Automação atualizada!" : "Automação criada!");
+      toast.success(builder.mode === "edit" ? "Campanha atualizada!" : "Campanha criada!");
       setBuilder(null);
       refetch();
     } catch (e: any) {
-      toast.error(e?.message ? `Erro ao salvar: ${e.message}` : "Erro ao salvar automação");
+      toast.error(e?.message ? `Erro ao salvar: ${e.message}` : "Erro ao salvar campanha");
     }
   };
 
@@ -166,11 +166,11 @@ export default function Mail() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
+    <div className="h-full flex flex-col p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Mail</h1>
         <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
-          <Plus className="h-4 w-4" /> Criar automação
+          <Plus className="h-4 w-4" /> Criar campanha
         </Button>
       </div>
 
@@ -179,7 +179,7 @@ export default function Mail() {
           <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
             <MailIcon className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">Nenhuma automação de e-mail ainda.</p>
+          <p className="text-sm text-muted-foreground">Nenhuma campanha de e-mail ainda.</p>
           <Button onClick={openCreate} variant="outline" className="rounded-xl gap-2"><Plus className="h-4 w-4" /> Criar a primeira</Button>
         </div>
       ) : (
@@ -223,9 +223,9 @@ export default function Mail() {
       {/* Name dialog before opening the builder */}
       <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nova automação de e-mail</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Nova campanha de e-mail</DialogTitle></DialogHeader>
           <div className="py-2">
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome da automação" autoFocus onKeyDown={(e) => e.key === "Enter" && confirmCreate()} />
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome da campanha" autoFocus onKeyDown={(e) => e.key === "Enter" && confirmCreate()} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNameDialogOpen(false)}>Cancelar</Button>
@@ -237,7 +237,7 @@ export default function Mail() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir automação?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir campanha?</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir <b>"{confirmDelete?.name}"</b>? Essa ação não pode ser desfeita.
             </AlertDialogDescription>
