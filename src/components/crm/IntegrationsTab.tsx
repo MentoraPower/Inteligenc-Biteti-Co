@@ -108,12 +108,14 @@ function HublaPage({
   const [confirmDelete, setConfirmDelete] = useState<PlatformIntegration | null>(null);
 
   const { data: integrations = [] } = useQuery({
-    queryKey: ["platform-integrations", "hubla"],
+    queryKey: ["platform-integrations", "hubla", subOriginId],
+    enabled: !!subOriginId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_integrations")
         .select("*")
         .eq("platform", "hubla")
+        .eq("sub_origin_id", subOriginId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as PlatformIntegration[];
@@ -477,12 +479,14 @@ function UnnichatPage({ onBack, subOriginId, pipelines }: { onBack: () => void; 
   const [confirmDelete, setConfirmDelete] = useState<PlatformIntegration | null>(null);
 
   const { data: integrations = [] } = useQuery({
-    queryKey: ["platform-integrations", "unnichat"],
+    queryKey: ["platform-integrations", "unnichat", subOriginId],
+    enabled: !!subOriginId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("platform_integrations")
         .select("*")
         .eq("platform", "unnichat")
+        .eq("sub_origin_id", subOriginId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as PlatformIntegration[];
