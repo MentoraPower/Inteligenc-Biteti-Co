@@ -44,7 +44,8 @@ const normalizePhone = (v: string) =>
 const CORE_TARGETS = [
   { key: "name", label: "Nome" },
   { key: "email", label: "Email" },
-  { key: "whatsapp", label: "Telefone" },
+  { key: "whatsapp", label: "Telefone / WhatsApp" },
+  { key: "instagram", label: "Instagram" },
 ];
 
 export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabProps) {
@@ -99,7 +100,8 @@ export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabP
     const guess: Record<number, string> = {};
     hdrs.forEach((h, i) => {
       const l = h.toLowerCase();
-      if (/nome|name/.test(l)) guess[i] = "name";
+      if (/insta|@/.test(l)) guess[i] = "instagram";
+      else if (/nome|name/.test(l)) guess[i] = "name";
       else if (/mail/.test(l)) guess[i] = "email";
       else if (/tel|phone|whats|celular|fone/.test(l)) guess[i] = "whatsapp";
       else guess[i] = "ignore";
@@ -121,8 +123,8 @@ export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabP
   const doImport = async () => {
     if (!pipelineId) return toast.error("Escolha a pipeline de destino");
     const hasName = Object.values(mapping).includes("name");
-    const hasContact = Object.values(mapping).some((v) => v === "email" || v === "whatsapp");
-    if (!hasName && !hasContact) return toast.error("Mapeie ao menos Nome, Email ou Telefone");
+    const hasContact = Object.values(mapping).some((v) => v === "email" || v === "whatsapp" || v === "instagram");
+    if (!hasName && !hasContact) return toast.error("Mapeie ao menos Nome, Email, Telefone ou Instagram");
 
     setImporting(true);
     setProgress(0);
@@ -138,6 +140,7 @@ export function ImportContactsTab({ subOriginId, pipelines }: ImportContactsTabP
           if (target === "name") lead.name = val;
           else if (target === "email") lead.email = val || null;
           else if (target === "whatsapp") lead.whatsapp = normalizePhone(val) || null;
+          else if (target === "instagram") lead.instagram = val ? (val.startsWith("@") ? val : `@${val}`) : null;
           else if (target.startsWith("cf:") && val) custom.push({ field_id: target.slice(3), response_value: val });
         });
         if (!lead.name || !lead.name.trim()) lead.name = lead.email || "Contato";
