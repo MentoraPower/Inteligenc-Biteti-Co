@@ -779,12 +779,31 @@ export function KanbanBoard() {
         // Prefer the real pointer; fall back to the dragged card's center.
         const activeRect = active.rect.current.translated;
         const ref = pointerY != null ? pointerY : (activeRect ? activeRect.top + activeRect.height / 2 : overCenter);
-        const position = ref < overCenter ? "top" : "bottom";
+        let position: "top" | "bottom" = ref < overCenter ? "top" : "bottom";
+        let targetLeadId = overId;
+
+        // Hovering over the card being dragged: retarget to the neighbor in the
+        // drag direction. A tiny move up/down opens the adjacent gap, and it never
+        // targets the dragged card itself (which used to drop it at the end).
+        if (overId === (active.id as string)) {
+          const pipeLeads = localLeads
+            .filter((l) => l.pipeline_id === overLead.pipeline_id)
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          const idx = pipeLeads.findIndex((l) => l.id === overId);
+          if (position === "top" && idx > 0) {
+            targetLeadId = pipeLeads[idx - 1].id;
+          } else if (position === "bottom" && idx < pipeLeads.length - 1) {
+            targetLeadId = pipeLeads[idx + 1].id;
+          } else {
+            setDropIndicator(null); // at the very top/bottom edge — no move
+            return;
+          }
+        }
 
         setDropIndicator({
           pipelineId: overLead.pipeline_id,
           position,
-          targetLeadId: overId,
+          targetLeadId,
         });
       } else {
         setDropIndicator({
