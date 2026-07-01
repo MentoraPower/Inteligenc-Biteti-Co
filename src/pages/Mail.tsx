@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -238,7 +237,7 @@ export default function Mail() {
 
       {/* Email configuration (large popup) */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="sm:max-w-4xl min-h-[600px] flex flex-col">
+        <DialogContent className="sm:max-w-6xl min-h-[600px] flex flex-col">
           <DialogHeader><DialogTitle>Configuração de e-mail</DialogTitle></DialogHeader>
           <div className="py-2 space-y-4 flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -254,10 +253,6 @@ export default function Mail() {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">E-mail de resposta (reply-to)</label>
               <Input value={settings.reply_to} onChange={(e) => setSettings((s) => ({ ...s, reply_to: e.target.value }))} placeholder="respostas@seudominio.com" className="h-11 rounded-xl" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Assinatura</label>
-              <Textarea value={settings.signature_html} onChange={(e) => setSettings((s) => ({ ...s, signature_html: e.target.value }))} placeholder="Sua assinatura de e-mail..." className="min-h-[240px] rounded-xl" />
             </div>
           </div>
           <DialogFooter>
