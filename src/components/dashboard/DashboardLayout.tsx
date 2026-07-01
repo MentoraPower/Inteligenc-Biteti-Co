@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, memo, useRef, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, LayoutGrid, ChevronRight } from "lucide-react";
+import { Menu, X, LogOut, LayoutGrid, ChevronRight, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRMOriginsPanel } from "./CRMOriginsPanel";
 import { PageTransition } from "./PageTransition";
@@ -49,6 +49,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
 
   const isCRMActive = location.pathname.startsWith("/crm") || location.pathname === "/";
   const isSettingsActive = location.pathname === "/settings";
+  const isMailActive = location.pathname.startsWith("/mail");
 
   // Initialize submenu states directly from localStorage (no animation on refresh)
   const getInitialCrmSubmenuState = () => {
@@ -226,6 +227,24 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                   </div>
                   <span className="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto">
                     Espaços
+                  </span>
+                </button>
+
+                {/* Mail Button */}
+                <button
+                  onClick={() => navigate('/mail')}
+                  className={cn(
+                    "relative flex items-center h-10 rounded-lg transition-all duration-200",
+                    isMailActive
+                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
+                      : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  <div className="w-10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-5 w-5" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto">
+                    Mail
                   </span>
                 </button>
 

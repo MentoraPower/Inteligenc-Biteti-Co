@@ -14,6 +14,7 @@ import LeadDetail from "./pages/LeadDetail";
 import Auth from "./pages/Auth";
 import AdminShell from "./pages/AdminShell";
 import Settings from "./pages/Settings";
+import Mail from "./pages/Mail";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
                 <Route index element={<Navigate to="/crm" replace />} />
                 <Route path="crm" element={<CRM />} />
                 <Route path="crm/:id" element={<LeadDetail />} />
+                <Route path="mail" element={<Mail />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="/termos" element={<TermsOfUse />} />
