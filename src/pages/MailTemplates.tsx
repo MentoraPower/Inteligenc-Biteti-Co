@@ -90,10 +90,6 @@ export default function MailTemplates() {
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-4">
-        Crie e-mails no editor visual e salve para reutilizar nas campanhas.
-      </p>
-
       <div className="rounded-2xl border border-border overflow-hidden">
         <div className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           <div>Nome</div>
