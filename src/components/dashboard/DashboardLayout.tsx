@@ -490,7 +490,9 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {isDesktop ? (
           <main 
             style={{
-              left: submenuOpen
+              left: mailEditorOpen
+                ? sidebarMargin + sidebarCollapsedWidth
+                : submenuOpen
                 ? sidebarMargin + sidebarCollapsedWidth - 16 + submenuWidth + 16
                 : sidebarMargin + sidebarCollapsedWidth + 8,
               top: '49px',
@@ -500,7 +502,10 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             }}
             className="fixed transition-[left] duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
           >
-            <div className="h-full overflow-hidden relative flex flex-col bg-card pt-1 pb-3 px-3">
+            <div className={cn(
+              "h-full overflow-hidden relative flex flex-col bg-card",
+              mailEditorOpen ? "" : "pt-1 pb-3 px-3"
+            )}>
               <PageTransition>
                 <RouteContentMemo>
                   {children}
