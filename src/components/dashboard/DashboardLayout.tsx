@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { originIdToSlug, slugify } from "@/lib/origin-slugs";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useIsDesktop } from "@/hooks/use-mobile";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -176,9 +177,9 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   // Sidebar dimensions
   const sidebarCollapsedWidth = 64;
   const submenuWidth = 256;
-  const sidebarMargin = 10; // gap around the floating menu (sides / top / bottom)
+  const sidebarMargin = 0; // flush to the edges (no side / top / bottom gap)
   const topbarHeight = 60;
-  const submenuExtra = 8;   // submenu is a bit shorter than the sidebar (top + bottom)
+  const submenuExtra = 0;   // submenu flush with the sidebar (no top/bottom gap)
   const submenuTuck = sidebarCollapsedWidth; // submenu extends left UNDER the menu
 
   return (
@@ -209,7 +210,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             top: topbarHeight + sidebarMargin,
             height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
           }}
-          className="group hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-card border border-zinc-800 dark:border-border rounded-2xl shadow-sm overflow-hidden z-50 w-16 hover:w-[180px] transition-[width] duration-200 ease-out"
+          className="hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-card rounded-none overflow-hidden z-50 w-16"
         >
           <div className="flex flex-col h-full relative">
             {/* Top spacing (logo removed) */}
@@ -218,45 +219,58 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2">
               <div className="flex flex-col gap-2">
                 {/* CRM Button */}
-                <button
-                  onClick={() => handleNavClick('crm')}
-                  className={cn(
-                    "relative flex items-center h-10 rounded-lg transition-all duration-200",
-                    isCRMActive
-                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
-                      : "text-zinc-400 hover:bg-white/10 hover:text-white"
-                  )}
-                >
-                  <div className="w-10 flex items-center justify-center flex-shrink-0">
-                    <LayoutGrid className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto">
-                    Espaços
-                  </span>
-                </button>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => handleNavClick('crm')}
+                      className={cn(
+                        "relative flex items-center justify-center h-10 rounded-lg transition-all duration-200",
+                        isCRMActive
+                          ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
+                          : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      <LayoutGrid className="h-5 w-5" strokeWidth={1.5} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-sm font-medium rounded-md">Espaços</TooltipContent>
+                </Tooltip>
 
                 {/* Mail Button */}
-                <button
-                  onClick={() => navigate('/mail')}
-                  className={cn(
-                    "relative flex items-center h-10 rounded-lg transition-all duration-200",
-                    isMailActive
-                      ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
-                      : "text-zinc-400 hover:bg-white/10 hover:text-white"
-                  )}
-                >
-                  <div className="w-10 flex items-center justify-center flex-shrink-0">
-                    <Mail className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-sm font-medium whitespace-nowrap transition-all duration-200 overflow-hidden opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto">
-                    Mail
-                  </span>
-                </button>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigate('/mail')}
+                      className={cn(
+                        "relative flex items-center justify-center h-10 rounded-lg transition-all duration-200",
+                        isMailActive
+                          ? "bg-white/10 text-white before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-[70%] before:w-1.5 before:rounded-r-full before:bg-gradient-to-b before:from-purple-700 before:to-purple-800"
+                          : "text-zinc-400 hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      <Mail className="h-5 w-5" strokeWidth={1.5} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-sm font-medium rounded-md">Mail</TooltipContent>
+                </Tooltip>
 
               </div>
             </nav>
           </div>
         </aside>
+
+        {/* Concave corner: dark fillet where the menu meets the navbar (over the submenu) */}
+        <div
+          aria-hidden
+          className="menu-concave-corner pointer-events-none hidden lg:block fixed"
+          style={{
+            left: sidebarMargin + sidebarCollapsedWidth,
+            top: topbarHeight,
+            width: 20,
+            height: 20,
+            zIndex: 45,
+          }}
+        />
 
         {/* CRM Submenu Clip Container - clips the submenu animation */}
         <div
@@ -282,7 +296,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
               animationsEnabled && "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
             )}
           >
-            <div className="h-full bg-background bg-clip-padding border border-border border-l-0 rounded-r-2xl overflow-hidden">
+            <div className="h-full bg-background bg-clip-padding rounded-none overflow-hidden">
               <div
                 className={cn(
                   "h-full",

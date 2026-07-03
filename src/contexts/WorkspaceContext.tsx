@@ -27,6 +27,14 @@ const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
 const WORKSPACE_STORAGE_KEY = 'current_workspace_id';
 
+// Toggle the native workspace-switch loading (dark backdrop behind the app + content-area bar).
+function toggleNativeOverlay(show: boolean) {
+  const backdrop = document.getElementById('workspace-loading-backdrop');
+  const overlay = document.getElementById('workspace-loading-overlay');
+  if (backdrop) backdrop.style.display = show ? 'block' : 'none';
+  if (overlay) overlay.style.display = show ? 'flex' : 'none';
+}
+
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
@@ -110,8 +118,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       // Clear the native loading overlay after workspaces are loaded
       sessionStorage.removeItem('workspace_switching');
-      const nativeOverlay = document.getElementById('workspace-loading-overlay');
-      if (nativeOverlay) nativeOverlay.style.display = 'none';
+      toggleNativeOverlay(false);
     }
   }, []);
 
@@ -135,8 +142,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       // Set flag so the native overlay shows immediately on reload
       sessionStorage.setItem('workspace_switching', 'true');
       // Show native overlay now
-      const nativeOverlay = document.getElementById('workspace-loading-overlay');
-      if (nativeOverlay) nativeOverlay.style.display = 'flex';
+      toggleNativeOverlay(true);
       // Small delay then reload
       setTimeout(() => {
         window.location.href = '/crm';
@@ -219,12 +225,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       // Show loading and reload
       setIsSwitching(true);
       sessionStorage.setItem('workspace_switching', 'true');
-      const nativeOverlay = document.getElementById('workspace-loading-overlay');
-      if (nativeOverlay) nativeOverlay.style.display = 'flex';
+      toggleNativeOverlay(true);
       setTimeout(() => {
         window.location.href = '/crm';
       }, 150);
-      
+
       return newWorkspace;
     } catch (error) {
       console.error('Error creating workspace:', error);
@@ -282,8 +287,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(WORKSPACE_STORAGE_KEY, next.id);
           setIsSwitching(true);
           sessionStorage.setItem('workspace_switching', 'true');
-          const nativeOverlay = document.getElementById('workspace-loading-overlay');
-          if (nativeOverlay) nativeOverlay.style.display = 'flex';
+          toggleNativeOverlay(true);
           setTimeout(() => { window.location.href = '/crm'; }, 150);
         }
       }

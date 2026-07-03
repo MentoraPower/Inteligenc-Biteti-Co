@@ -30,24 +30,43 @@
   <meta name="twitter:title" content="Biteti & Co Inteligenc">
   <meta property="og:description" content="Plataforma Biteti & Co Inteligenc">
   <meta name="twitter:description" content="Plataforma Biteti & Co Inteligenc">
+  <script>
+    // Apply theme before first paint so the loading overlay never flashes white.
+    try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+  </script>
 </head>
 
   <body>
-    <!-- Native loading overlay for workspace switching (survives page reload) -->
-    <div id="workspace-loading-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--background, #fff);align-items:center;justify-content:center;">
-      <div id="ws-overlay-spinner"></div>
+    <!-- Workspace-switch loading (survives page reload) -->
+    <!-- Backdrop sits BEHIND the app (#root): keeps navbar + menu dark so the reload never flashes white.
+         As soon as React mounts, the real navbar/menu (with the workspace button and rounded corner) paint over it. -->
+    <div id="workspace-loading-backdrop" style="display:none;position:fixed;inset:0;z-index:-1;">
+      <div class="ws-ov-bg" style="position:absolute;inset:0;"></div>
+      <div class="ws-ov-dark" style="position:absolute;top:0;left:0;right:0;height:60px;"></div>
+      <div class="ws-ov-dark" style="position:absolute;top:60px;left:0;width:64px;bottom:0;"></div>
+    </div>
+    <!-- Loader sits ABOVE the app, but only over the content area: a centered horizontal bar.
+         It is transparent, so the navbar, menu, workspace button and rounded corner stay visible. -->
+    <div id="workspace-loading-overlay" style="display:none;position:fixed;top:60px;left:64px;right:0;bottom:0;z-index:9999;align-items:center;justify-content:center;">
+      <div class="ws-ov-track"><div class="ws-ov-fill"></div></div>
     </div>
     <style>
-      @keyframes ws-spin { to { transform: rotate(360deg); } }
-      #ws-overlay-spinner { height: 32px; width: 32px; border-radius: 9999px; border: 3px solid rgba(0,0,0,0.15); border-top-color: rgba(0,0,0,0.7); animation: ws-spin 0.7s linear infinite; }
-      .dark #workspace-loading-overlay { background: #000; }
-      .dark #ws-overlay-spinner { border-color: rgba(255,255,255,0.2); border-top-color: rgba(255,255,255,0.9); }
+      @keyframes ws-bar { 0% { left: -40%; } 100% { left: 100%; } }
+      #workspace-loading-backdrop .ws-ov-bg { background: #fcfcfc; }
+      #workspace-loading-backdrop .ws-ov-dark { background: #18181b; }
+      .dark #workspace-loading-backdrop .ws-ov-bg { background: #0d0d0d; }
+      .dark #workspace-loading-backdrop .ws-ov-dark { background: #0d0d0d; }
+      #workspace-loading-overlay .ws-ov-track { position: relative; width: 240px; height: 4px; border-radius: 9999px; overflow: hidden; background: rgba(0,0,0,0.1); }
+      .dark #workspace-loading-overlay .ws-ov-track { background: rgba(255,255,255,0.12); }
+      #workspace-loading-overlay .ws-ov-fill { position: absolute; top: 0; height: 100%; width: 40%; border-radius: 9999px; background: linear-gradient(90deg, #7e22ce, #581c87); animation: ws-bar 1.1s ease-in-out infinite; }
     </style>
     <script>
-      // Show overlay immediately if workspace switch is in progress
+      // Show loading immediately if a workspace switch is in progress
       if (sessionStorage.getItem('workspace_switching') === 'true') {
-        var overlay = document.getElementById('workspace-loading-overlay');
-        if (overlay) overlay.style.display = 'flex';
+        var wsBackdrop = document.getElementById('workspace-loading-backdrop');
+        var wsOverlay = document.getElementById('workspace-loading-overlay');
+        if (wsBackdrop) wsBackdrop.style.display = 'block';
+        if (wsOverlay) wsOverlay.style.display = 'flex';
       }
     </script>
     <div id="root"></div>

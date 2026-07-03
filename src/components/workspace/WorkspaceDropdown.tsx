@@ -97,14 +97,14 @@ export function WorkspaceDropdown() {
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="h-9 flex items-center gap-2 pl-1 pr-3 ml-3 rounded-full bg-black/10 dark:bg-white/10 transition-colors outline-none hover:bg-black/15 dark:hover:bg-white/15">
+          <button className="h-9 flex items-center gap-2 pl-1 pr-3 ml-3 rounded-full bg-white/10 transition-colors outline-none hover:bg-white/15">
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center flex-shrink-0">
               <span className="text-[11px] font-semibold text-white">
                 {getInitials(displayName)}
               </span>
             </div>
-            <span className="text-sm font-bold text-foreground">{displayName}</span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <span className="text-sm font-bold text-white">{displayName}</span>
+            <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={8} className="w-80 bg-popover border border-border p-0 rounded-2xl overflow-hidden shadow-2xl">

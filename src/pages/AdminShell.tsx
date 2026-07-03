@@ -48,8 +48,8 @@ function TopNavbar() {
 
   return (
     <>
-      <div 
-        className="fixed top-0 left-0 right-0 z-50 h-[60px] bg-card flex items-center justify-between px-0 border-b border-border"
+      <div
+        className="fixed top-0 left-0 right-0 z-50 h-[60px] bg-zinc-900 dark:bg-card flex items-center justify-between px-0"
       >
         <WorkspaceDropdown />
         
@@ -64,12 +64,12 @@ function TopNavbar() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="w-8 h-8 rounded-full bg-muted overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-border transition-all"
+              className="w-8 h-8 rounded-full bg-white/10 overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-white/20 transition-all"
             >
               {photoUrl ? (
                 <img src={photoUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                <User className="h-4 w-4 text-zinc-300" strokeWidth={1.5} />
               )}
             </button>
             
