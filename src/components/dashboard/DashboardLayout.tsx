@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut, LayoutGrid, ChevronRight, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRMOriginsPanel } from "./CRMOriginsPanel";
+import { MailOptionsPanel } from "./MailOptionsPanel";
 import { PageTransition } from "./PageTransition";
 import { LoadingBar } from "@/components/LoadingBar";
 import { ConnectionStatus } from "@/components/realtime/ConnectionStatus";
@@ -61,7 +62,18 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   };
   
   const [crmSubmenuOpen, setCrmSubmenuOpen] = useState(getInitialCrmSubmenuState);
-  
+
+  // Mail submenu (Fluxos / Templates) — mirrors the CRM submenu.
+  const getInitialMailSubmenuState = () => {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('mail_submenu_open');
+    return saved !== 'false' && window.location.pathname.startsWith('/mail');
+  };
+  const [mailSubmenuOpen, setMailSubmenuOpen] = useState(getInitialMailSubmenuState);
+
+  // The submenu that belongs to the currently active section drives the layout.
+  const submenuOpen = isMailActive ? mailSubmenuOpen : crmSubmenuOpen;
+
   // Track if submenus were restored from storage (skip animation)
   const [crmSubmenuRestored] = useState(getInitialCrmSubmenuState);
   const [animationsEnabled, setAnimationsEnabled] = useState(false);
@@ -77,10 +89,23 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     setCrmSubmenuOpen(false);
   }, []);
 
+  // Toggle the Mail submenu; navigate to Mail if not there yet.
+  const handleMailClick = useCallback(() => {
+    if (isMailActive && mailSubmenuOpen) {
+      setMailSubmenuOpen(false);
+      return;
+    }
+    setMailSubmenuOpen(true);
+    if (!location.pathname.startsWith('/mail')) navigate('/mail');
+  }, [isMailActive, mailSubmenuOpen, location.pathname, navigate]);
+
   // Persist submenu states to localStorage
   useEffect(() => {
     localStorage.setItem('crm_submenu_open', String(crmSubmenuOpen));
   }, [crmSubmenuOpen]);
+  useEffect(() => {
+    localStorage.setItem('mail_submenu_open', String(mailSubmenuOpen));
+  }, [mailSubmenuOpen]);
 
   // Sync activePanel with current route (without forcing submenu open)
   useEffect(() => {
@@ -95,6 +120,21 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
   useEffect(() => {
     if (!isCRMActive) setCrmSubmenuOpen(false);
   }, [isCRMActive]);
+
+  // The Mail submenu only belongs to the Mail page — close it elsewhere.
+  useEffect(() => {
+    if (!isMailActive) setMailSubmenuOpen(false);
+  }, [isMailActive]);
+
+  // Collapse the Mail submenu while the campaign flow editor is open; reopen on exit.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const open = (e as CustomEvent).detail?.open;
+      setMailSubmenuOpen(!open);
+    };
+    window.addEventListener('mail-editor', handler);
+    return () => window.removeEventListener('mail-editor', handler);
+  }, []);
 
 
   // Sync with global state and localStorage (without affecting submenu)
@@ -240,7 +280,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate('/mail')}
+                      onClick={handleMailClick}
                       className={cn(
                         "relative flex items-center justify-center h-10 rounded-lg transition-all duration-200",
                         isMailActive
@@ -323,11 +363,56 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
           </div>
         </div>
 
+        {/* Mail Submenu Clip Container - clips the submenu animation */}
+        <div
+          style={{
+            left: sidebarMargin,
+            top: topbarHeight + sidebarMargin + submenuExtra,
+            height: `calc(100vh - ${topbarHeight + (sidebarMargin + submenuExtra) * 2}px)`,
+            width: submenuWidth + submenuTuck,
+            zIndex: 39,
+            pointerEvents: mailSubmenuOpen ? 'auto' : 'none',
+          }}
+          className="hidden lg:block fixed overflow-hidden"
+        >
+          <div
+            style={{
+              width: submenuWidth + submenuTuck,
+              transform: mailSubmenuOpen ? 'translateX(0px)' : `translateX(-${submenuWidth + submenuTuck}px)`,
+              willChange: animationsEnabled ? 'transform' : 'auto',
+            }}
+            className={cn(
+              "h-full overflow-hidden",
+              animationsEnabled && "transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+            )}
+          >
+            <div className="h-full bg-background bg-clip-padding rounded-none overflow-hidden">
+              <div
+                className={cn(
+                  "h-full",
+                  animationsEnabled && "transition-opacity duration-400"
+                )}
+                style={{
+                  width: submenuWidth + submenuTuck,
+                  minWidth: submenuWidth + submenuTuck,
+                  paddingLeft: submenuTuck,
+                  opacity: mailSubmenuOpen ? 1 : 0,
+                  transitionDelay: (animationsEnabled && mailSubmenuOpen) ? '80ms' : '0ms',
+                }}
+              >
+                <div className="h-full px-2 py-2">
+                  <MailOptionsPanel />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* Floating button to reopen CRM submenu when closed */}
-        {isCRMActive && !crmSubmenuOpen && (
+
+        {/* Floating button to reopen the active submenu when closed */}
+        {(isCRMActive || isMailActive) && !submenuOpen && (
           <button
-            onClick={() => setCrmSubmenuOpen(true)}
+            onClick={() => (isMailActive ? setMailSubmenuOpen(true) : setCrmSubmenuOpen(true))}
             style={{
               left: sidebarMargin + sidebarCollapsedWidth - 4,
               zIndex: 40,
@@ -401,8 +486,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
         {/* Main Content - Conditionally render only ONE to avoid duplicate children mounts */}
         {isDesktop ? (
           <main 
-            style={{ 
-              left: crmSubmenuOpen
+            style={{
+              left: submenuOpen
                 ? sidebarMargin + sidebarCollapsedWidth - 16 + submenuWidth + 16
                 : sidebarMargin + sidebarCollapsedWidth + 8,
               top: '49px',

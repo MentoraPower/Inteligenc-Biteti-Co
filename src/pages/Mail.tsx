@@ -14,8 +14,9 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowLeft, ArrowRight, Send, Workflow, Settings } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, Zap, Copy, ArrowRight, Settings, Search } from "lucide-react";
 import { toast } from "sonner";
+import { CampaignFlowEditor } from "@/components/mail/CampaignFlowEditor";
 
 interface EmailAutomation {
   id: string;
@@ -31,6 +32,7 @@ interface EmailAutomation {
 
 export default function Mail() {
   const [editing, setEditing] = useState<EmailAutomation | null>(null);
+  const [filter, setFilter] = useState("");
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
@@ -159,45 +161,29 @@ export default function Mail() {
     refetch();
   };
 
-  // ── Blank campaign page (starting point — to be built next) ──
+  // ── Campaign flow editor (vertical funnel, React Flow) ──
   if (editing) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-background">
-        <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
-          <h1 className="text-xl font-bold">Mail</h1>
-          <Button onClick={() => { setEditing(null); refetch(); }} className="h-9 gap-1.5 rounded-lg bg-white text-black hover:bg-neutral-100 border border-border font-medium">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </Button>
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-start p-6 pt-16 gap-10">
-          <h3 className="text-4xl font-bold text-center">O que você quer fazer?</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-6xl">
-            <button
-              onClick={() => toast.info("Disparo — em construção")}
-              className="h-80 rounded-md border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
-            >
-              <Send className="h-6 w-6" />
-              <p className="text-2xl font-bold">Disparo</p>
-            </button>
-
-            <button
-              onClick={() => toast.info("Fluxo — em construção")}
-              className="h-80 rounded-md border-2 border-border transition-colors flex items-center justify-center gap-2.5 text-center px-6"
-            >
-              <Workflow className="h-6 w-6" />
-              <p className="text-2xl font-bold">Fluxo</p>
-            </button>
-          </div>
-        </div>
-      </div>
+      <CampaignFlowEditor
+        automation={editing}
+        onBack={() => { setEditing(null); refetch(); }}
+      />
     );
   }
 
   return (
     <div className="h-full flex flex-col p-6 w-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Mail</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="relative w-full max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar campanhas..."
+            className="h-10 pl-9 rounded-xl"
+          />
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold">
             <Plus className="h-4 w-4" /> Criar campanha
           </Button>
@@ -214,12 +200,20 @@ export default function Mail() {
           <div className="text-center">Status</div>
           <div className="text-center">Ações</div>
         </div>
-        {automations.length === 0 && (
+        {(() => {
+          const visible = automations.filter((a) =>
+            a.name.toLowerCase().includes(filter.trim().toLowerCase())
+          );
+          return (
+            <>
+        {visible.length === 0 && (
           <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
-            Nenhuma campanha ainda. Clique em <b>Criar campanha</b> para começar.
+            {filter.trim()
+              ? "Nenhuma campanha encontrada."
+              : <>Nenhuma campanha ainda. Clique em <b>Criar campanha</b> para começar.</>}
           </div>
         )}
-        {automations.map((a) => (
+        {visible.map((a) => (
           <div key={a.id} className="grid grid-cols-[1fr_130px_110px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm">
             <div className="flex items-center gap-2 min-w-0">
               <Zap className="h-4 w-4 text-purple-700 flex-shrink-0" />
@@ -249,6 +243,9 @@ export default function Mail() {
             </div>
           </div>
         ))}
+            </>
+          );
+        })()}
       </div>
 
       {/* Name dialog before opening the campaign page */}
