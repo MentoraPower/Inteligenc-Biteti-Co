@@ -70,6 +70,8 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     return saved !== 'false' && window.location.pathname.startsWith('/mail');
   };
   const [mailSubmenuOpen, setMailSubmenuOpen] = useState(getInitialMailSubmenuState);
+  // True while the campaign flow editor is open — hides the submenu + its reopen arrow.
+  const [mailEditorOpen, setMailEditorOpen] = useState(false);
 
   // The submenu that belongs to the currently active section drives the layout.
   const submenuOpen = isMailActive ? mailSubmenuOpen : crmSubmenuOpen;
@@ -131,6 +133,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
     const handler = (e: Event) => {
       const open = (e as CustomEvent).detail?.open;
       setMailSubmenuOpen(!open);
+      setMailEditorOpen(!!open);
     };
     window.addEventListener('mail-editor', handler);
     return () => window.removeEventListener('mail-editor', handler);
@@ -410,7 +413,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
 
 
         {/* Floating button to reopen the active submenu when closed */}
-        {(isCRMActive || isMailActive) && !submenuOpen && (
+        {(isCRMActive || isMailActive) && !submenuOpen && !mailEditorOpen && (
           <button
             onClick={() => (isMailActive ? setMailSubmenuOpen(true) : setCrmSubmenuOpen(true))}
             style={{
