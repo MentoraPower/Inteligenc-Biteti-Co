@@ -210,7 +210,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
             top: topbarHeight + sidebarMargin,
             height: `calc(100vh - ${topbarHeight + sidebarMargin * 2}px)`,
           }}
-          className="hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-card rounded-none overflow-hidden z-50 w-16"
+          className="hidden lg:flex flex-col fixed bg-zinc-900 dark:bg-zinc-800 rounded-none overflow-hidden z-50 w-16"
         >
           <div className="flex flex-col h-full relative">
             {/* Top spacing (logo removed) */}

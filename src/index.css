@@ -766,5 +766,5 @@
   background: radial-gradient(circle at bottom right, transparent 19px, #18181b 20.5px);
 }
 .dark .menu-concave-corner {
-  background: radial-gradient(circle at bottom right, transparent 19px, hsl(var(--card)) 20.5px);
+  background: radial-gradient(circle at bottom right, transparent 19px, #27272a 20.5px);
 }

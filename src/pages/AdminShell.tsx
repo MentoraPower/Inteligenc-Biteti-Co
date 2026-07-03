@@ -49,7 +49,7 @@ function TopNavbar() {
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 z-50 h-[60px] bg-zinc-900 dark:bg-card flex items-center justify-between px-0"
+        className="fixed top-0 left-0 right-0 z-50 h-[60px] bg-zinc-900 dark:bg-zinc-800 flex items-center justify-between px-0"
       >
         <WorkspaceDropdown />
         
