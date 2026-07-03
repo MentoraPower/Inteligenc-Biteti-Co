@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, LayoutTemplate, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { TemplateEditor } from "@/components/mail/TemplateEditor";
 
 interface EmailTemplate {
   id: string;
@@ -40,6 +41,7 @@ export default function MailTemplates() {
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<EmailTemplate | null>(null);
+  const [editing, setEditing] = useState<EmailTemplate | null>(null);
 
   const { data: templates = [], refetch } = useQuery({
     queryKey: ["email-templates-all"],
@@ -59,13 +61,15 @@ export default function MailTemplates() {
 
   const confirmCreate = async () => {
     if (!newName.trim()) return;
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("email_templates")
-      .insert({ name: newName.trim(), subject: "", body_html: "" });
+      .insert({ name: newName.trim(), subject: "", body_html: "" })
+      .select("id,name,subject,created_at")
+      .single();
     if (error) return toast.error("Erro ao criar template");
     setNameDialogOpen(false);
     refetch();
-    toast.success("Template criado!");
+    setEditing(data as EmailTemplate); // open the visual editor right away
   };
 
   const doDelete = async () => {
@@ -78,13 +82,23 @@ export default function MailTemplates() {
     refetch();
   };
 
+  // Visual email editor (Elementor-style) ─ full screen
+  if (editing) {
+    return (
+      <TemplateEditor
+        template={editing}
+        onBack={() => { setEditing(null); refetch(); }}
+      />
+    );
+  }
+
   return (
     <div className="h-full flex flex-col p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Templates</h1>
         <Button
           onClick={openCreate}
-          className="h-10 gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 text-white hover:opacity-95 border-0 font-semibold"
+          className="h-10 gap-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white border-0 font-semibold"
         >
           <Plus className="h-4 w-4" /> Criar template
         </Button>
@@ -121,7 +135,7 @@ export default function MailTemplates() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => toast.info("Editor visual — em construção")}>
+                  <DropdownMenuItem onClick={() => setEditing(t)}>
                     <Pencil className="h-4 w-4 mr-2" /> Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem
