@@ -192,7 +192,7 @@ export function CampaignFlowEditor({ automation, onBack }: CampaignFlowEditorPro
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background pt-2">
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-1.5 text-sm">
