@@ -194,7 +194,7 @@ export default function Mail() {
       <div className="rounded-2xl border border-border overflow-x-auto">
         <div className="min-w-[980px]">
           {/* Header */}
-          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_210px_180px_150px_160px_130px] items-center gap-2 px-4 py-3 border-b border-border text-xs font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_210px_180px_150px_160px_130px] items-center gap-2 px-4 py-3 border-b border-border text-[15px] font-semibold text-muted-foreground">
             <div>
               <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
             </div>
@@ -344,7 +344,7 @@ export default function Mail() {
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
-                <div className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 px-4 py-3.5 bg-zinc-500/[0.06] text-[17px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <div className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   <div>E-mail de envio</div>
                   <div>Nome do remetente</div>
                   <div className="text-center">Verificação</div>
