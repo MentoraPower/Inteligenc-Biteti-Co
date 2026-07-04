@@ -1,5 +1,4 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Workflow, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Simple options submenu for the Mail section (mirrors the Espaços submenu visually,
@@ -8,52 +7,60 @@ export function MailOptionsPanel() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const options = [
+  // Grouped by function: each block has a title and its options.
+  const groups = [
     {
-      label: "Automações",
-      icon: Workflow,
-      path: "/mail",
-      isActive: location.pathname === "/mail",
+      title: "Automações",
+      items: [
+        { label: "Fluxo", path: "/mail", isActive: location.pathname === "/mail", dev: false },
+        { label: "Disparo", path: "", isActive: false, dev: true },
+      ],
     },
     {
-      label: "Templates",
-      icon: LayoutTemplate,
-      path: "/mail/templates",
-      isActive: location.pathname.startsWith("/mail/templates"),
+      title: "Estrutura",
+      items: [
+        {
+          label: "Templates",
+          path: "/mail/templates",
+          isActive: location.pathname.startsWith("/mail/templates"),
+          dev: false,
+        },
+      ],
     },
   ];
 
   return (
     <div className="h-full flex flex-col bg-background text-foreground">
-      {/* Options list */}
-      <div className="flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-1">
-        {options.map(({ label, icon: Icon, path, isActive }) => (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className={cn(
-              "flex items-center gap-2.5 w-full py-2.5 px-3 rounded-lg text-sm transition-colors",
-              isActive
-                ? "bg-accent text-foreground"
-                : "text-foreground/70 hover:text-foreground hover:bg-accent"
-            )}
-          >
-            <Icon
-              className={cn(
-                "h-4 w-4 flex-shrink-0",
-                isActive ? "text-purple-700" : "text-foreground/60"
-              )}
-            />
-            <span
-              className={cn(
-                "truncate font-bold",
-                isActive &&
-                  "bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent"
-              )}
-            >
-              {label}
-            </span>
-          </button>
+      {/* Options grouped in blocks */}
+      <div className="flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5">
+        {groups.map((group) => (
+          <div key={group.title} className="space-y-1">
+            <div className="px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {group.title}
+            </div>
+            {group.items.map(({ label, path, isActive, dev }) => (
+              <button
+                key={path || label}
+                onClick={() => !dev && navigate(path)}
+                disabled={dev}
+                className={cn(
+                  "w-full py-2.5 px-3 rounded-lg text-sm font-bold text-left transition-colors truncate flex items-center justify-between gap-2",
+                  dev
+                    ? "text-foreground/40 cursor-not-allowed"
+                    : isActive
+                    ? "bg-muted border border-border text-foreground"
+                    : "text-foreground/70 hover:text-foreground hover:bg-accent"
+                )}
+              >
+                <span className="truncate">{label}</span>
+                {dev && (
+                  <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                    em breve
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         ))}
       </div>
     </div>

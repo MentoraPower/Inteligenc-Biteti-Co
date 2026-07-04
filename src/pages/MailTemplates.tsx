@@ -35,6 +35,7 @@ interface EmailTemplate {
   name: string;
   subject: string | null;
   created_at: string;
+  body_html?: string | null;
 }
 
 export default function MailTemplates() {
@@ -48,7 +49,7 @@ export default function MailTemplates() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("email_templates")
-        .select("id,name,subject,created_at")
+        .select("id,name,subject,created_at,body_html")
         .order("created_at", { ascending: false });
       return (data || []) as EmailTemplate[];
     },
@@ -104,7 +105,7 @@ export default function MailTemplates() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-border overflow-hidden">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           <div>Nome</div>
           <div>Data de criação</div>
@@ -120,10 +121,29 @@ export default function MailTemplates() {
             key={t.id}
             className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <LayoutTemplate className="h-4 w-4 text-purple-700 flex-shrink-0" />
+            <button
+              onClick={() => setEditing(t)}
+              className="flex items-center gap-3 min-w-0 text-left group"
+            >
+              <div className="w-[72px] h-[72px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative group-hover:border-foreground/30 transition-colors">
+                {t.body_html && t.body_html.includes("<") ? (
+                  <iframe
+                    title={t.name}
+                    srcDoc={t.body_html}
+                    scrolling="no"
+                    tabIndex={-1}
+                    aria-hidden
+                    className="border-0 pointer-events-none absolute top-0 left-0"
+                    style={{ width: 600, height: 600, transform: `scale(${72 / 600})`, transformOrigin: "top left" }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <LayoutTemplate className="h-5 w-5 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
               <span className="font-medium truncate">{t.name}</span>
-            </div>
+            </button>
             <div className="text-muted-foreground">
               {new Date(t.created_at).toLocaleDateString("pt-BR")}
             </div>
