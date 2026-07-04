@@ -106,8 +106,13 @@ serve(async (req) => {
             if (!tpl?.body_html) {
               errMsg = "Template não encontrado";
             } else {
-              const subject = String(tpl.subject || tpl.name || "Novidade").replace(/\{\{\s*name\s*\}\}/gi, name);
-              const html = String(tpl.body_html).replace(/\{\{\s*name\s*\}\}/gi, name);
+              const personalize = (s: string) => String(s || "").replace(/\{\{\s*name\s*\}\}/gi, name);
+              const subject = personalize(step.subject || tpl.subject || tpl.name || "Novidade");
+              let html = personalize(tpl.body_html);
+              if (step.preheader) {
+                const pre = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${personalize(step.preheader)}</div>`;
+                html = /<body[^>]*>/i.test(html) ? html.replace(/(<body[^>]*>)/i, `$1${pre}`) : pre + html;
+              }
               let resendId: string | null = null;
               try {
                 const r: any = await resend.emails.send({ from, to: [lead.email], subject, html });

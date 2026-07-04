@@ -31,10 +31,10 @@ interface TriggerCfg {
   pipelineName: string;
 }
 type Step =
-  | { id: string; type: "email"; templateId?: string; templateName?: string }
+  | { id: string; type: "email"; templateId?: string; templateName?: string; subject?: string; preheader?: string }
   | { id: string; type: "timer"; amount: number; unit: "minutes" | "hours" | "days" };
 
-interface Opt { id: string; nome?: string; name?: string; body_html?: string | null }
+interface Opt { id: string; nome?: string; name?: string; body_html?: string | null; subject?: string | null }
 
 const genId = () => crypto.randomUUID();
 const UNIT_LABEL: Record<string, string> = { minutes: "minuto(s)", hours: "hora(s)", days: "dia(s)" };
@@ -72,7 +72,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
     (async () => {
       const [{ data: a }, { data: t }] = await Promise.all([
         (supabase as any).from("email_automations").select("flow_steps").eq("id", automation.id).single(),
-        (supabase as any).from("email_templates").select("id,name,body_html").order("created_at", { ascending: false }),
+        (supabase as any).from("email_templates").select("id,name,body_html,subject").order("created_at", { ascending: false }),
       ]);
       if (a?.flow_steps) {
         setTrigger(a.flow_steps.trigger ?? null);
@@ -217,9 +217,9 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                   <button onClick={() => setEmailPickerFor(step.id)} className="w-full text-left">
                     <div className="flex items-start gap-3 p-4">
                       <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0"><Mail className="h-4 w-4 text-white" /></div>
-                      <div className="pt-0.5">
-                        <p className="text-sm font-semibold leading-tight">Enviar um e‑mail</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{step.templateName ? `Template: ${step.templateName}` : "Escolher template"}</p>
+                      <div className="pt-0.5 min-w-0">
+                        <p className="text-sm font-semibold leading-tight truncate max-w-[290px]">{step.templateName || "Enviar um e‑mail"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[290px]">{step.subject || (step.templateName ? "Sem assunto" : "Escolher e‑mail")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 px-4 py-2.5 border-t border-border text-[11px] font-medium text-blue-600">
@@ -265,51 +265,88 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
       {/* Add step panel (top-to-bottom) */}
       {addAt !== null && (
-        <BottomSheet title="Adicionar etapa" onClose={() => setAddAt(null)}>
-          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-            <button onClick={() => addEmail(addAt)} className="rounded-xl border border-border p-5 text-left hover:border-purple-400 hover:bg-accent transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center mb-2"><Mail className="h-4 w-4 text-white" /></div>
-              <p className="text-sm font-semibold">Enviar e‑mail</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Escolha um template salvo</p>
+        <BottomSheet title="Adicionar etapa" subtitle="Escolha o que acontece nesta etapa do fluxo" onClose={() => setAddAt(null)}>
+          <div className="grid grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <button onClick={() => addEmail(addAt)} className="group rounded-2xl border border-border p-6 text-left hover:border-purple-400 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform"><Mail className="h-5 w-5 text-white" /></div>
+              <p className="text-base font-semibold">Enviar e‑mail</p>
+              <p className="text-sm text-muted-foreground mt-1">Dispara um e‑mail com um template salvo</p>
             </button>
-            <button onClick={() => addTimer(addAt)} className="rounded-xl border border-border p-5 text-left hover:border-purple-400 hover:bg-accent transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center mb-2"><Timer className="h-4 w-4 text-white" /></div>
-              <p className="text-sm font-semibold">Temporizador</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Aguardar um tempo</p>
+            <button onClick={() => addTimer(addAt)} className="group rounded-2xl border border-border p-6 text-left hover:border-purple-400 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform"><Timer className="h-5 w-5 text-white" /></div>
+              <p className="text-base font-semibold">Temporizador</p>
+              <p className="text-sm text-muted-foreground mt-1">Aguarda um tempo antes da próxima etapa</p>
             </button>
           </div>
         </BottomSheet>
       )}
 
-      {/* Email template picker (side panel) */}
-      {emailPickerFor && (
-        <SidePanel title="Escolher template" onClose={() => setEmailPickerFor(null)}>
-          {templates.length === 0 && <p className="text-sm text-muted-foreground">Nenhum template salvo. Crie um em Estrutura › Templates.</p>}
-          <div className="space-y-2">
-            {templates.map((t) => {
-              const step = steps.find((s) => s.id === emailPickerFor);
-              const selected = step && step.type === "email" && step.templateId === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => { updateStep(emailPickerFor, { templateId: t.id, templateName: t.name } as Partial<Step>); setEmailPickerFor(null); }}
-                  className={cn("w-full flex items-center gap-3 p-2 rounded-lg border text-left transition-colors", selected ? "border-purple-500 bg-purple-500/5" : "border-border hover:bg-accent")}
-                >
-                  <div className="w-[56px] h-[56px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative">
-                    {t.body_html && t.body_html.includes("<") ? (
-                      <iframe title={t.name} srcDoc={t.body_html} scrolling="no" tabIndex={-1} aria-hidden className="border-0 pointer-events-none absolute top-0 left-0" style={{ width: 600, height: 600, transform: `scale(${56 / 600})`, transformOrigin: "top left" }} />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Mail className="h-4 w-4 text-muted-foreground/40" /></div>
-                    )}
+      {/* Email config (side panel): subject + preheader + template preview/picker */}
+      {emailPickerFor && (() => {
+        const step = steps.find((s) => s.id === emailPickerFor);
+        if (!step || step.type !== "email") return null;
+        const tpl = templates.find((t) => t.id === step.templateId);
+        return (
+          <SidePanel title="Configurar e‑mail" width="w-[600px]" onClose={() => setEmailPickerFor(null)}>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">Assunto</label>
+                <input
+                  value={step.subject || ""}
+                  onChange={(e) => updateStep(step.id, { subject: e.target.value } as Partial<Step>)}
+                  placeholder="Assunto do e‑mail"
+                  className="w-full h-10 rounded-lg border border-border px-3 mt-1 outline-none focus:border-purple-400 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">Pré‑assunto</label>
+                <input
+                  value={step.preheader || ""}
+                  onChange={(e) => updateStep(step.id, { preheader: e.target.value } as Partial<Step>)}
+                  placeholder="Texto de pré‑visualização (aparece após o assunto na caixa de entrada)"
+                  className="w-full h-10 rounded-lg border border-border px-3 mt-1 outline-none focus:border-purple-400 text-sm"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">E‑mail</label>
+                  {tpl && (
+                    <button onClick={() => updateStep(step.id, { templateId: undefined, templateName: undefined } as Partial<Step>)} className="text-xs text-purple-700 hover:underline font-medium">
+                      Trocar template
+                    </button>
+                  )}
+                </div>
+                {tpl ? (
+                  <div className="rounded-lg border border-border overflow-hidden bg-white">
+                    <iframe title={tpl.name || ""} srcDoc={tpl.body_html || ""} className="w-full h-[440px] border-0" />
                   </div>
-                  <span className="text-sm font-medium truncate flex-1">{t.name}</span>
-                  {selected && <Check className="h-4 w-4 text-purple-600 flex-shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </SidePanel>
-      )}
+                ) : templates.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum template salvo. Crie um em Estrutura › Templates.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {templates.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => updateStep(step.id, { templateId: t.id, templateName: t.name, subject: step.subject || t.subject || "" } as Partial<Step>)}
+                        className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:border-purple-400 hover:bg-accent text-left transition-colors"
+                      >
+                        <div className="w-[56px] h-[56px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative">
+                          {t.body_html && t.body_html.includes("<") ? (
+                            <iframe title={t.name} srcDoc={t.body_html} scrolling="no" tabIndex={-1} aria-hidden className="border-0 pointer-events-none absolute top-0 left-0" style={{ width: 600, height: 600, transform: `scale(${56 / 600})`, transformOrigin: "top left" }} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><Mail className="h-4 w-4 text-muted-foreground/40" /></div>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium truncate flex-1">{t.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </SidePanel>
+        );
+      })()}
 
       {/* Timer config (side panel) */}
       {timerFor && (() => {
@@ -336,24 +373,32 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
 /* ---------------------------- Sub-panels ---------------------------- */
 
-function BottomSheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function BottomSheet({ title, subtitle, onClose, children }: { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[80]" onClick={onClose}>
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background border-t border-border shadow-[0_-10px_30px_rgba(0,0,0,0.15)] flex flex-col animate-in slide-in-from-bottom duration-200" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 h-12 border-b border-border flex-shrink-0">
-          <span className="text-sm font-semibold">{title}</span>
-          <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-accent"><X className="h-4 w-4" /></button>
+      <div className="absolute inset-0 bg-foreground/5" />
+      <div
+        className="absolute left-16 right-0 bottom-0 h-1/2 bg-background border-t border-border rounded-t-2xl flex flex-col animate-in slide-in-from-bottom duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 h-14 border-b border-border flex-shrink-0">
+          <div>
+            <p className="text-sm font-semibold">{title}</p>
+            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+          </div>
+          <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent"><X className="h-4 w-4" /></button>
         </div>
-        <div className="flex-1 overflow-auto p-6">{children}</div>
+        <div className="flex-1 overflow-auto p-8">{children}</div>
       </div>
     </div>
   );
 }
 
-function SidePanel({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function SidePanel({ title, onClose, children, width = "w-[420px]" }: { title: string; onClose: () => void; children: React.ReactNode; width?: string }) {
   return (
     <div className="fixed inset-0 z-[80]" onClick={onClose}>
-      <div className="absolute top-0 right-0 h-full w-[380px] max-w-[90vw] bg-background border-l border-border shadow-[-10px_0_30px_rgba(0,0,0,0.15)] flex flex-col animate-in slide-in-from-right duration-200" onClick={(e) => e.stopPropagation()}>
+      <div className="absolute inset-0 bg-foreground/5" />
+      <div className={cn("absolute top-0 right-0 h-full max-w-[95vw] bg-background border-l border-border flex flex-col animate-in slide-in-from-right duration-200", width)} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 h-12 border-b border-border flex-shrink-0">
           <span className="text-sm font-semibold">{title}</span>
           <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-accent"><X className="h-4 w-4" /></button>
@@ -418,26 +463,33 @@ function TriggerPanel({ current, onClose, onSave }: { current: TriggerCfg | null
   );
 
   return (
-    <BottomSheet title="Gatilho de entrada" onClose={onClose}>
+    <BottomSheet
+      title="Gatilho de entrada"
+      subtitle={type ? "Escolha onde o contato precisa entrar para iniciar o fluxo" : "Escolha o que inicia a automação"}
+      onClose={onClose}
+    >
       {!type ? (
-        <div className="max-w-md mx-auto space-y-2">
-          <button onClick={() => setType("pipeline_enter")} className="w-full flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:border-purple-400 hover:bg-accent transition-colors">
-            <div className="w-9 h-9 rounded-lg bg-purple-700 flex items-center justify-center flex-shrink-0"><GitBranch className="h-4 w-4 text-white" /></div>
-            <div>
-              <p className="text-sm font-semibold">Entrou em um pipeline</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Dispara quando um contato entra no pipeline escolhido</p>
+        <div className="max-w-2xl mx-auto">
+          <button onClick={() => setType("pipeline_enter")} className="group w-full flex items-center gap-4 rounded-2xl border border-border p-5 text-left hover:border-purple-400 hover:shadow-md transition-all">
+            <div className="w-12 h-12 rounded-xl bg-purple-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"><GitBranch className="h-5 w-5 text-white" /></div>
+            <div className="flex-1">
+              <p className="text-base font-semibold">Entrou em um pipeline</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Dispara quando um contato entra no pipeline escolhido</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto self-center" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto">
-          <div className="flex gap-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-4">
             <Column label="Workspace" items={workspaces} selected={ws} empty="Nenhum workspace" onPick={(o) => { setWs(o); setSub(null); setPipe(null); }} />
             <Column label="Espaço" items={subOrigins} selected={sub} empty={ws ? "Nenhum espaço" : "Escolha um workspace"} onPick={(o) => { setSub(o); setPipe(null); }} />
             <Column label="Pipeline" items={pipelines} selected={pipe} empty={sub ? "Nenhum pipeline" : "Escolha um espaço"} onPick={(o) => setPipe(o)} />
           </div>
-          <div className="flex justify-end mt-5">
+          <div className="flex items-center justify-between mt-6">
+            <button onClick={() => setType(null)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronLeft className="h-4 w-4" /> Voltar
+            </button>
             <button
               disabled={!ws || !sub || !pipe}
               onClick={() => ws && sub && pipe && onSave({
