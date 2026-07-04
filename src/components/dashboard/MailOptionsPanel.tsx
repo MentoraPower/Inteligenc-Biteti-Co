@@ -35,7 +35,7 @@ export function MailOptionsPanel() {
       <div className="flex-1 overflow-y-auto px-2 pt-4 pb-3 space-y-5">
         {groups.map((group) => (
           <div key={group.title} className="space-y-1">
-            <div className="px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="px-3 pb-1 text-[15px] font-bold text-foreground">
               {group.title}
             </div>
             {group.items.map(({ label, path, isActive, dev }) => (
@@ -44,7 +44,7 @@ export function MailOptionsPanel() {
                 onClick={() => !dev && navigate(path)}
                 disabled={dev}
                 className={cn(
-                  "w-full py-2.5 px-3 rounded-lg text-sm font-bold text-left transition-colors truncate flex items-center justify-between gap-2",
+                  "w-full py-2.5 px-3 rounded-lg text-[13px] font-medium text-left transition-colors truncate flex items-center justify-between gap-2",
                   dev
                     ? "text-foreground/40 cursor-not-allowed"
                     : isActive
