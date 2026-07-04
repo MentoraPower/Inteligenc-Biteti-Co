@@ -119,7 +119,7 @@ export default function MailTemplates() {
         {templates.map((t) => (
           <div
             key={t.id}
-            className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 border-t border-border text-[15px]"
+            className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm"
           >
             <button
               onClick={() => setEditing(t)}

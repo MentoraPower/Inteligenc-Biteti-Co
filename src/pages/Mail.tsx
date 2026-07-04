@@ -358,7 +358,7 @@ export default function Mail() {
                       ? { label: "Falhou", cls: "bg-red-600 text-white" }
                       : { label: "Pendente", cls: "bg-yellow-400 text-black" };
                   return (
-                    <div key={d.id} className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 items-center px-4 py-3 border-t border-border">
+                    <div key={d.id} className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 items-center px-4 py-3 border-t border-border text-sm">
                       <div className="flex items-center gap-1 min-w-0">
                         <Input
                           value={cfg.sender_local}
