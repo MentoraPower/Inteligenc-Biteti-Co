@@ -33,19 +33,16 @@ const genId = () => crypto.randomUUID();
 const UNIT_LABEL: Record<string, string> = { minutes: "minuto(s)", hours: "hora(s)", days: "dia(s)" };
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-// Icon badges use the actual designed app-icons.
-const MailBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
-  <img src={emailIcon} alt="E‑mail" className={cn("object-contain flex-shrink-0", box)} />
+// Icon badges use the actual designed app-icons, clipped to a full circle.
+const IconBadge = ({ src, alt, box = "w-9 h-9" }: { src: string; alt: string; box?: string }) => (
+  <div className={cn("rounded-full overflow-hidden flex-shrink-0", box)}>
+    <img src={src} alt={alt} className="w-full h-full object-cover scale-[1.6]" />
+  </div>
 );
-const AguardeBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
-  <img src={aguardeIcon} alt="Aguarde" className={cn("object-contain flex-shrink-0", box)} />
-);
-const TagBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
-  <img src={tagIcon} alt="Tag" className={cn("object-contain flex-shrink-0", box)} />
-);
-const PipelineBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
-  <img src={pipelineIcon} alt="Pipeline" className={cn("object-contain flex-shrink-0", box)} />
-);
+const MailBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => <IconBadge src={emailIcon} alt="E‑mail" box={box} />;
+const AguardeBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => <IconBadge src={aguardeIcon} alt="Aguarde" box={box} />;
+const TagBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => <IconBadge src={tagIcon} alt="Tag" box={box} />;
+const PipelineBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => <IconBadge src={pipelineIcon} alt="Pipeline" box={box} />;
 
 // Styled dropdown (our visual) — native select + custom chevron.
 function SelectField({ label, value, onChange, disabled, children }: { label: string; value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; disabled?: boolean; children: React.ReactNode }) {
