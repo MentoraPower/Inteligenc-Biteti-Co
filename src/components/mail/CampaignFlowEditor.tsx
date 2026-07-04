@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, History, Users,
-  ChevronLeft, Zap, X, GitBranch, Tag, Search, ChevronDown,
+  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Zap,
+  ChevronLeft, X, GitBranch, Tag, Search, ChevronDown,
   ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
 import emailIcon from "@/assets/mail/email.png";
@@ -215,12 +215,6 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
           <span className="font-semibold">{automation.name}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <History className="h-3.5 w-3.5" /> {saved ? "Salvo" : "Salvando…"}
-          </span>
-          <button className="h-8 px-3 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors">
-            <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Ver contatos</span>
-          </button>
           <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-medium">
             <button onClick={() => toggleActive(true)} className={cn("flex items-center gap-1.5 px-3 h-8 transition-colors", active ? "bg-emerald-500/15 text-emerald-600" : "text-muted-foreground hover:bg-accent")}>
               <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-emerald-500" : "bg-muted-foreground/40")} /> Ativo
@@ -269,7 +263,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                   <div data-node className="w-[520px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
                     <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100 z-10" title="Remover"><X className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
-                      <div className="flex items-center gap-5 pl-4 pr-6 py-4">
+                      <div className="flex items-center gap-5 pl-4 pr-6 py-6">
                         <MailBadge box="w-12 h-12" />
                         <p className="text-[15px] font-bold text-foreground flex items-center gap-2.5 leading-tight whitespace-nowrap min-w-0">
                           Enviar um email:
