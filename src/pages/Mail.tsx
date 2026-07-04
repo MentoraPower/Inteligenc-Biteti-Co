@@ -344,7 +344,7 @@ export default function Mail() {
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhum domínio cadastrado na Resend.</p>
             ) : (
               <div className="rounded-xl border border-border overflow-hidden">
-                <div className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 px-4 py-3 bg-zinc-500/[0.06] text-[15px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <div className="grid grid-cols-[1.4fr_1.1fr_120px_90px] gap-2 px-4 py-3.5 bg-zinc-500/[0.06] text-[17px] font-semibold text-muted-foreground uppercase tracking-wide">
                   <div>E-mail de envio</div>
                   <div>Nome do remetente</div>
                   <div className="text-center">Verificação</div>
