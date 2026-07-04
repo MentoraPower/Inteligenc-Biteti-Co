@@ -269,17 +269,17 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
               <div key={step.id} className="flex flex-col items-center">
                 <Line />
                 {step.type === "email" ? (
-                  <div data-node className="w-[440px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
+                  <div data-node className="w-[520px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
                     <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100 z-10" title="Remover"><X className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
                       <div className="flex items-center gap-5 pl-4 pr-6 py-4">
                         <MailBadge box="w-12 h-12" />
-                        <p className="text-[15px] font-bold text-foreground flex items-center gap-2.5 flex-wrap leading-tight">
+                        <p className="text-[15px] font-bold text-foreground flex items-center gap-2.5 leading-tight whitespace-nowrap min-w-0">
                           Enviar um email:
-                          <span className="px-2.5 py-1 rounded-md bg-[#e7eefc] text-[13px] font-medium text-foreground truncate max-w-[210px]">{step.templateName || "New Campaign"}</span>
+                          <span className="px-2.5 py-1 rounded-md bg-[#e7eefc] text-[13px] font-medium text-foreground truncate max-w-[300px]">{step.templateName || "New Campaign"}</span>
                         </p>
                       </div>
-                      <div className="flex items-center gap-6 px-5 py-3 border-t border-border text-[13px] font-semibold text-blue-600">
+                      <div className="flex items-center gap-6 px-5 py-3 border-t border-border text-[13px] font-semibold text-blue-600 whitespace-nowrap">
                         <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5" /> 0 enviados</span>
                         <span className="flex items-center gap-1.5"><MailOpen className="h-3.5 w-3.5" /> 0% de taxa de abertura</span>
                         <span className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" /> 0% de taxa de cliques</span>
