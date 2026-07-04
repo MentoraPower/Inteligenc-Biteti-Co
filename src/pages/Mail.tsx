@@ -194,12 +194,12 @@ export default function Mail() {
       <div className="rounded-2xl border border-border overflow-x-auto">
         <div className="min-w-[980px]">
           {/* Header */}
-          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_180px_150px_160px_130px] items-center gap-6 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
             <div>
               <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
             </div>
             <div>Automação</div>
-            <div>Editado pela última vez</div>
+            <div className="whitespace-nowrap">Editado pela última vez</div>
             <div>Contatos atuais</div>
             <div>Índice de conversão</div>
             <div className="flex justify-end">
@@ -221,7 +221,7 @@ export default function Mail() {
               );
             }
             return visible.map((a) => (
-              <div key={a.id} className="grid grid-cols-[36px_minmax(220px,1.4fr)_180px_150px_160px_130px] items-center gap-6 px-4 py-4 border-t border-border text-sm">
+              <div key={a.id} className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-4 border-t border-border text-sm">
                 <div>
                   <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
                 </div>
