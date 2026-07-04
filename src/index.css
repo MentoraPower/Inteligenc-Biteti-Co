@@ -761,6 +761,13 @@
   animation: ws-bar 1.1s ease-in-out infinite;
 }
 
+/* Code editor syntax colors (VS Code dark) */
+.tk-tag { color: #569cd6; }
+.tk-attr { color: #9cdcfe; }
+.tk-str { color: #ce9178; }
+.tk-punct { color: #808080; }
+.tk-comment { color: #6a9955; }
+
 /* Concave corner where the content meets the navbar/menu (dark fillet) */
 .menu-concave-corner {
   background: radial-gradient(circle at bottom right, transparent 19px, #18181b 20.5px);

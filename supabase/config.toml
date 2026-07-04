@@ -1,5 +1,8 @@
 project_id = "ytdfwkchsumgdvcroaqg"
 
+[functions.generate-email-ai]
+verify_jwt = false
+
 [functions.analyze-lead-profile]
 verify_jwt = false
 
