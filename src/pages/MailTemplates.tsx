@@ -106,7 +106,7 @@ export default function MailTemplates() {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 bg-zinc-500/[0.06] text-[15px] font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-2.5 bg-zinc-500/[0.06] text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
           <div>Nome</div>
           <div>Data de criação</div>
           <div className="text-center">Ações</div>

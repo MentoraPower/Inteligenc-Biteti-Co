@@ -194,7 +194,7 @@ export default function Mail() {
       <div className="rounded-2xl border border-border overflow-x-auto">
         <div className="min-w-[980px]">
           {/* Header */}
-          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_210px_180px_150px_160px_130px] items-center gap-2 px-4 py-3 border-b border-border text-[15px] font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_210px_180px_150px_160px_130px] items-center gap-2 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground">
             <div>
               <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
             </div>
