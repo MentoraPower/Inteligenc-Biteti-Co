@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Mail, Plus, Send, MailOpen, MousePointerClick, Ban, History, Users,
-  ChevronLeft, ChevronRight, Zap, Timer, X, Check, GitBranch, Tag, Search,
-  Sparkles, ZoomIn, ZoomOut, Maximize2,
+  ChevronLeft, Zap, X, GitBranch, Tag, Search, ChevronDown,
+  ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
+import emailIcon from "@/assets/mail/email.png";
+import aguardeIcon from "@/assets/mail/aguarde.png";
+import tagIcon from "@/assets/mail/tag.png";
+import pipelineIcon from "@/assets/mail/pipeline.png";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -27,6 +32,45 @@ interface Domain { domain: string; sender_name: string | null; sender_local: str
 const genId = () => crypto.randomUUID();
 const UNIT_LABEL: Record<string, string> = { minutes: "minuto(s)", hours: "hora(s)", days: "dia(s)" };
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+// Icon badges use the actual designed app-icons.
+const MailBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
+  <img src={emailIcon} alt="E‑mail" className={cn("object-contain flex-shrink-0", box)} />
+);
+const AguardeBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
+  <img src={aguardeIcon} alt="Aguarde" className={cn("object-contain flex-shrink-0", box)} />
+);
+const TagBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
+  <img src={tagIcon} alt="Tag" className={cn("object-contain flex-shrink-0", box)} />
+);
+const PipelineBadge = ({ box = "w-9 h-9" }: { box?: string; icon?: string }) => (
+  <img src={pipelineIcon} alt="Pipeline" className={cn("object-contain flex-shrink-0", box)} />
+);
+
+// Styled dropdown (our visual) — native select + custom chevron.
+function SelectField({ label, value, onChange, disabled, children }: { label: string; value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-sm font-semibold text-foreground/80">{label}</label>
+      <div className="relative mt-2">
+        <select
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="w-full h-12 rounded-lg border border-border pl-4 pr-11 outline-none text-base bg-background appearance-none cursor-pointer hover:border-foreground/30 focus:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {children}
+        </select>
+        <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+      </div>
+    </div>
+  );
+}
+// Zoom the email content a bit in previews so the fonts read larger.
+const previewDoc = (html: string) => {
+  const z = "<style>html{zoom:1.15}</style>";
+  return html.includes("</head>") ? html.replace("</head>", z + "</head>") : z + html;
+};
 
 /* ------------------------------- Editor ------------------------------ */
 
@@ -213,8 +257,8 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                 )}
               </button>
             ) : (
-              <button data-node onClick={() => setTriggerOpen(true)} className="w-[320px] px-5 py-5 rounded-xl border border-dashed border-border text-sm text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors flex items-center justify-center gap-2">
-                <Zap className="h-4 w-4" /> Adicione um gatilho de entrada
+              <button data-node onClick={() => setTriggerOpen(true)} className="w-[320px] px-6 py-5 rounded-xl border-2 border-dashed border-border text-[15px] text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors text-center">
+                Adicione um gatilho de entrada
               </button>
             )}
 
@@ -225,31 +269,33 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
               <div key={step.id} className="flex flex-col items-center">
                 <Line />
                 {step.type === "email" ? (
-                  <div data-node className="w-[400px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
-                    <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100" title="Remover"><X className="h-3.5 w-3.5" /></button>
+                  <div data-node className="w-[440px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
+                    <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100 z-10" title="Remover"><X className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
-                      <div className="flex items-start gap-3 p-4">
-                        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0"><Mail className="h-4 w-4 text-white" /></div>
-                        <div className="pt-0.5 min-w-0">
-                          <p className="text-sm font-semibold leading-tight truncate max-w-[300px]">{step.templateName || "Enviar um e‑mail"}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[300px]">{step.subject || (step.templateName ? "Sem assunto" : "Escolher e‑mail")}</p>
-                        </div>
+                      <div className="flex items-center gap-5 pl-4 pr-6 py-4">
+                        <MailBadge box="w-12 h-12" />
+                        <p className="text-[15px] font-bold text-foreground flex items-center gap-2.5 flex-wrap leading-tight">
+                          Enviar um email:
+                          <span className="px-2.5 py-1 rounded-md bg-[#e7eefc] text-[13px] font-medium text-foreground truncate max-w-[210px]">{step.templateName || "New Campaign"}</span>
+                        </p>
                       </div>
-                      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-border text-[11px] font-medium text-blue-600">
-                        <span className="flex items-center gap-1"><Send className="h-3 w-3" /> 0 enviados</span>
-                        <span className="flex items-center gap-1"><MailOpen className="h-3 w-3" /> 0% abertura</span>
-                        <span className="flex items-center gap-1"><MousePointerClick className="h-3 w-3" /> 0% cliques</span>
+                      <div className="flex items-center gap-6 px-5 py-3 border-t border-border text-[13px] font-semibold text-blue-600">
+                        <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5" /> 0 enviados</span>
+                        <span className="flex items-center gap-1.5"><MailOpen className="h-3.5 w-3.5" /> 0% de taxa de abertura</span>
+                        <span className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" /> 0% de taxa de cliques</span>
                       </div>
                     </button>
                   </div>
                 ) : (
-                  <div data-node className="w-[320px] rounded-xl bg-card shadow-sm border border-border p-4 group relative">
+                  <div data-node className="w-[400px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
                     <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100" title="Remover"><X className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => setTimerFor(step.id)} className="w-full text-left flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0"><Timer className="h-4 w-4 text-white" /></div>
-                      <div>
-                        <p className="text-sm font-semibold leading-tight">Aguarde</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Aguardar {step.amount} {UNIT_LABEL[step.unit]}</p>
+                    <button onClick={() => setTimerFor(step.id)} className="w-full text-left">
+                      <div className="flex items-start gap-3 p-4">
+                        <AguardeBadge />
+                        <div className="pt-0.5 min-w-0">
+                          <p className="text-sm font-semibold leading-tight">Aguarde</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Aguardar {step.amount} {UNIT_LABEL[step.unit]}</p>
+                        </div>
                       </div>
                     </button>
                   </div>
@@ -296,22 +342,25 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
 /* ---------------------------- Shared shells ---------------------------- */
 
-function CenterModal({ children, onClose, size = "max-w-4xl" }: { children: React.ReactNode; onClose: () => void; size?: string }) {
-  return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+function CenterModal({ children, onClose, size = "max-w-4xl", tall = true }: { children: React.ReactNode; onClose: () => void; size?: string; tall?: boolean }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-foreground/30" />
-      <div className={cn("relative w-full h-[82vh] bg-background rounded-2xl border border-border shadow-xl flex flex-col overflow-hidden", size)} onClick={(e) => e.stopPropagation()}>
+      <div className={cn("relative w-full bg-background rounded-2xl border border-border shadow-xl flex flex-col overflow-hidden", size, tall ? "h-[82vh]" : "max-h-[88vh]")} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
-function SidePanel({ title, subtitle, icon, onClose, footer, children, width = "w-[560px]" }: { title: string; subtitle?: string; icon?: React.ReactNode; onClose: () => void; footer?: React.ReactNode; children: React.ReactNode; width?: string }) {
-  return (
-    <div className="fixed inset-0 z-[90]" onClick={onClose}>
-      <div className="absolute inset-0 bg-foreground/20" />
-      <div className={cn("absolute top-0 right-0 h-full max-w-[96vw] bg-background border-l border-border flex flex-col animate-in slide-in-from-right duration-200", width)} onClick={(e) => e.stopPropagation()}>
+function SidePanel({ title, subtitle, icon, onClose, footer, children, width = "w-[560px]" }: { title: string; subtitle?: string; icon?: React.ReactNode; onClose: () => void; footer?: (close: () => void) => React.ReactNode; children: React.ReactNode; width?: string }) {
+  const [closing, setClosing] = useState(false);
+  const close = () => { if (closing) return; setClosing(true); setTimeout(onClose, 260); };
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-end p-4" onClick={close}>
+      <div className={cn("absolute inset-0 bg-foreground/20 transition-opacity duration-300", closing && "opacity-0")} />
+      <div className={cn("relative h-[96vh] max-h-[1040px] rounded-2xl overflow-hidden max-w-[96vw] bg-background border border-border shadow-xl flex flex-col", closing ? "panel-slide-out" : "panel-slide-in", width)} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 px-6 pt-5 pb-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             {icon}
@@ -320,12 +369,13 @@ function SidePanel({ title, subtitle, icon, onClose, footer, children, width = "
               {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
             </div>
           </div>
-          <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent flex-shrink-0"><X className="h-4 w-4" /></button>
+          <button onClick={close} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent flex-shrink-0"><X className="h-4 w-4" /></button>
         </div>
-        <div className="flex-1 overflow-auto px-6 py-5">{children}</div>
-        {footer && <div className="flex items-center justify-end gap-2 px-6 h-16 border-t border-border flex-shrink-0">{footer}</div>}
+        <div className="flex-1 overflow-auto px-6 pt-7 pb-6">{children}</div>
+        {footer && <div className="flex items-center justify-end gap-2 px-6 h-16 border-t border-border flex-shrink-0">{footer(close)}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -335,7 +385,6 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
   const initStage = current ? (isPipelineTrigger(current) ? "pipeline_enter" : current.type) : "list";
   const [stage, setStage] = useState<"list" | "pipeline_enter" | "tag_added" | "tag_removed">(initStage as any);
   const [search, setSearch] = useState("");
-  const [cat, setCat] = useState("all");
 
   const [workspaces, setWorkspaces] = useState<Opt[]>([]);
   const [subOrigins, setSubOrigins] = useState<Opt[]>([]);
@@ -377,42 +426,27 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
 
   const nameOf = (o: Opt) => o.nome || o.name || "";
   const TRIGGERS = [
-    { key: "pipeline_enter", label: "Entrou em um pipeline", icon: GitBranch, cat: "crm" },
-    { key: "tag_added", label: "Tag adicionada", icon: Tag, cat: "tags" },
-    { key: "tag_removed", label: "Tag removida", icon: Tag, cat: "tags" },
+    { key: "pipeline_enter", label: "Entrou em um pipeline", icon: GitBranch, cat: "crm", desc: "Dispara quando um contato entra no pipeline escolhido" },
+    { key: "tag_added", label: "Tag adicionada", icon: Tag, cat: "tags", desc: "Dispara quando uma tag é adicionada ao contato" },
+    { key: "tag_removed", label: "Tag removida", icon: Tag, cat: "tags", desc: "Dispara quando uma tag é removida do contato" },
   ] as const;
-  const CATS = [{ key: "all", label: "Visualizar tudo" }, { key: "crm", label: "Vendas e CRM" }, { key: "tags", label: "Tags" }];
-  const visible = TRIGGERS.filter((t) => (cat === "all" || t.cat === cat) && t.label.toLowerCase().includes(search.toLowerCase()));
+  const visible = TRIGGERS.filter((t) => t.label.toLowerCase().includes(search.toLowerCase()));
 
-  const Column = ({ label, items, selected, onPick, empty }: { label: string; items: Opt[]; selected: Opt | null; onPick: (o: Opt) => void; empty: string }) => (
-    <div className="flex-1 min-w-0">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{label}</p>
-      <div className="rounded-xl border border-border divide-y divide-border max-h-[40vh] overflow-auto">
-        {items.length === 0 && <p className="px-3 py-2.5 text-xs text-muted-foreground">{empty}</p>}
-        {items.map((o) => (
-          <button key={o.id} onClick={() => onPick(o)} className={cn("w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors flex items-center justify-between gap-2", selected?.id === o.id && "bg-purple-500/10 text-purple-800 font-medium")}>
-            <span className="truncate">{nameOf(o)}</span>
-            {selected?.id === o.id && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 
   const configFooter = (canSave: boolean, save: () => void) => (
     <>
       <div className="flex items-center justify-between px-6 h-16 border-t border-border flex-shrink-0">
-        <button onClick={() => setStage("list")} className="h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent flex items-center gap-1"><ChevronLeft className="h-4 w-4" /> Voltar</button>
+        <button onClick={() => setStage("list")} className="h-10 px-4 rounded border border-border text-sm font-medium hover:bg-accent flex items-center gap-1"><ChevronLeft className="h-4 w-4" /> Voltar</button>
         <div className="flex items-center gap-2">
-          <button onClick={onClose} className="h-10 px-4 rounded-lg border border-border text-sm font-medium hover:bg-accent">Cancelar</button>
-          <button disabled={!canSave} onClick={save} className="h-10 px-5 rounded-lg bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Salvar</button>
+          <button onClick={onClose} className="h-10 px-4 rounded border border-border text-sm font-medium hover:bg-accent">Cancelar</button>
+          <button disabled={!canSave} onClick={save} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Salvar</button>
         </div>
       </div>
     </>
   );
 
   return (
-    <CenterModal onClose={onClose}>
+    <CenterModal onClose={onClose} size={stage === "list" ? "max-w-4xl" : "max-w-2xl"} tall={stage === "list"}>
       {stage === "list" ? (
         <>
           <div className="flex items-center justify-between gap-4 px-6 h-16 border-b border-border flex-shrink-0">
@@ -426,23 +460,18 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
             </div>
           </div>
           <div className="flex-1 flex min-h-0">
-            <div className="w-56 flex-shrink-0 border-r border-border p-4 overflow-auto">
-              <p className="text-[11px] font-semibold uppercase text-muted-foreground mb-2 px-2">Acionar categorias</p>
-              <div className="space-y-0.5">
-                {CATS.map((c) => (
-                  <button key={c.key} onClick={() => setCat(c.key)} className={cn("w-full text-left px-3 py-2 rounded-lg text-sm transition-colors", cat === c.key ? "bg-purple-500/10 text-purple-800 font-medium" : "text-foreground/70 hover:bg-accent")}>{c.label}</button>
-                ))}
-              </div>
-            </div>
             <div className="flex-1 overflow-auto p-8">
-              <div className="grid grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 {visible.map((t) => (
-                  <button key={t.key} onClick={() => setStage(t.key as any)} className="group flex flex-col items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors">
-                    <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors"><t.icon className="h-6 w-6 text-purple-700" /></div>
-                    <span className="text-xs text-center leading-tight font-medium">{t.label}</span>
+                  <button key={t.key} onClick={() => setStage(t.key as any)} className="group flex items-center gap-4 rounded-2xl border border-border p-5 text-left hover:bg-accent transition-colors">
+                    {t.key === "pipeline_enter" ? <PipelineBadge box="w-14 h-14" icon="h-6 w-6" /> : <TagBadge box="w-14 h-14" />}
+                    <div>
+                      <p className="text-base font-semibold">{t.label}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t.desc}</p>
+                    </div>
                   </button>
                 ))}
-                {visible.length === 0 && <p className="text-sm text-muted-foreground col-span-4">Nada encontrado.</p>}
+                {visible.length === 0 && <p className="text-sm text-muted-foreground col-span-2">Nada encontrado.</p>}
               </div>
             </div>
           </div>
@@ -450,33 +479,35 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
       ) : stage === "pipeline_enter" ? (
         <>
           <div className="flex items-center gap-3 px-6 h-16 border-b border-border flex-shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center"><GitBranch className="h-4 w-4 text-purple-700" /></div>
-            <div><p className="text-base font-bold leading-tight">Entrou em um pipeline</p><p className="text-xs text-muted-foreground">Escolha onde o contato precisa entrar</p></div>
+            <div><p className="text-base font-bold leading-tight">Entrou em um pipeline</p></div>
           </div>
-          <div className="flex-1 overflow-auto p-6">
-            <div className="grid grid-cols-3 gap-4">
-              <Column label="Workspace" items={workspaces} selected={ws} empty="Nenhum workspace" onPick={(o) => { setWs(o); setSub(null); setPipe(null); }} />
-              <Column label="Espaço" items={subOrigins} selected={sub} empty={ws ? "Nenhum espaço" : "Escolha um workspace"} onPick={(o) => { setSub(o); setPipe(null); }} />
-              <Column label="Pipeline" items={pipelines} selected={pipe} empty={sub ? "Nenhum pipeline" : "Escolha um espaço"} onPick={(o) => setPipe(o)} />
-            </div>
+          <div className="flex-1 overflow-auto p-8 space-y-5">
+            <SelectField label="Workspace" value={ws?.id || ""} onChange={(e) => { const o = workspaces.find((w) => w.id === e.target.value) || null; setWs(o); setSub(null); setPipe(null); }}>
+              <option value="">Selecione o workspace</option>
+              {workspaces.map((o) => <option key={o.id} value={o.id}>{nameOf(o)}</option>)}
+            </SelectField>
+            <SelectField label="Espaço" value={sub?.id || ""} disabled={!ws} onChange={(e) => { const o = subOrigins.find((s) => s.id === e.target.value) || null; setSub(o); setPipe(null); }}>
+              <option value="">{ws ? "Selecione o espaço" : "Escolha um workspace"}</option>
+              {subOrigins.map((o) => <option key={o.id} value={o.id}>{nameOf(o)}</option>)}
+            </SelectField>
+            <SelectField label="Pipeline" value={pipe?.id || ""} disabled={!sub} onChange={(e) => { const o = pipelines.find((p) => p.id === e.target.value) || null; setPipe(o); }}>
+              <option value="">{sub ? "Selecione o pipeline" : "Escolha um espaço"}</option>
+              {pipelines.map((o) => <option key={o.id} value={o.id}>{nameOf(o)}</option>)}
+            </SelectField>
           </div>
           {configFooter(!!(ws && sub && pipe), () => ws && sub && pipe && onSave({ type: "pipeline_enter", workspaceId: ws.id, workspaceName: nameOf(ws), subOriginId: sub.id, subOriginName: nameOf(sub), pipelineId: pipe.id, pipelineName: nameOf(pipe) }))}
         </>
       ) : (
         <>
           <div className="flex items-center gap-3 px-6 h-16 border-b border-border flex-shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center"><Tag className="h-4 w-4 text-purple-700" /></div>
             <div><p className="text-base font-bold leading-tight">{stage === "tag_removed" ? "Tag removida" : "Tag adicionada"}</p><p className="text-xs text-muted-foreground">Escolha a tag que inicia a automação</p></div>
           </div>
-          <div className="flex-1 overflow-auto p-6">
-            <div className="max-w-md">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Selecionar tag</label>
-              <select value={tag} onChange={(e) => setTag(e.target.value)} className="w-full h-10 rounded-lg border border-border px-3 mt-1.5 outline-none focus:border-purple-400 text-sm bg-background">
-                <option value="">Escolha uma tag</option>
-                {tags.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-              {tags.length === 0 && <p className="text-xs text-muted-foreground mt-2">Nenhuma tag encontrada nos contatos.</p>}
-            </div>
+          <div className="flex-1 overflow-auto p-8">
+            <SelectField label="Selecionar tag" value={tag} onChange={(e) => setTag(e.target.value)}>
+              <option value="">Escolha uma tag</option>
+              {tags.map((t) => <option key={t} value={t}>{t}</option>)}
+            </SelectField>
+            {tags.length === 0 && <p className="text-sm text-muted-foreground mt-2">Nenhuma tag encontrada nos contatos.</p>}
           </div>
           {configFooter(!!tag, () => onSave({ type: stage, tagName: tag }))}
         </>
@@ -489,49 +520,46 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
 
 function AddActionModal({ onClose, onEmail, onTimer }: { onClose: () => void; onEmail: () => void; onTimer: () => void }) {
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState("sugerido");
+  const [tab, setTab] = useState("enviando");
   const TABS = [
-    { key: "sugerido", label: "Sugerido", icon: Sparkles },
     { key: "enviando", label: "Enviando", icon: Mail },
     { key: "fluxo", label: "Fluxo de trabalho", icon: GitBranch },
     { key: "contatos", label: "Contatos", icon: Users },
     { key: "crm", label: "CRM", icon: Tag },
   ];
   const actions = [
-    { key: "timer", tab: ["sugerido", "fluxo"], icon: Timer, color: "bg-amber-500", title: "Aguarde", desc: "Esperar por um período de tempo antes da próxima etapa", run: onTimer },
-    { key: "email", tab: ["sugerido", "enviando"], icon: Mail, color: "bg-blue-600", title: "Enviar um e‑mail", desc: "Um e‑mail de marketing para os contatos inscritos", run: onEmail },
+    { key: "email", tab: ["enviando"], title: "Enviar um e‑mail", desc: "Um e‑mail de marketing para os contatos inscritos", run: onEmail },
+    { key: "timer", tab: ["fluxo"], title: "Aguarde", desc: "Esperar por um período de tempo antes da próxima etapa", run: onTimer },
   ];
   const visible = actions.filter((a) => a.tab.includes(tab) && a.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <CenterModal onClose={onClose} size="max-w-lg">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-border flex-shrink-0">
-        <h2 className="text-lg font-bold">Adicione uma ação</h2>
-        <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-accent"><X className="h-5 w-5" /></button>
-      </div>
-      <div className="px-6 pt-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Procurar por uma ação" className="h-10 w-full rounded-lg border border-border pl-9 pr-3 text-sm outline-none focus:border-purple-400" />
+    <SidePanel title="Adicione uma ação" width="w-[560px]" onClose={onClose}>
+      <div className="flex flex-col h-full">
+        <div className="flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Procurar por uma ação" className="h-11 w-full rounded-lg border border-border pl-9 pr-3 text-base outline-none" />
+          </div>
+          <div className="flex items-center gap-2.5 mt-5 flex-wrap">
+            {TABS.map((t) => (
+              <button key={t.key} onClick={() => setTab(t.key)} className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors", tab === t.key ? "bg-purple-500/10 text-purple-800" : "text-muted-foreground hover:bg-accent")}>
+                <t.icon className="h-4 w-4" /> {t.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-5 mt-4 border-b border-border">
-          {TABS.map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)} className={cn("flex flex-col items-center gap-1 pb-2.5 text-xs transition-colors border-b-2 -mb-px", tab === t.key ? "border-purple-600 text-purple-700 font-semibold" : "border-transparent text-muted-foreground hover:text-foreground")}>
-              <t.icon className="h-4 w-4" /> {t.label}
+        <div className="flex-1 overflow-auto mt-4 space-y-2.5">
+          {visible.map((a) => (
+            <button key={a.key} onClick={a.run} className="w-full flex items-center gap-3.5 rounded-xl border border-border p-4 text-left hover:bg-accent transition-colors">
+              {a.key === "email" ? <MailBadge box="w-12 h-12" /> : <AguardeBadge box="w-12 h-12" />}
+              <div><p className="text-base font-semibold">{a.title}</p><p className="text-sm text-muted-foreground mt-0.5">{a.desc}</p></div>
             </button>
           ))}
+          {visible.length === 0 && <p className="text-base text-muted-foreground text-center py-8">Nenhuma ação nesta categoria ainda.</p>}
         </div>
       </div>
-      <div className="flex-1 overflow-auto px-6 py-4 space-y-2.5">
-        {visible.map((a) => (
-          <button key={a.key} onClick={a.run} className="w-full flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:border-purple-400 hover:shadow-sm transition-all">
-            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0", a.color)}><a.icon className="h-5 w-5 text-white" /></div>
-            <div><p className="text-sm font-semibold">{a.title}</p><p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p></div>
-          </button>
-        ))}
-        {visible.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhuma ação nesta categoria ainda.</p>}
-      </div>
-    </CenterModal>
+    </SidePanel>
   );
 }
 
@@ -542,9 +570,24 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
   const tpl = templates.find((t) => t.id === step.templateId);
   const fromLine = domain?.domain ? `${domain.sender_name || "Equipe"} <${domain.sender_local || "contato"}@${domain.domain}>` : "Nenhum domínio ativo";
 
+  const [testOpen, setTestOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [testSubject, setTestSubject] = useState(step.subject || tpl?.subject || "");
+  const [sending, setSending] = useState(false);
+  const sendTest = async () => {
+    if (!testEmail || !tpl) return;
+    setSending(true);
+    const { error } = await (supabase as any).functions.invoke("send-email", {
+      body: { leadId: "test", leadName: "Teste", leadEmail: testEmail, templateId: step.templateId, subject: testSubject || "Teste", bodyHtml: tpl.body_html || "" },
+    });
+    setSending(false);
+    if (error) toast.error("Erro ao enviar o teste");
+    else { toast.success("E‑mail de teste enviado!"); setTestOpen(false); }
+  };
+
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="grid grid-cols-[130px_1fr] items-center gap-3 py-3 border-b border-border">
-      <label className="text-sm text-muted-foreground">{label}</label>
+    <div className="grid grid-cols-[140px_1fr] items-center gap-3 py-3.5 border-b border-border">
+      <label className="text-base text-muted-foreground">{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -553,48 +596,68 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
     <SidePanel
       title="Enviar um e‑mail"
       subtitle="Um e‑mail de marketing para os contatos inscritos"
-      icon={<div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0"><Mail className="h-4 w-4 text-white" /></div>}
-      width="w-[620px]"
+      icon={<MailBadge />}
+      width="w-[760px]"
       onClose={onClose}
-      footer={<button onClick={onClose} className="h-10 px-5 rounded-lg bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Concluir</button>}
+      footer={(close) => (
+        <div className="flex-1 flex items-center justify-between">
+          <button onClick={() => setTestOpen((v) => !v)} className="text-sm text-purple-700 font-medium hover:underline">Enviar um teste</button>
+          <button onClick={close} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Finalizar</button>
+        </div>
+      )}
     >
-      <Row label="Nome do e‑mail:">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium truncate">{tpl?.name || "Nenhum e‑mail selecionado"}</span>
-          <button onClick={() => setPicking((v) => !v)} className="text-sm text-purple-700 hover:underline font-medium flex-shrink-0">{tpl ? "Selecionar novo e‑mail" : "Escolher e‑mail"}</button>
+      <div className="flex flex-col h-full">
+        {testOpen && (
+          <div className="mb-4 rounded-xl border border-border bg-muted/40 p-4 flex-shrink-0">
+            <p className="text-sm font-semibold mb-2">Enviar e‑mail de teste</p>
+            <input value={testSubject} onChange={(e) => setTestSubject(e.target.value)} placeholder="Assunto do teste" className="w-full h-9 bg-transparent border-b border-border mb-2 outline-none text-sm placeholder:text-muted-foreground/70" />
+            <div className="flex items-center gap-2">
+              <input type="email" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="e‑mail para receber o teste" className="flex-1 h-9 bg-transparent border-b border-border outline-none text-sm placeholder:text-muted-foreground/70" />
+              <button onClick={sendTest} disabled={!testEmail || !tpl || sending} className="h-9 px-4 rounded-lg bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0">{sending ? "Enviando…" : "Enviar"}</button>
+            </div>
+            {!tpl && <p className="text-xs text-muted-foreground mt-2">Escolha um template antes de enviar o teste.</p>}
+          </div>
+        )}
+        <div className="flex-shrink-0">
+          <Row label="Nome do e‑mail:">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-base font-medium truncate">{tpl?.name || "Nenhum e‑mail selecionado"}</span>
+              <button onClick={() => setPicking((v) => !v)} className="text-base text-purple-700 hover:underline font-medium flex-shrink-0">{tpl ? "Selecionar novo e‑mail" : "Escolher e‑mail"}</button>
+            </div>
+          </Row>
+          <Row label="Linha de assunto:">
+            <input value={step.subject || ""} onChange={(e) => onChange({ subject: e.target.value })} placeholder="Escreva sua linha de assunto" className="w-full h-9 bg-transparent outline-none text-base placeholder:text-muted-foreground/70" />
+          </Row>
+          <Row label="Pré‑cabeçalho:">
+            <input value={step.preheader || ""} onChange={(e) => onChange({ preheader: e.target.value })} placeholder="Escreva seu preheader" className="w-full h-9 bg-transparent outline-none text-base placeholder:text-muted-foreground/70" />
+          </Row>
+          <Row label="De:">
+            <span className="text-base">{fromLine}</span>
+          </Row>
         </div>
-      </Row>
-      <Row label="Linha de assunto:">
-        <input value={step.subject || ""} onChange={(e) => onChange({ subject: e.target.value })} placeholder="Escreva sua linha de assunto" className="w-full h-9 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-sm" />
-      </Row>
-      <Row label="Pré‑cabeçalho:">
-        <input value={step.preheader || ""} onChange={(e) => onChange({ preheader: e.target.value })} placeholder="Escreva seu preheader" className="w-full h-9 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-sm" />
-      </Row>
-      <Row label="De:">
-        <span className="text-sm">{fromLine}</span>
-      </Row>
 
-      {picking ? (
-        <div className="mt-4 space-y-2">
-          {templates.length === 0 && <p className="text-sm text-muted-foreground">Nenhum template salvo. Crie um em Estrutura › Templates.</p>}
-          {templates.map((t) => (
-            <button key={t.id} onClick={() => { onChange({ templateId: t.id, templateName: t.name, subject: step.subject || t.subject || "" }); setPicking(false); }} className="w-full flex items-center gap-3 p-2 rounded-lg border border-border hover:border-purple-400 hover:bg-accent text-left transition-colors">
-              <div className="w-[56px] h-[56px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative">
-                {t.body_html && t.body_html.includes("<") ? (
-                  <iframe title={t.name} srcDoc={t.body_html} scrolling="no" tabIndex={-1} aria-hidden className="border-0 pointer-events-none absolute top-0 left-0" style={{ width: 600, height: 600, transform: `scale(${56 / 600})`, transformOrigin: "top left" }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><Mail className="h-4 w-4 text-muted-foreground/40" /></div>
-                )}
-              </div>
-              <span className="text-sm font-medium truncate flex-1">{t.name}</span>
-            </button>
-          ))}
-        </div>
-      ) : tpl ? (
-        <div className="mt-4 rounded-lg border border-border overflow-hidden bg-white">
-          <iframe title={tpl.name || ""} srcDoc={tpl.body_html || ""} className="w-full h-[440px] border-0" />
-        </div>
-      ) : null}
+        {picking ? (
+          <div className="flex-1 overflow-auto mt-4 space-y-2">
+            {templates.length === 0 && <p className="text-base text-muted-foreground">Nenhum template salvo. Crie um em Estrutura › Templates.</p>}
+            {templates.map((t) => (
+              <button key={t.id} onClick={() => { onChange({ templateId: t.id, templateName: t.name, subject: step.subject || t.subject || "" }); setPicking(false); }} className="w-full flex items-center gap-3 p-2 rounded-lg border border-border text-left transition-colors">
+                <div className="w-[56px] h-[56px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative">
+                  {t.body_html && t.body_html.includes("<") ? (
+                    <iframe title={t.name} srcDoc={t.body_html} scrolling="no" tabIndex={-1} aria-hidden className="border-0 pointer-events-none absolute top-0 left-0" style={{ width: 600, height: 600, transform: `scale(${56 / 600})`, transformOrigin: "top left" }} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Mail className="h-4 w-4 text-muted-foreground/40" /></div>
+                  )}
+                </div>
+                <span className="text-base font-medium truncate flex-1">{t.name}</span>
+              </button>
+            ))}
+          </div>
+        ) : tpl ? (
+          <div className="flex-1 min-h-[380px] mt-4 rounded-xl border border-border overflow-hidden bg-white">
+            <iframe title={tpl.name || ""} srcDoc={previewDoc(tpl.body_html || "")} className="w-full h-full border-0" />
+          </div>
+        ) : null}
+      </div>
     </SidePanel>
   );
 }
@@ -606,10 +669,10 @@ function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "
     <SidePanel
       title="Aguarde"
       subtitle="Esperar por um período de tempo antes da próxima etapa"
-      icon={<div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0"><Timer className="h-4 w-4 text-white" /></div>}
+      icon={<AguardeBadge />}
       width="w-[460px]"
       onClose={onClose}
-      footer={<button onClick={onClose} className="h-10 px-5 rounded-lg bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Concluir</button>}
+      footer={(close) => <button onClick={close} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Finalizar</button>}
     >
       <p className="text-sm text-muted-foreground mb-3">O contato aguardará:</p>
       <div className="flex items-center gap-2">
