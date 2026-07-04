@@ -35,19 +35,19 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
     const from = dom?.domain
-      ? `${dom.sender_name || "Equipe"} <${(dom.sender_local || "contato")}@${dom.domain}>`
+      ? `${dom.sender_name || "Equipe"} <${dom.sender_local || "contato"}@${dom.domain}>`
       : null;
 
     const now = () => new Date().toISOString();
 
-    // Due runs.
+    // Due runs (enrollment/wake set next_run_at <= now).
     const { data: runs } = await supabase
       .from("automation_runs")
       .select("*")
       .eq("status", "active")
       .lte("next_run_at", now())
       .order("next_run_at", { ascending: true })
-      .limit(25);
+      .limit(50);
 
     let processed = 0;
     let sent = 0;
@@ -59,81 +59,87 @@ serve(async (req) => {
         .eq("id", run.automation_id)
         .single();
 
-      // Automation gone or paused -> stop this run.
       if (!auto || auto.is_active === false) {
         await supabase.from("automation_runs").update({ status: "done", updated_at: now() }).eq("id", run.id);
         continue;
       }
 
       const steps: any[] = auto.flow_steps?.steps || [];
-      if (run.step_index >= steps.length) {
-        await supabase.from("automation_runs").update({ status: "done", updated_at: now() }).eq("id", run.id);
-        continue;
-      }
+      const { data: lead } = await supabase.from("leads").select("id, name, email").eq("id", run.lead_id).single();
 
-      const step = steps[run.step_index];
+      let idx: number = run.step_index;
+      let guard = 0;
 
-      // Timer: schedule the next step for later.
-      if (step?.type === "timer") {
-        await supabase
-          .from("automation_runs")
-          .update({ step_index: run.step_index + 1, next_run_at: new Date(Date.now() + delayMs(step.amount, step.unit)).toISOString(), updated_at: now() })
-          .eq("id", run.id);
-        processed++;
-        continue;
-      }
+      // Drain all immediate (email) steps in one shot; stop at a timer (schedule a wake) or the end.
+      while (guard++ < 200) {
+        if (idx >= steps.length) {
+          await supabase.from("automation_runs").update({ status: "done", step_index: idx, updated_at: now() }).eq("id", run.id);
+          break;
+        }
+        const step = steps[idx];
 
-      // Email: send via Resend.
-      if (step?.type === "email") {
-        if (!from) {
-          // No active domain configured yet — retry in 5 min.
-          await supabase.from("automation_runs").update({ last_error: "Nenhum domínio ativo configurado", next_run_at: new Date(Date.now() + 300_000).toISOString(), updated_at: now() }).eq("id", run.id);
-          continue;
+        if (step?.type === "timer") {
+          const next = new Date(Date.now() + delayMs(step.amount, step.unit)).toISOString();
+          await supabase.from("automation_runs").update({ step_index: idx + 1, next_run_at: next, updated_at: now() }).eq("id", run.id);
+          await supabase.rpc("schedule_wake", { wake_at: next });
+          processed++;
+          break;
         }
 
-        const { data: lead } = await supabase.from("leads").select("id, name, email").eq("id", run.lead_id).single();
-        const advance = (err: string | null) =>
-          supabase.from("automation_runs").update({ step_index: run.step_index + 1, next_run_at: now(), last_error: err, updated_at: now() }).eq("id", run.id);
+        if (step?.type === "email") {
+          if (!from) {
+            const retry = new Date(Date.now() + 300_000).toISOString();
+            await supabase.from("automation_runs").update({ last_error: "Nenhum domínio ativo configurado", next_run_at: retry, updated_at: now() }).eq("id", run.id);
+            await supabase.rpc("schedule_wake", { wake_at: retry });
+            break;
+          }
 
-        if (!lead?.email) { await advance("Lead sem e-mail"); continue; }
-        if (!step.templateId) { await advance("E-mail sem template escolhido"); continue; }
+          const name = lead?.name || "";
+          let errMsg: string | null = null;
 
-        const { data: tpl } = await supabase.from("email_templates").select("subject, body_html, name").eq("id", step.templateId).single();
-        if (!tpl?.body_html) { await advance("Template não encontrado"); continue; }
+          if (!lead?.email) {
+            errMsg = "Lead sem e-mail";
+          } else if (!step.templateId) {
+            errMsg = "E-mail sem template escolhido";
+          } else {
+            const { data: tpl } = await supabase.from("email_templates").select("subject, body_html, name").eq("id", step.templateId).single();
+            if (!tpl?.body_html) {
+              errMsg = "Template não encontrado";
+            } else {
+              const subject = String(tpl.subject || tpl.name || "Novidade").replace(/\{\{\s*name\s*\}\}/gi, name);
+              const html = String(tpl.body_html).replace(/\{\{\s*name\s*\}\}/gi, name);
+              let resendId: string | null = null;
+              try {
+                const r: any = await resend.emails.send({ from, to: [lead.email], subject, html });
+                if (r?.error) errMsg = r.error.message || String(r.error);
+                else resendId = r?.data?.id ?? null;
+              } catch (e) {
+                errMsg = String((e as any)?.message || e);
+              }
+              await supabase.from("sent_emails").insert({
+                lead_id: lead.id,
+                lead_name: lead.name,
+                lead_email: lead.email,
+                subject,
+                body_html: html,
+                status: errMsg ? "failed" : "sent",
+                resend_id: resendId,
+                sent_at: now(),
+              });
+              if (!errMsg) sent++;
+            }
+          }
 
-        const name = lead.name || "";
-        const subject = String(tpl.subject || tpl.name || "Novidade").replace(/\{\{\s*name\s*\}\}/gi, name);
-        const html = String(tpl.body_html).replace(/\{\{\s*name\s*\}\}/gi, name);
-
-        let resendId: string | null = null;
-        let errMsg: string | null = null;
-        try {
-          const r: any = await resend.emails.send({ from, to: [lead.email], subject, html });
-          if (r?.error) errMsg = r.error.message || String(r.error);
-          else resendId = r?.data?.id ?? null;
-        } catch (e) {
-          errMsg = String((e as any)?.message || e);
+          idx += 1;
+          processed++;
+          await supabase.from("automation_runs").update({ step_index: idx, next_run_at: now(), last_error: errMsg, updated_at: now() }).eq("id", run.id);
+          continue; // keep draining immediate steps
         }
 
-        await supabase.from("sent_emails").insert({
-          lead_id: lead.id,
-          lead_name: lead.name,
-          lead_email: lead.email,
-          subject,
-          body_html: html,
-          status: errMsg ? "failed" : "sent",
-          resend_id: resendId,
-          sent_at: now(),
-        });
-
-        await advance(errMsg);
-        if (!errMsg) sent++;
-        processed++;
-        continue;
+        // Unknown step -> skip.
+        idx += 1;
+        await supabase.from("automation_runs").update({ step_index: idx, updated_at: now() }).eq("id", run.id);
       }
-
-      // Unknown step type -> just advance.
-      await supabase.from("automation_runs").update({ step_index: run.step_index + 1, next_run_at: now(), updated_at: now() }).eq("id", run.id);
     }
 
     return json({ ok: true, due: runs?.length || 0, processed, sent });
