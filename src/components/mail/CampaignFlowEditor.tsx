@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Zap,
+  Mail, Plus, Send, MailOpen, MousePointerClick, Ban,
   ChevronLeft, X, GitBranch, Tag, Search, ChevronDown,
   ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
@@ -90,6 +90,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
   const [templates, setTemplates] = useState<Opt[]>([]);
   const [domain, setDomain] = useState<Domain | null>(null);
+  const [stats, setStats] = useState<Record<string, { sent: number; opened: number; clicked: number }>>({});
 
   // Pan / zoom
   const [view, setView] = useState({ x: 0, y: 48, k: 1 });
@@ -103,10 +104,11 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
   useEffect(() => {
     (async () => {
-      const [{ data: a }, { data: t }, { data: d }] = await Promise.all([
+      const [{ data: a }, { data: t }, { data: d }, { data: st }] = await Promise.all([
         (supabase as any).from("email_automations").select("flow_steps").eq("id", automation.id).single(),
         (supabase as any).from("email_templates").select("id,name,body_html,subject").order("created_at", { ascending: false }),
         (supabase as any).from("email_domains").select("domain,sender_name,sender_local").eq("is_active", true).limit(1).maybeSingle(),
+        (supabase as any).rpc("automation_step_stats", { p_automation_id: automation.id }),
       ]);
       if (a?.flow_steps) {
         setTrigger(a.flow_steps.trigger ?? null);
@@ -114,6 +116,9 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
       }
       setTemplates((t || []) as Opt[]);
       setDomain((d as Domain) || null);
+      const map: Record<string, { sent: number; opened: number; clicked: number }> = {};
+      ((st || []) as any[]).forEach((r) => { map[r.step_id] = { sent: Number(r.sent), opened: Number(r.opened), clicked: Number(r.clicked) }; });
+      setStats(map);
       loaded.current = true;
     })();
   }, [automation.id]);
@@ -157,6 +162,8 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
   const removeStep = (id: string) => setSteps((arr) => arr.filter((x) => x.id !== id));
   const addEmail = (i: number) => { const id = genId(); insertStep(i, { id, type: "email" }); setAddAt(null); setEmailFor(id); };
   const addTimer = (i: number) => { const id = genId(); insertStep(i, { id, type: "timer", amount: 1, unit: "days" }); setAddAt(null); setTimerFor(id); };
+  const sentCount = (id: string) => stats[id]?.sent ?? 0;
+  const pct = (id: string, key: "opened" | "clicked") => { const s = stats[id]; return s && s.sent ? Math.round((s[key] / s.sent) * 100) : 0; };
 
   /* --------------------------- Pan / zoom --------------------------- */
   useEffect(() => {
@@ -237,14 +244,13 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
             {/* Trigger */}
             {trigger ? (
               <button data-node onClick={() => setTriggerOpen(true)} className="w-[320px] rounded-xl bg-card border border-border shadow-sm p-4 text-left hover:border-purple-400 transition-colors">
-                <div className="flex items-center gap-2 text-purple-700 text-xs font-semibold uppercase tracking-wide"><Zap className="h-3.5 w-3.5" /> Gatilho</div>
                 {isPipelineTrigger(trigger) ? (
                   <>
-                    <p className="text-sm font-semibold mt-1.5">Entrou no pipeline “{trigger.pipelineName}”</p>
+                    <p className="text-sm font-semibold">Entrou no pipeline “{trigger.pipelineName}”</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{trigger.workspaceName} › {trigger.subOriginName}</p>
                   </>
                 ) : (
-                  <p className="text-sm font-semibold mt-1.5">{trigger.type === "tag_removed" ? "Tag removida" : "Tag adicionada"}: {trigger.tagName}</p>
+                  <p className="text-sm font-semibold">{trigger.type === "tag_removed" ? "Tag removida" : "Tag adicionada"}: {trigger.tagName}</p>
                 )}
               </button>
             ) : (
@@ -271,9 +277,9 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                         </p>
                       </div>
                       <div className="flex items-center gap-6 px-5 py-3 border-t border-border text-[13px] font-semibold text-blue-600 whitespace-nowrap">
-                        <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5" /> 0 enviados</span>
-                        <span className="flex items-center gap-1.5"><MailOpen className="h-3.5 w-3.5" /> 0% de taxa de abertura</span>
-                        <span className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" /> 0% de taxa de cliques</span>
+                        <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5" /> {sentCount(step.id)} enviados</span>
+                        <span className="flex items-center gap-1.5"><MailOpen className="h-3.5 w-3.5" /> {pct(step.id, "opened")}% de taxa de abertura</span>
+                        <span className="flex items-center gap-1.5"><MousePointerClick className="h-3.5 w-3.5" /> {pct(step.id, "clicked")}% de taxa de cliques</span>
                       </div>
                     </button>
                   </div>

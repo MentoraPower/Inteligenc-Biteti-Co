@@ -113,6 +113,14 @@ serve(async (req) => {
                 const pre = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${personalize(step.preheader)}</div>`;
                 html = /<body[^>]*>/i.test(html) ? html.replace(/(<body[^>]*>)/i, `$1${pre}`) : pre + html;
               }
+
+              // Tracking: rewrite links (click) + inject open pixel, keyed to this send.
+              const sentId = crypto.randomUUID();
+              const trackBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/email-tracking`;
+              html = html.replace(/href\s*=\s*"(https?:\/\/[^"]+)"/gi, (_m, u) => `href="${trackBase}/click/${sentId}?url=${encodeURIComponent(u)}"`);
+              const pixel = `<img src="${trackBase}/open/${sentId}" width="1" height="1" alt="" style="display:none;border:0;max-height:0;max-width:0;" />`;
+              html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${pixel}</body>`) : html + pixel;
+
               let resendId: string | null = null;
               try {
                 const r: any = await resend.emails.send({ from, to: [lead.email], subject, html });
@@ -122,6 +130,7 @@ serve(async (req) => {
                 errMsg = String((e as any)?.message || e);
               }
               await supabase.from("sent_emails").insert({
+                id: sentId,
                 lead_id: lead.id,
                 lead_name: lead.name,
                 lead_email: lead.email,
@@ -129,6 +138,8 @@ serve(async (req) => {
                 body_html: html,
                 status: errMsg ? "failed" : "sent",
                 resend_id: resendId,
+                automation_id: run.automation_id,
+                step_id: step.id,
                 sent_at: now(),
               });
               if (!errMsg) sent++;
