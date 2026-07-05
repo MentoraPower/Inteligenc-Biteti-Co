@@ -77,6 +77,48 @@ const previewDoc = (html: string) => {
   return html.includes("</head>") ? html.replace("</head>", z + "</head>") : z + html;
 };
 
+const triggerDesc = (t: TriggerCfg) => {
+  if (isPipelineTrigger(t)) return `Entrou no pipeline “${t.pipelineName}”`;
+  return t.type === "tag_removed" ? `Perdeu a tag “${t.tagName}”` : `Recebeu a tag “${t.tagName}”`;
+};
+
+// Trigger card (top of the flow) — icon circle + "Inicie a automação quando" + bold description.
+function TriggerCard({ trigger, onClick }: { trigger: TriggerCfg; onClick: () => void }) {
+  const pipeline = isPipelineTrigger(trigger);
+  return (
+    <button data-node onClick={onClick} className="relative w-[280px] rounded-2xl bg-card border border-border shadow-sm px-6 pt-9 pb-6 text-center hover:border-purple-400 transition-colors">
+      <div className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full ring-4 ring-background">
+        {pipeline ? <PipelineBadge box="w-12 h-12" /> : <TagBadge box="w-12 h-12" />}
+      </div>
+      <p className="text-sm text-muted-foreground">Inicie a automação quando</p>
+      <p className="text-[15px] font-bold mt-1 leading-snug">{triggerDesc(trigger)}</p>
+    </button>
+  );
+}
+
+// Curved connectors from each trigger card down to the central "+" of the flow.
+function TriggerConnectors({ count }: { count: number }) {
+  const CARD = 280, GAP = 16, H = 48;
+  const W = count * CARD + (count - 1) * GAP;
+  const cx = W / 2;
+  return (
+    <svg width={W} height={H} className="block mx-auto" style={{ overflow: "visible" }}>
+      {Array.from({ length: count }).map((_, i) => {
+        const x = i * (CARD + GAP) + CARD / 2;
+        return <path key={i} d={`M ${x} 0 C ${x} ${H * 0.7}, ${cx} ${H * 0.35}, ${cx} ${H}`} stroke="hsl(var(--border))" strokeWidth={2} fill="none" />;
+      })}
+    </svg>
+  );
+}
+
+function DashedAddTrigger({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button data-node onClick={onClick} className="w-[280px] rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors flex items-center justify-center px-4 min-h-[90px]">
+      {label}
+    </button>
+  );
+}
+
 /* ------------------------------- Editor ------------------------------ */
 
 interface Props {
@@ -85,7 +127,7 @@ interface Props {
 }
 
 export function CampaignFlowEditor({ automation, onBack }: Props) {
-  const initFlow = ((automation as any).flow_steps || {}) as { trigger?: TriggerCfg; steps?: Step[] };
+  const initFlow = ((automation as any).flow_steps || {}) as { triggers?: TriggerCfg[]; trigger?: TriggerCfg; steps?: Step[] };
   const [active, setActive] = useState(!!automation.is_active);
   const [tags, setTags] = useState<string[]>(((automation as any).tags as string[]) || []);
   const [tagInput, setTagInput] = useState("");
@@ -102,12 +144,15 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
     void saveTags([...tags, v]);
   };
   const removeTag = (t: string) => void saveTags(tags.filter((x) => x !== t));
-  const [trigger, setTrigger] = useState<TriggerCfg | null>(initFlow.trigger ?? null);
+  const [triggers, setTriggers] = useState<TriggerCfg[]>(
+    Array.isArray(initFlow.triggers) ? initFlow.triggers : (initFlow.trigger ? [initFlow.trigger] : [])
+  );
   const [steps, setSteps] = useState<Step[]>(Array.isArray(initFlow.steps) ? initFlow.steps : []);
   const [saved, setSaved] = useState(true);
   const loaded = useRef(false);
 
-  const [triggerOpen, setTriggerOpen] = useState(false);
+  // Which trigger is being configured: an index (edit), "new" (add), or null (closed).
+  const [triggerEdit, setTriggerEdit] = useState<number | "new" | null>(null);
   const [addAt, setAddAt] = useState<number | null>(null);
   const [emailFor, setEmailFor] = useState<string | null>(null);
   const [timerFor, setTimerFor] = useState<string | null>(null);
@@ -145,29 +190,29 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
   }, [automation.id]);
 
   const persist = useCallback(async () => {
-    const pipe = isPipelineTrigger(trigger) ? trigger : null;
+    const pipe = triggers.find((t) => isPipelineTrigger(t)) as Extract<TriggerCfg, { pipelineId: string }> | undefined;
     const { error } = await (supabase as any)
       .from("email_automations")
-      .update({ flow_steps: { trigger, steps }, trigger_pipeline_id: pipe?.pipelineId ?? null, sub_origin_id: pipe?.subOriginId ?? null })
+      .update({ flow_steps: { triggers, steps }, trigger_pipeline_id: pipe?.pipelineId ?? null, sub_origin_id: pipe?.subOriginId ?? null })
       .eq("id", automation.id);
     if (error) toast.error("Erro ao salvar o fluxo"); else setSaved(true);
-  }, [trigger, steps, automation.id]);
+  }, [triggers, steps, automation.id]);
 
   useEffect(() => {
     if (!loaded.current) return;
     setSaved(false);
     const t = setTimeout(() => void persist(), 700);
     return () => clearTimeout(t);
-  }, [trigger, steps, persist]);
+  }, [triggers, steps, persist]);
 
-  const stateRef = useRef({ trigger, steps });
-  useEffect(() => { stateRef.current = { trigger, steps }; }, [trigger, steps]);
+  const stateRef = useRef({ triggers, steps });
+  useEffect(() => { stateRef.current = { triggers, steps }; }, [triggers, steps]);
   useEffect(() => () => {
     if (!loaded.current) return;
-    const { trigger: tr, steps: st } = stateRef.current;
-    const pipe = isPipelineTrigger(tr) ? tr : null;
+    const { triggers: trs, steps: st } = stateRef.current;
+    const pipe = trs.find((t) => isPipelineTrigger(t)) as Extract<TriggerCfg, { pipelineId: string }> | undefined;
     void (supabase as any).from("email_automations")
-      .update({ flow_steps: { trigger: tr, steps: st }, trigger_pipeline_id: pipe?.pipelineId ?? null, sub_origin_id: pipe?.subOriginId ?? null })
+      .update({ flow_steps: { triggers: trs, steps: st }, trigger_pipeline_id: pipe?.pipelineId ?? null, sub_origin_id: pipe?.subOriginId ?? null })
       .eq("id", automation.id);
   }, [automation.id]);
 
@@ -286,25 +331,24 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
       >
         <div className="absolute top-0 left-0 w-full" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`, transformOrigin: "0 0" }}>
           <div className="flex flex-col items-center pb-24">
-            {/* Trigger */}
-            {trigger ? (
-              <button data-node onClick={() => setTriggerOpen(true)} className="w-[320px] rounded-xl bg-card border border-border shadow-sm p-4 text-left hover:border-purple-400 transition-colors">
-                {isPipelineTrigger(trigger) ? (
-                  <>
-                    <p className="text-sm font-semibold">Entrou no pipeline “{trigger.pipelineName}”</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{trigger.workspaceName} › {trigger.subOriginName}</p>
-                  </>
-                ) : (
-                  <p className="text-sm font-semibold">{trigger.type === "tag_removed" ? "Tag removida" : "Tag adicionada"}: {trigger.tagName}</p>
+            {/* Triggers — cards side by side at the top + dashed "add another" */}
+            <div className="relative pt-6">
+              <div className="flex items-stretch justify-center gap-4">
+                {triggers.map((t, i) => (
+                  <TriggerCard key={i} trigger={t} onClick={() => setTriggerEdit(i)} />
+                ))}
+                {triggers.length === 0 && (
+                  <DashedAddTrigger label="Adicione um gatilho de entrada" onClick={() => setTriggerEdit("new")} />
                 )}
-              </button>
-            ) : (
-              <button data-node onClick={() => setTriggerOpen(true)} className="w-[320px] px-6 py-5 rounded-xl border-2 border-dashed border-border text-[15px] text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors text-center">
-                Adicione um gatilho de entrada
-              </button>
-            )}
+              </div>
+              {triggers.length > 0 && (
+                <div className="absolute top-6" style={{ left: `calc(50% + ${(triggers.length * 280 + (triggers.length - 1) * 16) / 2 + 16}px)` }}>
+                  <DashedAddTrigger label="Adicione outro gatilho de entrada" onClick={() => setTriggerEdit("new")} />
+                </div>
+              )}
+            </div>
 
-            <Line />
+            {triggers.length >= 2 ? <TriggerConnectors count={triggers.length} /> : <Line />}
             <AddBtn index={0} />
 
             {steps.map((step, i) => (
@@ -366,8 +410,22 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
       </div>
 
       {/* Modals / panels */}
-      {triggerOpen && (
-        <TriggerModal current={trigger} onClose={() => setTriggerOpen(false)} onSave={(cfg) => { setTrigger(cfg); setTriggerOpen(false); }} />
+      {triggerEdit !== null && (
+        <TriggerModal
+          current={typeof triggerEdit === "number" ? triggers[triggerEdit] : null}
+          onClose={() => setTriggerEdit(null)}
+          onSave={(cfg) => {
+            setTriggers((prev) => {
+              if (typeof triggerEdit === "number") { const next = [...prev]; next[triggerEdit] = cfg; return next; }
+              return [...prev, cfg];
+            });
+            setTriggerEdit(null);
+          }}
+          onDelete={typeof triggerEdit === "number" ? () => {
+            setTriggers((prev) => prev.filter((_, i) => i !== triggerEdit));
+            setTriggerEdit(null);
+          } : undefined}
+        />
       )}
       {addAt !== null && (
         <AddActionModal onClose={() => setAddAt(null)} onEmail={() => addEmail(addAt)} onTimer={() => addTimer(addAt)} />
@@ -427,16 +485,17 @@ function SidePanel({ title, subtitle, icon, onClose, footer, children, width = "
 
 /* ---------------------------- Trigger modal ---------------------------- */
 
-function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null; onClose: () => void; onSave: (c: TriggerCfg) => void }) {
+function TriggerModal({ current, onClose, onSave, onDelete }: { current: TriggerCfg | null; onClose: () => void; onSave: (c: TriggerCfg) => void; onDelete?: () => void }) {
+  const cp = isPipelineTrigger(current) ? current : null;
   const initStage = current ? (isPipelineTrigger(current) ? "pipeline_enter" : current.type) : "list";
   const [stage, setStage] = useState<"list" | "pipeline_enter" | "tag_added" | "tag_removed">(initStage as any);
   const [search, setSearch] = useState("");
 
-  const [workspaces, setWorkspaces] = useState<Opt[]>([]);
-  const [subOrigins, setSubOrigins] = useState<Opt[]>([]);
-  const [pipelines, setPipelines] = useState<Opt[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const cp = isPipelineTrigger(current) ? current : null;
+  // Pre-seed the option lists with the current selection so the config shows instantly (no flash).
+  const [workspaces, setWorkspaces] = useState<Opt[]>(cp ? [{ id: cp.workspaceId, name: cp.workspaceName }] : []);
+  const [subOrigins, setSubOrigins] = useState<Opt[]>(cp ? [{ id: cp.subOriginId, nome: cp.subOriginName }] : []);
+  const [pipelines, setPipelines] = useState<Opt[]>(cp ? [{ id: cp.pipelineId, nome: cp.pipelineName }] : []);
+  const [tags, setTags] = useState<string[]>(!cp && current ? [current.tagName] : []);
   const [ws, setWs] = useState<Opt | null>(cp ? { id: cp.workspaceId, name: cp.workspaceName } : null);
   const [sub, setSub] = useState<Opt | null>(cp ? { id: cp.subOriginId, nome: cp.subOriginName } : null);
   const [pipe, setPipe] = useState<Opt | null>(cp ? { id: cp.pipelineId, nome: cp.pipelineName } : null);
@@ -482,7 +541,10 @@ function TriggerModal({ current, onClose, onSave }: { current: TriggerCfg | null
   const configFooter = (canSave: boolean, save: () => void) => (
     <>
       <div className="flex items-center justify-between px-6 h-16 border-t border-border flex-shrink-0">
-        <button onClick={() => setStage("list")} className="h-10 px-4 rounded border border-border text-sm font-medium hover:bg-accent flex items-center gap-1"><ChevronLeft className="h-4 w-4" /> Voltar</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setStage("list")} className="h-10 px-4 rounded border border-border text-sm font-medium hover:bg-accent flex items-center gap-1"><ChevronLeft className="h-4 w-4" /> Voltar</button>
+          {onDelete && <button onClick={onDelete} className="h-10 px-4 rounded border border-border text-sm font-medium text-red-600 hover:bg-red-500/10">Remover</button>}
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={onClose} className="h-10 px-4 rounded border border-border text-sm font-medium hover:bg-accent">Cancelar</button>
           <button disabled={!canSave} onClick={save} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Salvar</button>
