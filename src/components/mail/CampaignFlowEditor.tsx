@@ -84,9 +84,10 @@ interface Props {
 }
 
 export function CampaignFlowEditor({ automation, onBack }: Props) {
+  const initFlow = ((automation as any).flow_steps || {}) as { trigger?: TriggerCfg; steps?: Step[] };
   const [active, setActive] = useState(!!automation.is_active);
-  const [trigger, setTrigger] = useState<TriggerCfg | null>(null);
-  const [steps, setSteps] = useState<Step[]>([]);
+  const [trigger, setTrigger] = useState<TriggerCfg | null>(initFlow.trigger ?? null);
+  const [steps, setSteps] = useState<Step[]>(Array.isArray(initFlow.steps) ? initFlow.steps : []);
   const [saved, setSaved] = useState(true);
   const loaded = useRef(false);
 
@@ -111,16 +112,13 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
 
   useEffect(() => {
     (async () => {
-      const [{ data: a }, { data: t }, { data: d }, { data: st }] = await Promise.all([
-        (supabase as any).from("email_automations").select("flow_steps").eq("id", automation.id).single(),
+      // Flow (trigger/steps) is already initialized from the prop, so it renders instantly.
+      // Here we only fetch what the panels/metrics need.
+      const [{ data: t }, { data: d }, { data: st }] = await Promise.all([
         (supabase as any).from("email_templates").select("id,name,body_html,subject").order("created_at", { ascending: false }),
         (supabase as any).from("email_domains").select("domain,sender_name,sender_local").eq("is_active", true).limit(1).maybeSingle(),
         (supabase as any).rpc("automation_step_stats", { p_automation_id: automation.id }),
       ]);
-      if (a?.flow_steps) {
-        setTrigger(a.flow_steps.trigger ?? null);
-        setSteps(Array.isArray(a.flow_steps.steps) ? a.flow_steps.steps : []);
-      }
       setTemplates((t || []) as Opt[]);
       setDomain((d as Domain) || null);
       const map: Record<string, { sent: number; opened: number; clicked: number }> = {};
