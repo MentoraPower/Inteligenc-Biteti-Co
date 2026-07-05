@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-  Mail, Plus, Send, MailOpen, MousePointerClick, Ban,
+  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Users,
   ChevronLeft, X, GitBranch, Tag, Search, ChevronDown,
   ZoomIn, ZoomOut, Maximize2,
 } from "lucide-react";
