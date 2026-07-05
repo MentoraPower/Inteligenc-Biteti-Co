@@ -102,10 +102,10 @@ function TriggerConnectors({ count }: { count: number }) {
   const W = count * CARD + (count - 1) * GAP;
   const cx = W / 2;
   return (
-    <svg width={W} height={H} className="block mx-auto" style={{ overflow: "visible" }}>
+    <svg width={W} height={H} className="block mx-auto text-zinc-300 dark:text-zinc-600" style={{ overflow: "visible" }}>
       {Array.from({ length: count }).map((_, i) => {
         const x = i * (CARD + GAP) + CARD / 2;
-        return <path key={i} d={`M ${x} 0 C ${x} ${H * 0.7}, ${cx} ${H * 0.35}, ${cx} ${H}`} stroke="hsl(var(--border))" strokeWidth={2} fill="none" />;
+        return <path key={i} d={`M ${x} 0 C ${x} ${H * 0.7}, ${cx} ${H * 0.35}, ${cx} ${H}`} stroke="currentColor" strokeWidth={2} fill="none" />;
       })}
     </svg>
   );
@@ -274,7 +274,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
       <Plus className="h-4 w-4" />
     </button>
   );
-  const Line = () => <div className="w-px h-7 bg-border" />;
+  const Line = () => <div className="w-[2px] h-7 bg-zinc-300 dark:bg-zinc-600" />;
 
   return (
     <div className="h-full flex flex-col bg-background pt-2">
@@ -327,7 +327,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
       <div
         ref={viewportRef}
         onMouseDown={onPanStart}
-        className="flex-1 min-h-0 relative overflow-hidden cursor-grab active:cursor-grabbing bg-[radial-gradient(circle,#e4e4e7_1px,transparent_1px)] [background-size:22px_22px] dark:bg-[radial-gradient(circle,#3f3f46_1px,transparent_1px)]"
+        className="flex-1 min-h-0 relative overflow-hidden cursor-grab active:cursor-grabbing bg-[radial-gradient(circle,#c4c4cc_1px,transparent_1px)] [background-size:22px_22px] dark:bg-[radial-gradient(circle,#52525b_1px,transparent_1px)]"
       >
         <div className="absolute top-0 left-0 w-full" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`, transformOrigin: "0 0" }}>
           <div className="flex flex-col items-center pb-24">
