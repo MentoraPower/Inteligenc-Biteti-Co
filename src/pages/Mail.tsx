@@ -15,6 +15,52 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Trash2, Copy, ArrowRight, Settings, Search, ChevronDown } from "lucide-react";
+import emailIcon from "@/assets/mail/email.png";
+import aguardeIcon from "@/assets/mail/aguarde.png";
+
+// Mini real render of the automation flow, scaled to fit the square thumbnail.
+function FlowThumb({ flow, active }: { flow: any; active: boolean }) {
+  const trigger = flow?.trigger;
+  const steps = ((flow?.steps || []) as any[]).slice(0, 3);
+  const Badge = ({ src }: { src: string }) => (
+    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+      <img src={src} alt="" className="w-full h-full object-cover scale-[1.6]" />
+    </div>
+  );
+  return (
+    <div className="w-[110px] h-[110px] rounded-lg border border-border bg-white overflow-hidden flex-shrink-0 relative">
+      <div className="absolute top-1 left-1 z-10 flex items-center gap-1 text-[8px] font-medium bg-white/90 rounded px-1 py-0.5">
+        <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-zinc-400"}`} />
+        {active ? "Ativo" : "Inativo"}
+      </div>
+      <div className="absolute top-7 left-1/2 origin-top" style={{ transform: "translateX(-50%) scale(0.32)" }}>
+        <div className="flex flex-col items-center w-[300px]">
+          {trigger ? (
+            <div className="w-[240px] rounded-xl bg-card border border-border shadow-sm px-4 py-3 text-base font-semibold">Gatilho configurado</div>
+          ) : (
+            <div className="w-[240px] rounded-xl border-2 border-dashed border-border px-4 py-4 text-base text-muted-foreground text-center">Adicione um gatilho</div>
+          )}
+          {steps.map((s: any, i: number) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className="w-px h-5 bg-border" />
+              {s?.type === "email" ? (
+                <div className="w-[290px] rounded-xl bg-card border border-border shadow-sm px-4 py-3 flex items-center gap-3">
+                  <Badge src={emailIcon} />
+                  <span className="text-base font-semibold">Enviar um email</span>
+                </div>
+              ) : (
+                <div className="w-[240px] rounded-xl bg-card border border-border shadow-sm px-4 py-3 flex items-center gap-3">
+                  <Badge src={aguardeIcon} />
+                  <span className="text-base font-semibold">Aguarde</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 import { toast } from "sonner";
 import { CampaignFlowEditor } from "@/components/mail/CampaignFlowEditor";
 
@@ -169,8 +215,8 @@ export default function Mail() {
   return (
     <div className="h-full flex flex-col w-full overflow-y-auto">
       {/* Hero */}
-      <div className="bg-gradient-to-b from-purple-300/60 via-purple-100/40 to-transparent px-6 pt-14 pb-16">
-        <h1 className="text-center text-4xl font-extrabold bg-gradient-to-b from-purple-600 to-purple-800 bg-clip-text text-transparent">
+      <div className="bg-gradient-to-b from-purple-300/60 via-purple-100/40 to-transparent dark:from-purple-800/40 dark:via-purple-950/25 dark:to-transparent px-6 pt-14 pb-16">
+        <h1 className="text-center text-4xl font-extrabold bg-gradient-to-b from-purple-600 to-purple-800 dark:from-purple-300 dark:to-purple-500 bg-clip-text text-transparent">
           Automatizando base
         </h1>
         <button onClick={openCreate} className="mx-auto mt-4 block text-purple-700 font-semibold hover:underline">
@@ -237,22 +283,7 @@ export default function Mail() {
 
                 {/* Automação: thumbnail + name */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-[104px] h-[60px] rounded-lg border border-border bg-card p-1.5 flex flex-col gap-1 flex-shrink-0">
-                    <div className="flex items-center gap-1 text-[9px] font-medium">
-                      <span className={`h-1.5 w-1.5 rounded-full ${a.is_active ? "bg-emerald-500" : "bg-zinc-400"}`} />
-                      {a.is_active ? "Ativo" : "Inativo"}
-                    </div>
-                    {/* Mini flow preview (trigger + steps) */}
-                    <div className="flex-1 flex flex-col items-center justify-center gap-[2px] overflow-hidden">
-                      <div className={`h-2 w-9 rounded-[3px] border border-dashed ${(a.flow_steps as any)?.trigger ? "border-purple-400 bg-purple-100/60" : "border-border"}`} />
-                      {(((a.flow_steps as any)?.steps || []) as any[]).slice(0, 3).map((s: any, i: number) => (
-                        <div key={i} className="flex flex-col items-center gap-[2px]">
-                          <div className="h-[4px] w-px bg-border" />
-                          <div className={`h-2.5 w-2.5 rounded-full ${s?.type === "email" ? "bg-blue-600" : "bg-amber-500"}`} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <FlowThumb flow={a.flow_steps as any} active={a.is_active} />
                   <button
                     onClick={() => setEditing(a)}
                     className="text-blue-600 font-semibold hover:underline truncate text-left"
