@@ -38,6 +38,12 @@ interface EmailTemplate {
   body_html?: string | null;
 }
 
+// Make the email fit the card preview width.
+const fitDoc = (html: string) => {
+  const css = "<style>html,body{margin:0;padding:0}*{box-sizing:border-box;max-width:100%!important}table{width:100%!important;max-width:100%!important}img{max-width:100%!important;height:auto!important}</style>";
+  return html.includes("</head>") ? html.replace("</head>", css + "</head>") : css + html;
+};
+
 export default function MailTemplates() {
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -106,69 +112,65 @@ export default function MailTemplates() {
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
-          <div>Nome</div>
-          <div>Data de criação</div>
-          <div className="text-center">Ações</div>
-        </div>
-        {templates.length === 0 && (
-          <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
+        {templates.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
             Nenhum template ainda. Clique em <b>Criar template</b> para começar.
           </div>
-        )}
-        {templates.map((t) => (
-          <div
-            key={t.id}
-            className="grid grid-cols-[1fr_130px_44px] items-center gap-2 px-4 py-3 border-t border-border text-sm"
-          >
-            <button
-              onClick={() => setEditing(t)}
-              className="flex items-center gap-3 min-w-0 text-left group"
-            >
-              <div className="w-[72px] h-[72px] rounded-sm border border-border overflow-hidden bg-white flex-shrink-0 relative group-hover:border-foreground/30 transition-colors">
-                {t.body_html && t.body_html.includes("<") ? (
-                  <iframe
-                    title={t.name}
-                    srcDoc={t.body_html}
-                    scrolling="no"
-                    tabIndex={-1}
-                    aria-hidden
-                    className="border-0 pointer-events-none absolute top-0 left-0"
-                    style={{ width: 600, height: 600, transform: `scale(${72 / 600})`, transformOrigin: "top left" }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <LayoutTemplate className="h-5 w-5 text-muted-foreground/40" />
-                  </div>
-                )}
+        ) : (
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+            {templates.map((t) => (
+              <div key={t.id} className="rounded-xl border border-border overflow-hidden bg-card flex flex-col group">
+                {/* Top: real email preview (16:9) */}
+                <button
+                  onClick={() => setEditing(t)}
+                  className="block aspect-[16/9] bg-white overflow-hidden relative border-b border-border"
+                >
+                  {t.body_html && t.body_html.includes("<") ? (
+                    <iframe
+                      title={t.name}
+                      srcDoc={fitDoc(t.body_html)}
+                      scrolling="no"
+                      tabIndex={-1}
+                      aria-hidden
+                      className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <LayoutTemplate className="h-8 w-8 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </button>
+                {/* Bottom: name, last edited, 3-dots */}
+                <div className="flex items-center justify-between gap-2 p-3">
+                  <button onClick={() => setEditing(t)} className="min-w-0 text-left">
+                    <p className="font-semibold truncate">{t.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Editado em {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg flex-shrink-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditing(t)}>
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setConfirmDelete(t)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              <span className="font-medium truncate">{t.name}</span>
-            </button>
-            <div className="text-muted-foreground">
-              {new Date(t.created_at).toLocaleDateString("pt-BR")}
-            </div>
-            <div className="flex justify-end">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditing(t)}>
-                    <Pencil className="h-4 w-4 mr-2" /> Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setConfirmDelete(t)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Name dialog before creating a template */}

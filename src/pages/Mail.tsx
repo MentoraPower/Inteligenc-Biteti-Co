@@ -79,6 +79,8 @@ interface EmailAutomation {
 export default function Mail() {
   const [editing, setEditing] = useState<EmailAutomation | null>(null);
   const [filter, setFilter] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<EmailAutomation | null>(null);
@@ -202,6 +204,18 @@ export default function Mail() {
     refetch();
   };
 
+  const visible = automations.filter((a) =>
+    a.name.toLowerCase().includes(filter.trim().toLowerCase())
+  );
+  const shown = visible.slice(0, rowsPerPage);
+  const allSelected = shown.length > 0 && shown.every((a) => selected.has(a.id));
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(shown.map((a) => a.id)));
+  const toggleOne = (id: string) => setSelected((prev) => {
+    const n = new Set(prev);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
+
   // ── Campaign flow editor (vertical funnel, React Flow) ──
   if (editing) {
     return (
@@ -219,7 +233,7 @@ export default function Mail() {
         <h1 className="text-center text-4xl font-extrabold bg-gradient-to-b from-purple-600 to-purple-800 dark:from-purple-300 dark:to-purple-500 bg-clip-text text-transparent">
           Automatizando base
         </h1>
-        <button onClick={openCreate} className="mx-auto mt-4 block text-purple-700 font-semibold hover:underline">
+        <button onClick={openCreate} className="mx-auto mt-5 block rounded-md border border-purple-300 dark:border-purple-500/40 px-4 py-2 text-purple-700 dark:text-purple-300 font-semibold hover:bg-purple-500/10 transition-colors">
           Criar campanha
         </button>
       </div>
@@ -251,7 +265,7 @@ export default function Mail() {
           {/* Header */}
           <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
             <div>
-              <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border accent-purple-800 cursor-pointer" />
             </div>
             <div>Automação</div>
             <div className="whitespace-nowrap">Editado pela última vez</div>
@@ -263,9 +277,6 @@ export default function Mail() {
           </div>
 
           {(() => {
-            const visible = automations.filter((a) =>
-              a.name.toLowerCase().includes(filter.trim().toLowerCase())
-            );
             if (visible.length === 0) {
               return (
                 <div className="px-4 py-10 border-t border-border text-center text-sm text-muted-foreground">
@@ -275,10 +286,10 @@ export default function Mail() {
                 </div>
               );
             }
-            return visible.map((a) => (
-              <div key={a.id} className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-4 border-t border-border/50 text-sm">
+            return shown.map((a) => (
+              <div key={a.id} className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-4 border-b border-border/50 text-sm">
                 <div>
-                  <input type="checkbox" className="h-4 w-4 rounded border-border accent-purple-800" />
+                  <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggleOne(a.id)} className="h-4 w-4 rounded border-border accent-purple-800 cursor-pointer" />
                 </div>
 
                 {/* Automação: thumbnail + name */}
@@ -306,19 +317,18 @@ export default function Mail() {
                 <div className="text-muted-foreground">—</div>
 
                 {/* Actions */}
-                <div className="flex justify-end items-center gap-0.5">
-                  <Button
+                <div className="flex justify-end items-center">
+                  <button
                     onClick={() => setEditing(a)}
-                    variant="ghost"
-                    className="h-8 px-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 font-medium"
+                    className="h-8 px-3 rounded-l-sm border border-border border-r-0 text-blue-600 hover:bg-blue-500/10 font-medium text-sm transition-colors"
                   >
                     Editar
-                  </Button>
+                  </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-blue-600 hover:bg-blue-500/10">
+                      <button className="h-8 w-8 rounded-r-sm border border-border flex items-center justify-center text-blue-600 hover:bg-blue-500/10 transition-colors">
                         <ChevronDown className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => duplicate(a)}>
@@ -338,9 +348,18 @@ export default function Mail() {
 
       {/* Rows per page */}
       <div className="flex justify-end mt-3">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded-lg px-3 h-8">
-          Linhas: 20 <ChevronDown className="h-3.5 w-3.5" />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded-lg px-3 h-8 hover:bg-accent transition-colors">
+              Linhas: {rowsPerPage} <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {[10, 20, 50, 100].map((n) => (
+              <DropdownMenuItem key={n} onClick={() => setRowsPerPage(n)}>{n} linhas</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       </div>
 
