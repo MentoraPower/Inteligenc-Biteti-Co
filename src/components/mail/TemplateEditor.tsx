@@ -237,9 +237,13 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     return () => window.dispatchEvent(new CustomEvent("mail-editor", { detail: { open: false } }));
   }, []);
 
-  // Auto-scroll the conversation to the bottom.
+  // Follow the conversation only while the user is already near the bottom — so they can
+  // freely scroll up/down while the AI is typing or the checklist updates.
   useEffect(() => {
-    historyRef.current?.scrollTo({ top: historyRef.current.scrollHeight, behavior: "smooth" });
+    const el = historyRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
+    if (nearBottom) el.scrollTo({ top: el.scrollHeight });
   }, [messages]);
 
   // Keep refs in sync so persist() always sees the latest values.
