@@ -39,7 +39,7 @@ export function MailOptionsPanel() {
           {groups.map((group) => (
             <div key={group.title}>
               {/* Section header (uppercase, subtle) */}
-              <div className="px-2 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="px-2 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-foreground/70">
                 {group.title}
               </div>
               <div className="space-y-0.5">
@@ -48,16 +48,20 @@ export function MailOptionsPanel() {
                     key={path || label}
                     onClick={() => !dev && navigate(path)}
                     disabled={dev}
-                    className={cn(
-                      "w-full py-2 px-3 rounded-lg text-sm text-left transition-colors truncate flex items-center justify-between gap-2",
-                      dev
-                        ? "text-foreground/40 cursor-not-allowed"
-                        : isActive
-                        ? "bg-muted font-semibold text-foreground"
-                        : "text-foreground/80 hover:bg-accent"
-                    )}
+                    className="group w-full py-0.5 text-left flex items-center gap-2"
                   >
-                    <span className="truncate">{label}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-sm truncate transition-colors",
+                        dev
+                          ? "text-foreground/40 cursor-not-allowed"
+                          : isActive
+                          ? "bg-muted font-semibold text-foreground"
+                          : "text-foreground/80 group-hover:bg-accent"
+                      )}
+                    >
+                      {label}
+                    </span>
                     {dev && (
                       <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
                         em breve
