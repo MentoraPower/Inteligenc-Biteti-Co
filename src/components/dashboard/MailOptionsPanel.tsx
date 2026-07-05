@@ -17,7 +17,8 @@ export function MailOptionsPanel() {
     <div className="h-full flex flex-col bg-background text-foreground">
       <div className="flex-1 overflow-y-auto px-3 pt-6 pb-4">
         {/* Big title */}
-        <h2 className="text-xl font-bold px-2 mb-5">Mail</h2>
+        <h2 className="text-xl font-bold px-2 mb-4">Mail</h2>
+        <div className="border-b border-border mb-4" />
 
         <div className="space-y-0.5">
           {options.map(({ label, path, isActive }) => (
