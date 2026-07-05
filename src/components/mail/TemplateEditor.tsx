@@ -94,20 +94,21 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
   const [name, setName] = useState(template.name);
   const [editingName, setEditingName] = useState(false);
 
+  const initialHtml = (((template as any).body_html as string) && (template as any).body_html.includes("<")) ? ((template as any).body_html as string) : "";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [emailHtml, setEmailHtml] = useState<string>("");
+  const [emailHtml, setEmailHtml] = useState<string>(initialHtml);
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState<Attachment | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const loaded = useRef(false);
   const interacted = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
-  const emailHtmlRef = useRef("");
+  const emailHtmlRef = useRef(initialHtml);
 
   // Undo/redo + code/preview for the email.
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
-  const baseHtml = useRef("");
+  const baseHtml = useRef(initialHtml);
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeDraft, setCodeDraft] = useState("");
   const [codeHeight, setCodeHeight] = useState(360);
@@ -180,6 +181,8 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
   // Keep refs in sync so persist() always sees the latest values.
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { emailHtmlRef.current = emailHtml; }, [emailHtml]);
+  // Keep the editor's title in sync when the template's name changes (e.g. named via the popup).
+  useEffect(() => { setName(template.name); }, [template.name]);
 
   // Load the saved email + chat for this template.
   useEffect(() => {

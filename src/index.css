@@ -735,7 +735,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, hsl(25 100% 50%) 0%, hsl(35 100% 55%) 100%);
+  background: linear-gradient(90deg, #a855f7 0%, #7e22ce 100%);
   transform-origin: left;
   animation: toast-progress 4s linear forwards;
 }

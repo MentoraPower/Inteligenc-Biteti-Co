@@ -14,7 +14,7 @@ export function MailOptionsPanel() {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-background text-foreground">
+    <div className="h-full flex flex-col bg-card text-foreground">
       <div className="flex-1 overflow-y-auto px-3 pt-6 pb-4">
         {/* Big title */}
         <h2 className="text-xl font-bold px-2 mb-4">Mail</h2>

@@ -61,22 +61,31 @@ export default function MailTemplates() {
     },
   });
 
-  const openCreate = () => {
+  const openCreate = async () => {
+    // Create the template immediately and open the editor; the name popup shows on top.
+    const { data, error } = await (supabase as any)
+      .from("email_templates")
+      .insert({ name: "Novo template", subject: "", body_html: "" })
+      .select("id,name,subject,created_at")
+      .single();
+    if (error) return toast.error("Erro ao criar template");
+    refetch();
+    setEditing(data as EmailTemplate);
     setNewName("");
     setNameDialogOpen(true);
   };
 
   const confirmCreate = async () => {
-    if (!newName.trim()) return;
-    const { data, error } = await (supabase as any)
+    if (!editing) { setNameDialogOpen(false); return; }
+    const name = newName.trim() || "Novo template";
+    const { error } = await (supabase as any)
       .from("email_templates")
-      .insert({ name: newName.trim(), subject: "", body_html: "" })
-      .select("id,name,subject,created_at")
-      .single();
-    if (error) return toast.error("Erro ao criar template");
+      .update({ name })
+      .eq("id", editing.id);
+    if (error) return toast.error("Erro ao salvar nome");
+    setEditing({ ...editing, name });
     setNameDialogOpen(false);
     refetch();
-    setEditing(data as EmailTemplate); // open the visual editor right away
   };
 
   const doDelete = async () => {
@@ -89,13 +98,46 @@ export default function MailTemplates() {
     refetch();
   };
 
+  const nameDialogEl = (
+    <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Nome do template</DialogTitle>
+        </DialogHeader>
+        <div className="py-2">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nome do template"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && confirmCreate()}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setNameDialogOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmCreate}
+            className="bg-gradient-to-r from-purple-700 to-purple-900 text-white border-0"
+          >
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Visual email editor (Elementor-style) ─ full screen
   if (editing) {
     return (
-      <TemplateEditor
-        template={editing}
-        onBack={() => { setEditing(null); refetch(); }}
-      />
+      <>
+        <TemplateEditor
+          template={editing}
+          onBack={() => { setEditing(null); refetch(); }}
+        />
+        {nameDialogEl}
+      </>
     );
   }
 
@@ -179,34 +221,8 @@ export default function MailTemplates() {
         )}
       </div>
 
-      {/* Name dialog before creating a template */}
-      <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Novo template de e-mail</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nome do template"
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && confirmCreate()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNameDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={confirmCreate}
-              className="bg-gradient-to-r from-purple-700 to-purple-900 text-white border-0"
-            >
-              Criar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Name popup (shown on top of the editor after creating) */}
+      {nameDialogEl}
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
