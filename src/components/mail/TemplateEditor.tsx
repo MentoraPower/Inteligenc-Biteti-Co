@@ -499,7 +499,7 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                 <EmailCanvas html={emailHtml} onChange={commitEmail} onUploadImage={uploadImage} />
               ) : (
                 <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center text-muted-foreground">
-                  <Mail className="h-8 w-8 opacity-50" />
+                  <p className="text-lg font-medium">Crie seu Email...</p>
                 </div>
               )}
             </div>
