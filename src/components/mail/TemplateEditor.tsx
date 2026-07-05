@@ -21,6 +21,9 @@ import {
   FileText,
   X,
   User,
+  CheckCircle2,
+  Loader2,
+  Circle,
 } from "lucide-react";
 
 // Injected into the mobile preview iframe so a fixed-width (600px) email reflows to phone width
@@ -77,6 +80,10 @@ interface Attachment {
   content?: string;
 }
 
+interface ChatStep {
+  label: string;
+  status: "pending" | "active" | "done";
+}
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -84,7 +91,16 @@ interface ChatMessage {
   attachments?: Attachment[];
   loading?: boolean;
   animate?: boolean;
+  steps?: ChatStep[];
 }
+
+const EMAIL_STEPS = [
+  "Entendendo o pedido",
+  "Estruturando o e‑mail",
+  "Escrevendo os textos",
+  "Aplicando o design e as cores",
+  "Finalizando o e‑mail",
+];
 
 interface TemplateEditorProps {
   template: { id: string; name: string };
@@ -143,6 +159,35 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       return next;
     });
   }, []);
+
+  // Reveal the finished email on the side, block by block, so it looks like it's being built live.
+  const revealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const revealEmail = (html: string) => {
+    if (revealTimerRef.current) clearInterval(revealTimerRef.current);
+    let blocks: string[] = [];
+    let prefix = "";
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      prefix = Array.from(doc.head?.querySelectorAll("style") || []).map((s) => s.outerHTML).join("");
+      blocks = Array.from(doc.body.children).map((el) => el.outerHTML);
+    } catch { /* fall through */ }
+    if (blocks.length <= 1) { setEmailHtml(html); baseHtml.current = html; return; }
+    // Record one undo step for the whole generation, then animate the reveal.
+    setUndoStack((u) => [...u, emailHtmlRef.current || ""]);
+    setRedoStack([]);
+    let i = 1;
+    setEmailHtml(prefix + blocks[0]);
+    revealTimerRef.current = setInterval(() => {
+      i++;
+      if (i >= blocks.length) {
+        if (revealTimerRef.current) { clearInterval(revealTimerRef.current); revealTimerRef.current = null; }
+        setEmailHtml(html);
+        baseHtml.current = html;
+        return;
+      }
+      setEmailHtml(prefix + blocks.slice(0, i).join(""));
+    }, 280);
+  };
 
   // Upload an ebook PDF, register it, and insert a download button into the email.
   const ebookInputRef = useRef<HTMLInputElement>(null);
@@ -298,6 +343,33 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     return pub?.publicUrl || null;
   };
 
+  // Manus-style step checklist that advances in real time while generating.
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startSteps = (msgId: string) => {
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    stepTimerRef.current = setInterval(() => {
+      setMessages((m) => m.map((x) => {
+        if (x.id !== msgId || !x.steps) return x;
+        const active = x.steps.findIndex((s) => s.status === "active");
+        if (active < 0 || active >= x.steps.length - 1) return x; // keep the last one active until done
+        return {
+          ...x,
+          steps: x.steps.map((s, i) =>
+            i === active ? { ...s, status: "done" as const } : i === active + 1 ? { ...s, status: "active" as const } : s
+          ),
+        };
+      }));
+    }, 1300);
+  };
+  const finishSteps = (msgId: string) => {
+    if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
+    setMessages((m) => m.map((x) => (x.id === msgId && x.steps ? { ...x, steps: x.steps.map((s) => ({ ...s, status: "done" as const })) } : x)));
+  };
+  useEffect(() => () => {
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    if (revealTimerRef.current) clearInterval(revealTimerRef.current);
+  }, []);
+
   const handleAiSend = async (data: ClaudeChatSendData) => {
     const text = data.message.trim();
     if (!text && data.files.length === 0) return;
@@ -346,8 +418,15 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       setMessages((m) => [
         ...m,
         userMsg,
-        { id: placeholderId, role: "assistant", content: "", loading: true },
+        {
+          id: placeholderId,
+          role: "assistant",
+          content: "",
+          loading: true,
+          steps: wantsEmail ? EMAIL_STEPS.map((label, i) => ({ label, status: i === 0 ? "active" : "pending" })) : undefined,
+        },
       ]);
+      if (wantsEmail) startSteps(placeholderId);
 
       const history = priorMessages.map((m) => ({ role: m.role, content: m.content }));
       const { data: res, error } = await (supabase as any).functions.invoke("generate-email-ai", {
@@ -356,12 +435,13 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       if (error) throw new Error(error.message);
       if (res?.error) throw new Error(res.error);
 
+      finishSteps(placeholderId);
       setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: res.reply || "Pronto!", loading: false, animate: true } : x)));
       if (res.email_changed && res.html) {
-        baseHtml.current = res.html;
-        commitEmail(res.html);
+        revealEmail(res.html);
       }
     } catch (e: any) {
+      if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
       setMessages((m) => {
         const hasPlaceholder = m.some((x) => x.id === placeholderId);
         const errText = `Erro ao gerar o e-mail: ${e?.message || e}`;
@@ -501,11 +581,33 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                         ))}
                       </div>
                     )}
-                    {m.loading ? (
+                    {m.steps && (
+                      <div className="flex flex-col gap-2 py-1 mb-1">
+                        {m.steps.map((s, i) => (
+                          <div key={i} className="flex items-center gap-2.5">
+                            {s.status === "done" ? (
+                              <CheckCircle2 className="h-[18px] w-[18px] text-emerald-500 flex-shrink-0" />
+                            ) : s.status === "active" ? (
+                              <Loader2 className="h-[18px] w-[18px] text-purple-500 animate-spin flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-[18px] w-[18px] text-muted-foreground/40 flex-shrink-0" />
+                            )}
+                            <span className={cn(
+                              "text-sm transition-colors",
+                              s.status === "done" ? "text-foreground" : s.status === "active" ? "text-foreground font-medium" : "text-muted-foreground/60"
+                            )}>
+                              {s.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {m.loading && !m.steps ? (
                       <div className="py-1 leading-none">
                         <span className="text-3xl leading-none text-foreground/60 animate-pulse">•</span>
                       </div>
-                    ) : m.content ? (
+                    ) : null}
+                    {m.content ? (
                       <div
                         className={cn(
                           "max-w-full text-base font-medium leading-relaxed text-foreground",
@@ -530,11 +632,6 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
         {/* Email preview (wider) */}
         <div className="w-[760px] max-w-[60%] border-l border-border bg-background flex-shrink-0 flex flex-col">
           <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: emailBg(emailHtml) || "#ffffff" }}>
-            {generating && (
-              <div className="mb-3 flex justify-center">
-                <div className="ws-loading-track"><div className="ws-loading-fill" /></div>
-              </div>
-            )}
             <div className="mx-auto min-h-full">
               {emailHtml ? (
                 <EmailCanvas html={emailHtml} onChange={commitEmail} onUploadImage={uploadImage} />
