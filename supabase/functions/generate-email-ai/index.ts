@@ -37,6 +37,7 @@ Imagens:
 Responda em TEXTO PURO neste formato EXATO (sem markdown, sem JSON, sem cercas de código). Comece imediatamente com "REPLY:":
 REPLY: <resposta curta em português numa única linha, sem usar '-'; se criou/editou, resuma o que fez; se não, confirme que entendeu e pergunte o que falta>
 CHANGED: <true se criou/alterou o e-mail, false caso contrário>
+STEPS: <quando CHANGED=true, liste em UMA linha as etapas REAIS e PERSONALIZADAS que você executou para ESTE pedido específico (não use uma lista genérica). Separe as etapas por " | ". Cada etapa no formato "Título curto::descrição do que foi feito" (a descrição pode ser maior em umas e menor em outras). Use POUCAS etapas (1 a 2) para alterações pequenas e MAIS etapas para criações do zero ou pedidos complexos. Quando CHANGED=false, deixe esta linha VAZIA.>
 ===HTML===
 <quando CHANGED=true, o documento HTML COMPLETO do e-mail aqui; quando false, deixe VAZIO (nada após esta linha)>`;
 

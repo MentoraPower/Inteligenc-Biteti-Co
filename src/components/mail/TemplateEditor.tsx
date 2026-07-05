@@ -95,14 +95,6 @@ interface ChatMessage {
   steps?: ChatStep[];
 }
 
-const EMAIL_STEPS: { label: string; detail: string }[] = [
-  { label: "Entendendo o pedido", detail: "Li a sua mensagem com atenção, identifiquei o objetivo do e‑mail, o público, o tom desejado e os pontos principais que você quer destacar antes de começar a montar qualquer coisa." },
-  { label: "Estruturando o e‑mail", detail: "Montei a estrutura em tabelas, responsiva." },
-  { label: "Escrevendo os textos", detail: "Escrevi um título de impacto, o corpo com a mensagem principal de forma clara e objetiva, e uma chamada para ação convidando a pessoa a clicar no botão." },
-  { label: "Aplicando o design e as cores", detail: "Apliquei a paleta e os botões." },
-  { label: "Finalizando o e‑mail", detail: "Revisei tudo, conferi a leitura no desktop e no celular, e finalizei o HTML pronto para envio." },
-];
-
 interface TemplateEditorProps {
   template: { id: string; name: string };
   onBack: () => void;
@@ -358,10 +350,11 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n;
   });
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Attach the checklist (first step active) to an assistant message and start it.
-  const beginSteps = (msgId: string) => {
+  // Attach the AI's own checklist (first step active) to an assistant message and start it.
+  const beginSteps = (msgId: string, steps: { label: string; detail?: string }[]) => {
+    const src = steps.length ? steps : [{ label: "Atualizando o e‑mail", detail: "" }];
     setMessages((m) => m.map((x) => (x.id === msgId
-      ? { ...x, steps: EMAIL_STEPS.map((s, i) => ({ label: s.label, detail: s.detail, status: i === 0 ? "active" as const : "pending" as const })) }
+      ? { ...x, steps: src.map((s, i) => ({ label: s.label, detail: s.detail, status: i === 0 ? "active" as const : "pending" as const })) }
       : x)));
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
     stepTimerRef.current = setInterval(() => {
@@ -494,8 +487,18 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
             const reply = rm ? rm[1].trim() : "Pronto!";
             changed = /CHANGED:\s*true/i.test(header);
             setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: reply, loading: false } : x)));
-            // Only show the checklist when an email is actually being built.
-            if (changed) beginSteps(placeholderId);
+            // Only show the checklist when an email is actually built — using the AI's own custom steps.
+            if (changed) {
+              const sm = header.match(/STEPS:\s*([\s\S]*?)(?:\r?\n|$)/i);
+              const parsed = (sm ? sm[1] : "")
+                .split("|")
+                .map((p) => {
+                  const [label, detail] = p.split("::");
+                  return { label: (label || "").trim(), detail: (detail || "").trim() || undefined };
+                })
+                .filter((s) => s.label);
+              beginSteps(placeholderId, parsed);
+            }
             headerDone = true;
           }
           if (changed && !isEdit) {
