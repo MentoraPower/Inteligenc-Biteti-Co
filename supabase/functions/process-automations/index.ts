@@ -79,7 +79,16 @@ serve(async (req) => {
         const step = steps[idx];
 
         if (step?.type === "timer") {
-          const next = new Date(Date.now() + delayMs(step.amount, step.unit)).toISOString();
+          let next: string;
+          if (step.mode === "datetime" && step.datetime) {
+            // Configured date/time is São Paulo local (UTC-3, no DST) -> absolute UTC instant.
+            const target = new Date(`${step.datetime}:00-03:00`);
+            next = (isNaN(target.getTime()) || target.getTime() <= Date.now())
+              ? new Date().toISOString()
+              : target.toISOString();
+          } else {
+            next = new Date(Date.now() + delayMs(step.amount, step.unit)).toISOString();
+          }
           await supabase.from("automation_runs").update({ step_index: idx + 1, next_run_at: next, updated_at: now() }).eq("id", run.id);
           await supabase.rpc("schedule_wake", { wake_at: next });
           processed++;

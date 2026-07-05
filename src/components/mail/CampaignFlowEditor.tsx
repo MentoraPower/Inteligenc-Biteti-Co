@@ -24,7 +24,14 @@ const isPipelineTrigger = (t: TriggerCfg | null): t is Extract<TriggerCfg, { pip
 
 type Step =
   | { id: string; type: "email"; templateId?: string; templateName?: string; subject?: string; preheader?: string }
-  | { id: string; type: "timer"; amount: number; unit: "minutes" | "hours" | "days" };
+  | { id: string; type: "timer"; mode?: "duration" | "datetime"; amount?: number; unit?: "minutes" | "hours" | "days"; datetime?: string };
+
+const fmtDateTime = (dt: string) => {
+  const [d, t] = (dt || "").split("T");
+  if (!d) return "";
+  const [y, mo, da] = d.split("-");
+  return `${da}/${mo}/${y}${t ? " às " + t : ""}`;
+};
 
 interface Opt { id: string; nome?: string; name?: string; body_html?: string | null; subject?: string | null }
 interface Domain { domain: string; sender_name: string | null; sender_local: string | null }
@@ -161,7 +168,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
   const updateStep = (id: string, patch: Partial<Step>) => setSteps((arr) => arr.map((x) => (x.id === id ? ({ ...x, ...patch } as Step) : x)));
   const removeStep = (id: string) => setSteps((arr) => arr.filter((x) => x.id !== id));
   const addEmail = (i: number) => { const id = genId(); insertStep(i, { id, type: "email" }); setAddAt(null); setEmailFor(id); };
-  const addTimer = (i: number) => { const id = genId(); insertStep(i, { id, type: "timer", amount: 1, unit: "days" }); setAddAt(null); setTimerFor(id); };
+  const addTimer = (i: number) => { const id = genId(); insertStep(i, { id, type: "timer", mode: "duration", amount: 1, unit: "days" }); setAddAt(null); setTimerFor(id); };
   const sentCount = (id: string) => stats[id]?.sent ?? 0;
   const pct = (id: string, key: "opened" | "clicked") => { const s = stats[id]; return s && s.sent ? Math.round((s[key] / s.sent) * 100) : 0; };
 
@@ -291,7 +298,11 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                         <AguardeBadge />
                         <div className="pt-0.5 min-w-0">
                           <p className="text-sm font-semibold leading-tight">Aguarde</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Aguardar {step.amount} {UNIT_LABEL[step.unit]}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {step.mode === "datetime" && step.datetime
+                              ? `Até ${fmtDateTime(step.datetime)}`
+                              : `Aguardar ${step.amount ?? 1} ${UNIT_LABEL[step.unit ?? "days"]}`}
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -662,24 +673,89 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
 /* ---------------------------- Timer panel ---------------------------- */
 
 function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "timer" }>; onChange: (p: Partial<Step>) => void; onClose: () => void }) {
+  const mode = step.mode || "duration";
+  const dt = step.datetime || "";
+  const datePart = dt.includes("T") ? dt.split("T")[0] : "";
+  const timePart = dt.includes("T") ? dt.split("T")[1] : "";
+  const defaultDate = () => {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+  const toDuration = () => onChange({ mode: "duration", amount: step.amount ?? 1, unit: step.unit ?? "days" });
+  const toDatetime = () => onChange({ mode: "datetime", datetime: dt || `${defaultDate()}T10:00` });
+
   return (
     <SidePanel
       title="Aguarde"
-      subtitle="Esperar por um período de tempo antes da próxima etapa"
+      subtitle="Espere um período ou até uma data e hora específicas"
       icon={<AguardeBadge />}
-      width="w-[460px]"
+      width="w-[480px]"
       onClose={onClose}
       footer={(close) => <button onClick={close} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Finalizar</button>}
     >
-      <p className="text-sm text-muted-foreground mb-3">O contato aguardará:</p>
-      <div className="flex items-center gap-2">
-        <input type="number" min={1} value={step.amount} onChange={(e) => onChange({ amount: Math.max(1, Number(e.target.value) || 1) })} className="w-24 h-10 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-sm" />
-        <select value={step.unit} onChange={(e) => onChange({ unit: e.target.value as any })} className="h-10 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-sm bg-background">
-          <option value="minutes">minuto(s)</option>
-          <option value="hours">hora(s)</option>
-          <option value="days">dia(s)</option>
-        </select>
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 rounded-xl bg-muted mb-6">
+        <button onClick={toDuration} className={cn("flex-1 h-9 rounded-lg text-sm font-medium transition-colors", mode === "duration" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+          Período de tempo
+        </button>
+        <button onClick={toDatetime} className={cn("flex-1 h-9 rounded-lg text-sm font-medium transition-colors", mode === "datetime" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+          Data e hora
+        </button>
       </div>
+
+      {mode === "duration" ? (
+        <div>
+          <label className="text-sm font-semibold text-foreground/80">O contato aguardará</label>
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="number"
+              min={1}
+              value={step.amount ?? 1}
+              onChange={(e) => onChange({ amount: Math.max(1, Number(e.target.value) || 1) })}
+              className="w-24 h-12 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-base"
+            />
+            <div className="relative flex-1">
+              <select
+                value={step.unit ?? "days"}
+                onChange={(e) => onChange({ unit: e.target.value as any })}
+                className="w-full h-12 rounded-lg border border-border pl-4 pr-11 outline-none text-base bg-background appearance-none cursor-pointer hover:border-foreground/30 focus:border-purple-400 transition-colors"
+              >
+                <option value="minutes">minuto(s)</option>
+                <option value="hours">hora(s)</option>
+                <option value="days">dia(s)</option>
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Dispara em uma data e horário específicos, no fuso de <b>São Paulo</b>.</p>
+          <div>
+            <label className="text-sm font-semibold text-foreground/80">Data</label>
+            <input
+              type="date"
+              value={datePart}
+              onChange={(e) => onChange({ mode: "datetime", datetime: `${e.target.value}T${timePart || "10:00"}` })}
+              className="w-full h-12 mt-2 rounded-lg border border-border px-4 outline-none text-base bg-background focus:border-purple-400"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-foreground/80">Horário (São Paulo)</label>
+            <input
+              type="time"
+              value={timePart}
+              onChange={(e) => onChange({ mode: "datetime", datetime: `${datePart || defaultDate()}T${e.target.value}` })}
+              className="w-full h-12 mt-2 rounded-lg border border-border px-4 outline-none text-base bg-background focus:border-purple-400"
+            />
+          </div>
+          {step.datetime && (
+            <p className="text-sm text-foreground bg-muted/60 rounded-lg px-3 py-2">
+              Vai disparar em <b>{fmtDateTime(step.datetime)}</b> (horário de São Paulo).
+            </p>
+          )}
+        </div>
+      )}
     </SidePanel>
   );
 }
