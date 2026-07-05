@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import Mail from "./pages/Mail";
 import MailTemplates from "./pages/MailTemplates";
 import MailDisparo from "./pages/MailDisparo";
+import EbookDownload from "./pages/EbookDownload";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="mail/disparo" element={<MailDisparo />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
+              <Route path="/ebook/:id" element={<EbookDownload />} />
               <Route path="/termos" element={<TermsOfUse />} />
               <Route path="/privacidade" element={<PrivacyPolicy />} />
               <Route path="/auth" element={<Auth />} />
