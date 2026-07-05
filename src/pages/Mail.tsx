@@ -173,6 +173,9 @@ export default function Mail() {
         <h1 className="text-center text-4xl font-extrabold bg-gradient-to-b from-purple-600 to-purple-800 bg-clip-text text-transparent">
           Automatizando base
         </h1>
+        <button onClick={openCreate} className="mx-auto mt-4 block text-purple-700 font-semibold hover:underline">
+          Criar campanha
+        </button>
       </div>
 
       {/* Content */}
@@ -190,9 +193,6 @@ export default function Mail() {
               className="h-10 pl-9 rounded-xl"
             />
           </div>
-          <Button onClick={openCreate} className="h-10 gap-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white border-0 font-semibold">
-            <Plus className="h-4 w-4" /> Criar campanha
-          </Button>
           <Button variant="outline" size="icon" onClick={openSettings} title="Configuração de e-mail" className="h-10 w-10 rounded-xl">
             <Settings className="h-4 w-4" />
           </Button>
