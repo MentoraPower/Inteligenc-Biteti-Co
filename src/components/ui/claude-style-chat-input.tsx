@@ -268,14 +268,19 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
       onDrop={onDrop}
     >
       <div
-        className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-muted shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-muted"
         onClick={(e) => {
           const t = e.target as HTMLElement;
           if (!t.closest("button, a, label")) textareaRef.current?.focus();
         }}
       >
-        {/* Second, animated colorful border along the bottom */}
-        <div className="chat-anim-border pointer-events-none absolute -bottom-[3px] left-4 right-4 h-[3px] rounded-full" />
+        {/* Animated colorful border — reaches the corners and fades at the ends */}
+        <div
+          className="chat-anim-border pointer-events-none absolute -bottom-[2px] left-1 right-1 h-[3px] rounded-full"
+          style={{ WebkitMaskImage: "linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)" }}
+        />
+        {/* Second solid border below, same rounded format */}
+        <div className="pointer-events-none absolute -bottom-[7px] left-3 right-3 h-[2px] rounded-full bg-border" />
         <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
           {(files.length > 0 || pastedContent.length > 0) && (
             <div className="flex gap-3 overflow-x-auto pb-2 px-1">
