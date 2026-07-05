@@ -14,7 +14,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, Copy, ArrowRight, Settings, Search, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Copy, ArrowRight, Settings, Search, ChevronDown, ArrowUp, AtSign } from "lucide-react";
 import { toast } from "sonner";
 import { CampaignFlowEditor } from "@/components/mail/CampaignFlowEditor";
 
@@ -167,7 +167,27 @@ export default function Mail() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 w-full overflow-y-auto">
+    <div className="h-full flex flex-col w-full overflow-y-auto">
+      {/* Hero */}
+      <div className="bg-gradient-to-b from-purple-300/60 via-purple-100/40 to-transparent px-6 pt-12 pb-14">
+        <h1 className="text-center text-4xl font-extrabold bg-gradient-to-b from-purple-600 to-purple-800 bg-clip-text text-transparent mb-6">
+          Automatizando base
+        </h1>
+        <div className="max-w-2xl mx-auto rounded-2xl bg-white border border-border shadow-lg p-4">
+          <p className="text-sm text-muted-foreground mb-3">Diga o que você quer automatizar e nós faremos o resto</p>
+          <div className="flex items-center justify-between">
+            <button className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm text-muted-foreground hover:bg-accent transition-colors">
+              <AtSign className="h-4 w-4" /> Adicionar contexto
+            </button>
+            <button className="h-9 w-9 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center text-white transition-colors">
+              <ArrowUp className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 p-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <Button variant="outline" className="h-10 rounded font-medium">Filtro</Button>
@@ -295,6 +315,7 @@ export default function Mail() {
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded-lg px-3 h-8">
           Linhas: 20 <ChevronDown className="h-3.5 w-3.5" />
         </div>
+      </div>
       </div>
 
       {/* Name dialog before opening the campaign page */}
