@@ -267,15 +267,6 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      {/* Curved borders behind the chat — follow the rounded shape, solid first then colored, thinning/fading at the ends */}
-      <div
-        className="chat-anim-border pointer-events-none absolute inset-0 rounded-2xl z-0"
-        style={{ transform: "translateY(3.5px)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent)" }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 rounded-2xl bg-zinc-300 dark:bg-zinc-600 z-0"
-        style={{ transform: "translateY(1.5px)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 24%, #000 76%, transparent)" }}
-      />
       <div
         className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-muted"
         onClick={(e) => {
@@ -283,6 +274,9 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
           if (!t.closest("button, a, label")) textareaRef.current?.focus();
         }}
       >
+        {/* Solid border first, colored one just below — snug to the bottom edge, tapered/faded at the ends */}
+        <div className="pointer-events-none absolute left-6 right-6 bottom-[1px] h-[2px] rounded-full bg-zinc-300 dark:bg-zinc-600" style={{ WebkitMaskImage: "linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent)" }} />
+        <div className="chat-anim-border pointer-events-none absolute left-10 right-10 -bottom-[3px] h-[2px] rounded-full" style={{ WebkitMaskImage: "linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent)" }} />
         <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
           {(files.length > 0 || pastedContent.length > 0) && (
             <div className="flex gap-3 overflow-x-auto pb-2 px-1">
