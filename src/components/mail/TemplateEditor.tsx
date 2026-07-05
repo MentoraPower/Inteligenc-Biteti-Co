@@ -96,11 +96,11 @@ interface ChatMessage {
 }
 
 const EMAIL_STEPS: { label: string; detail: string }[] = [
-  { label: "Entendendo o pedido", detail: "Analisei o que você pediu para o e‑mail." },
-  { label: "Estruturando o e‑mail", detail: "Defini o layout em tabelas, responsivo no desktop e no celular." },
-  { label: "Escrevendo os textos", detail: "Escrevi o título, o corpo e a chamada para ação." },
-  { label: "Aplicando o design e as cores", detail: "Apliquei a paleta, o espaçamento e os botões." },
-  { label: "Finalizando o e‑mail", detail: "Revisei e finalizei o HTML." },
+  { label: "Entendendo o pedido", detail: "Li a sua mensagem com atenção, identifiquei o objetivo do e‑mail, o público, o tom desejado e os pontos principais que você quer destacar antes de começar a montar qualquer coisa." },
+  { label: "Estruturando o e‑mail", detail: "Montei a estrutura em tabelas, responsiva." },
+  { label: "Escrevendo os textos", detail: "Escrevi um título de impacto, o corpo com a mensagem principal de forma clara e objetiva, e uma chamada para ação convidando a pessoa a clicar no botão." },
+  { label: "Aplicando o design e as cores", detail: "Apliquei a paleta e os botões." },
+  { label: "Finalizando o e‑mail", detail: "Revisei tudo, conferi a leitura no desktop e no celular, e finalizei o HTML pronto para envio." },
 ];
 
 interface TemplateEditorProps {
@@ -474,6 +474,8 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       let headerDone = false;
       let changed = false;
       let undoPushed = false;
+      const priorHtml = emailHtmlRef.current || "";
+      const isEdit = !!priorHtml.trim(); // editing: apply once at the end (don't rebuild the whole preview live)
 
       while (true) {
         const { done, value } = await reader.read();
@@ -496,11 +498,11 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
             if (changed) beginSteps(placeholderId);
             headerDone = true;
           }
-          if (changed) {
+          if (changed && !isEdit) {
             const html = acc.slice(markIdx + MARK.length).replace(/^\s*\r?\n/, "");
             if (html) {
-              if (!undoPushed) { setUndoStack((u) => [...u, emailHtmlRef.current || ""]); setRedoStack([]); undoPushed = true; }
-              setEmailHtml(html); // stream the real email into the preview live
+              if (!undoPushed) { setUndoStack((u) => [...u, priorHtml]); setRedoStack([]); undoPushed = true; }
+              setEmailHtml(html); // stream the real email into the preview live (only when creating from scratch)
             }
           }
         }
@@ -509,7 +511,11 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       if (changed) {
         finishSteps(placeholderId);
         const finalHtml = acc.slice(acc.indexOf(MARK) + MARK.length).replace(/^\s*\r?\n/, "").trim();
-        if (finalHtml) { setEmailHtml(finalHtml); baseHtml.current = finalHtml; }
+        if (finalHtml) {
+          if (!undoPushed) { setUndoStack((u) => [...u, priorHtml]); setRedoStack([]); undoPushed = true; }
+          setEmailHtml(finalHtml);
+          baseHtml.current = finalHtml;
+        }
       }
     } catch (e: any) {
       if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
@@ -667,14 +673,16 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                         {m.role === "assistant" && m.animate ? <TypewriterText text={m.content} /> : m.content}
                       </div>
                     ) : null}
-                    {m.steps && (
+                    {m.steps && (() => {
+                      const visible = m.steps!.filter((s) => s.status !== "pending");
+                      return (
                       <div className="flex flex-col mt-1">
-                        {m.steps.map((s, i) => {
-                          const isLast = i === m.steps!.length - 1;
-                          const key = `${m.id}:${i}`;
+                        {visible.map((s, i) => {
+                          const isLast = i === visible.length - 1;
+                          const key = `${m.id}:${s.label}`;
                           const open = expandedSteps.has(key);
                           return (
-                            <div key={i} className="flex gap-2.5">
+                            <div key={s.label} className="flex gap-2.5">
                               {/* icon + connector line */}
                               <div className="flex flex-col items-center flex-shrink-0">
                                 {s.status === "active" ? (
@@ -708,7 +716,8 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                           );
                         })}
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

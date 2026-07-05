@@ -26,7 +26,7 @@ Regras do HTML gerado:
   - O e-mail precisa ficar bonito e legível tanto no desktop quanto no celular, sem cortar nada e sem fontes minúsculas.
 - Largura máxima do conteúdo ~600px, centralizado. Visual MODERNO, limpo e elegante: bom espaçamento, hierarquia clara, cantos arredondados, botões (CTAs) bem visíveis.
 - Paleta padrão: destaque em roxo (#7e22ce / #581c87), fundo claro. Só mude se o usuário pedir.
-- Ao editar, parta do E-MAIL ATUAL fornecido e mude apenas o que foi pedido, preservando o resto.
+- Ao editar, NUNCA reconstrua o e-mail do zero. Copie o E-MAIL ATUAL fornecido na ÍNTEGRA e altere SOMENTE o trecho exato que o usuário pediu, mantendo todo o resto EXATAMENTE igual (mesmos textos, imagens, URLs, cores, espaçamentos e estrutura). Se o pedido é "muda o título", só o título muda; nada mais.
 
 Regra de texto IMPORTANTE:
 - NUNCA use o caractere "-" (hífen ou travessão) em textos visíveis do e-mail. Quando precisar separar ideias, use vírgula ",". (Isso não se aplica a URLs ou código.)
