@@ -67,7 +67,11 @@ serve(async (req) => {
     const userContent: any[] = [];
     if (Array.isArray(imageUrls)) {
       for (const url of imageUrls) {
-        if (url) userContent.push({ type: "image", source: { type: "url", url } });
+        // Claude vision só suporta JPG/PNG/GIF/WEBP. SVG (e outros) NÃO viram bloco de imagem,
+        // mas a URL continua disponível na lista "IMAGENS DISPONÍVEIS" para ser embutida no e-mail.
+        if (url && /\.(jpe?g|png|gif|webp)(\?|$)/i.test(String(url))) {
+          userContent.push({ type: "image", source: { type: "url", url } });
+        }
       }
     }
     if (Array.isArray(pastedTexts)) {
