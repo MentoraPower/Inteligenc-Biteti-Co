@@ -16,6 +16,7 @@ import AdminShell from "./pages/AdminShell";
 import Settings from "./pages/Settings";
 import Mail from "./pages/Mail";
 import MailTemplates from "./pages/MailTemplates";
+import MailDisparo from "./pages/MailDisparo";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="crm/:id" element={<LeadDetail />} />
                 <Route path="mail" element={<Mail />} />
                 <Route path="mail/templates" element={<MailTemplates />} />
+                <Route path="mail/disparo" element={<MailDisparo />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="/termos" element={<TermsOfUse />} />
