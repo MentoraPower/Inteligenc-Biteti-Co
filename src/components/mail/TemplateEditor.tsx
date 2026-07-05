@@ -16,6 +16,7 @@ import {
   Redo2,
   Code2,
   Eye,
+  BookDown,
   Mail,
   FileText,
   X,
@@ -142,6 +143,31 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       return next;
     });
   }, []);
+
+  // Upload an ebook PDF, register it, and insert a download button into the email.
+  const ebookInputRef = useRef<HTMLInputElement>(null);
+  const [ebookUploading, setEbookUploading] = useState(false);
+  const uploadEbook = async (file: File) => {
+    if (!file) return;
+    setEbookUploading(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${crypto.randomUUID()}-${safe}`;
+      const { error: upErr } = await (supabase as any).storage.from("ebooks").upload(path, file, { contentType: file.type || "application/pdf", upsert: false });
+      if (upErr) { toast.error("Erro ao enviar o ebook"); return; }
+      const { data: pub } = (supabase as any).storage.from("ebooks").getPublicUrl(path);
+      const { data: rec, error: recErr } = await (supabase as any).from("ebooks").insert({ name: file.name, file_url: pub.publicUrl, file_name: file.name }).select("id").single();
+      if (recErr || !rec) { toast.error("Erro ao registrar o ebook"); return; }
+      const url = `https://app.bitet.co/ebook/${rec.id}`;
+      const btn = `<div style="text-align:center;margin:24px 0;"><a href="${url}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 30px;border-radius:8px;font-family:Arial,sans-serif;font-size:16px;">Baixar ebook</a></div>`;
+      const html = emailHtmlRef.current || "";
+      const next = html.includes("</body>") ? html.replace("</body>", btn + "</body>") : (html + btn);
+      commitEmail(next);
+      toast.success("Ebook adicionado — botão inserido no e‑mail!");
+    } finally {
+      setEbookUploading(false);
+    }
+  };
 
   const undo = useCallback(() => {
     setUndoStack((u) => {
@@ -425,6 +451,21 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
             className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent transition-colors"
           >
             <Eye className="h-4 w-4" />
+          </button>
+          <input
+            ref={ebookInputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadEbook(f); e.currentTarget.value = ""; }}
+          />
+          <button
+            onClick={() => ebookInputRef.current?.click()}
+            disabled={ebookUploading}
+            title="Adicionar ebook (PDF) — insere botão de download"
+            className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40"
+          >
+            <BookDown className="h-4 w-4" />
           </button>
         </div>
       </div>
