@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, LayoutTemplate, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, LayoutTemplate, MoreVertical, Pencil, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { TemplateEditor } from "@/components/mail/TemplateEditor";
 
@@ -119,7 +119,7 @@ export default function MailTemplates() {
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
             {templates.map((t) => (
-              <div key={t.id} className="rounded-xl border border-border overflow-hidden bg-card flex flex-col group">
+              <div key={t.id} className="rounded-xl border border-border overflow-hidden bg-card flex flex-col group hover:border-foreground/20 hover:shadow-md transition-all">
                 {/* Top: real email preview (16:9) */}
                 <button
                   onClick={() => setEditing(t)}
@@ -140,32 +140,38 @@ export default function MailTemplates() {
                     </div>
                   )}
                 </button>
-                {/* Bottom: name, last edited, 3-dots */}
-                <div className="flex items-center justify-between gap-2 p-3">
-                  <button onClick={() => setEditing(t)} className="min-w-0 text-left">
-                    <p className="font-semibold truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Editado em {new Date(t.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg flex-shrink-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditing(t)}>
-                        <Pencil className="h-4 w-4 mr-2" /> Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setConfirmDelete(t)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                {/* Bottom: name + subject, divider, updated date + 3-dots */}
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <button onClick={() => setEditing(t)} className="min-w-0 text-left flex-1">
+                      <p className="font-semibold text-[15px] leading-tight truncate">{t.name}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-1">
+                        {t.subject || "Sem linha de assunto"}
+                      </p>
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg flex-shrink-0 -mr-1.5 -mt-1 text-muted-foreground hover:text-foreground">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditing(t)}>
+                          <Pencil className="h-4 w-4 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setConfirmDelete(t)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-3 border-t border-border">
+                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                    Atualizado em {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                  </div>
                 </div>
               </div>
             ))}
