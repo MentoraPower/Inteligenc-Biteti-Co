@@ -355,9 +355,9 @@ function SidePanel({ title, subtitle, icon, onClose, footer, children, width = "
   const [closing, setClosing] = useState(false);
   const close = () => { if (closing) return; setClosing(true); setTimeout(onClose, 260); };
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-end p-4" onClick={close}>
+    <div className="fixed inset-0 z-[100]" onClick={close}>
       <div className={cn("absolute inset-0 bg-foreground/20 transition-opacity duration-300", closing && "opacity-0")} />
-      <div className={cn("relative h-[96vh] max-h-[1040px] rounded-2xl overflow-hidden max-w-[96vw] bg-background border border-border shadow-xl flex flex-col", closing ? "panel-slide-out" : "panel-slide-in", width)} onClick={(e) => e.stopPropagation()}>
+      <div className={cn("absolute top-[52px] bottom-4 right-4 rounded-2xl overflow-hidden max-w-[96vw] bg-background border border-border shadow-xl flex flex-col", closing ? "panel-slide-out" : "panel-slide-in", width)} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 px-6 pt-5 pb-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             {icon}
