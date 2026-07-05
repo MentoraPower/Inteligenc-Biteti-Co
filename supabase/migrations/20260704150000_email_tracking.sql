@@ -22,6 +22,7 @@ create table if not exists public.email_tracking_events (
   scheduled_email_id uuid,
   event_type text not null, -- open | click
   url text,
+  link_url text, -- clicked URL (email-tracking function column)
   user_agent text,
   ip_address text,
   created_at timestamptz default now()

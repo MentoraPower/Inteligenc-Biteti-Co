@@ -52,11 +52,11 @@ export function MailOptionsPanel() {
                   >
                     <span
                       className={cn(
-                        "rounded-full px-3 py-1.5 text-sm truncate transition-colors",
+                        "rounded-full px-3 py-1.5 text-sm font-bold truncate transition-colors",
                         dev
                           ? "text-foreground/40 cursor-not-allowed"
                           : isActive
-                          ? "bg-muted font-semibold text-foreground"
+                          ? "bg-muted text-foreground"
                           : "text-foreground/80 group-hover:bg-accent"
                       )}
                     >
