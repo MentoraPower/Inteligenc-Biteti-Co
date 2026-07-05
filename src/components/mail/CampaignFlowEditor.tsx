@@ -86,7 +86,7 @@ const triggerDesc = (t: TriggerCfg) => {
 function TriggerCard({ trigger, onClick }: { trigger: TriggerCfg; onClick: () => void }) {
   const pipeline = isPipelineTrigger(trigger);
   return (
-    <button data-node onClick={onClick} className="relative w-[280px] rounded-2xl bg-card border border-border shadow-sm px-6 pt-9 pb-6 text-center hover:border-purple-400 transition-colors">
+    <button data-node onClick={onClick} className="relative w-[280px] rounded bg-card border border-border shadow-sm px-6 pt-9 pb-6 text-center hover:border-purple-400 transition-colors">
       <div className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full ring-4 ring-background">
         {pipeline ? <PipelineBadge box="w-12 h-12" /> : <TagBadge box="w-12 h-12" />}
       </div>
@@ -113,7 +113,7 @@ function TriggerConnectors({ count }: { count: number }) {
 
 function DashedAddTrigger({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button data-node onClick={onClick} className="w-[280px] rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors flex items-center justify-center px-4 min-h-[90px]">
+    <button data-node onClick={onClick} className="w-[280px] rounded border-2 border-dashed border-border text-sm text-muted-foreground hover:border-purple-400 hover:text-foreground transition-colors flex items-center justify-center px-4 min-h-[90px]">
       {label}
     </button>
   );
@@ -355,7 +355,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
               <div key={step.id} className="flex flex-col items-center">
                 <Line />
                 {step.type === "email" ? (
-                  <div data-node className="w-[520px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
+                  <div data-node className="w-[520px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
                     <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100 z-10" title="Remover"><X className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
                       <div className="flex items-center gap-5 pl-4 pr-6 py-6">
@@ -373,7 +373,7 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                     </button>
                   </div>
                 ) : (
-                  <div data-node className="w-[400px] rounded-xl bg-card shadow-sm border border-border overflow-hidden group relative">
+                  <div data-node className="w-[400px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
                     <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100" title="Remover"><X className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setTimerFor(step.id)} className="w-full text-left">
                       <div className="flex items-start gap-3 p-4">
