@@ -267,6 +267,15 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      {/* Curved borders behind the chat — follow the rounded shape, solid first then colored, thinning/fading at the ends */}
+      <div
+        className="chat-anim-border pointer-events-none absolute inset-0 rounded-2xl z-0"
+        style={{ transform: "translateY(6px)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent)" }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 rounded-2xl bg-zinc-300 dark:bg-zinc-600 z-0"
+        style={{ transform: "translateY(3px)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent)" }}
+      />
       <div
         className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-muted"
         onClick={(e) => {
@@ -274,13 +283,6 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
           if (!t.closest("button, a, label")) textareaRef.current?.focus();
         }}
       >
-        {/* Animated colorful border — reaches the corners and fades at the ends */}
-        <div
-          className="chat-anim-border pointer-events-none absolute -bottom-[2px] left-1 right-1 h-[3px] rounded-full"
-          style={{ WebkitMaskImage: "linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)", maskImage: "linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)" }}
-        />
-        {/* Second solid border below, same rounded format */}
-        <div className="pointer-events-none absolute -bottom-[7px] left-3 right-3 h-[2px] rounded-full bg-border" />
         <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
           {(files.length > 0 || pastedContent.length > 0) && (
             <div className="flex gap-3 overflow-x-auto pb-2 px-1">
