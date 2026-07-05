@@ -37,7 +37,11 @@ Imagens:
 Responda em TEXTO PURO neste formato EXATO (sem markdown, sem JSON, sem cercas de código). Comece imediatamente com "REPLY:":
 REPLY: <resposta curta em português numa única linha, sem usar '-'; se criou/editou, resuma o que fez; se não, confirme que entendeu e pergunte o que falta>
 CHANGED: <true se criou/alterou o e-mail, false caso contrário>
-STEPS: <quando CHANGED=true, liste em UMA linha as etapas REAIS e PERSONALIZADAS que você executou para ESTE pedido específico (não use uma lista genérica). Separe as etapas por " | ". Cada etapa no formato "Título curto::descrição do que foi feito" (a descrição pode ser maior em umas e menor em outras). Use POUCAS etapas (1 a 2) para alterações pequenas e MAIS etapas para criações do zero ou pedidos complexos. Quando CHANGED=false, deixe esta linha VAZIA.>
+STEPS: <quando CHANGED=true, liste em UMA linha as etapas que você executou. SIGA SEMPRE esta base de copy (nomes FIRMES, em GERÚNDIO, curtos e profissionais):
+  1) A PRIMEIRA etapa é SEMPRE de entendimento/início (ex.: "Entendendo o pedido").
+  2) As etapas do MEIO são PERSONALIZADAS ao pedido, firmes e em gerúndio (ex.: "Estruturando o layout", "Escrevendo o título", "Definindo a copy", "Ajustando as cores", "Trocando o botão").
+  3) A ÚLTIMA etapa é SEMPRE de finalização (ex.: "Finalizando o e-mail").
+  Separe por " | ". Cada etapa no formato "Título curto::descrição do que foi feito" (a descrição pode ser maior em umas e menor em outras). Use POUCAS etapas (2 a 3) para alterações pequenas e MAIS para criações do zero. Quando CHANGED=false, deixe esta linha VAZIA.>
 ===HTML===
 <quando CHANGED=true, o documento HTML COMPLETO do e-mail aqui; quando false, deixe VAZIO (nada após esta linha)>`;
 
