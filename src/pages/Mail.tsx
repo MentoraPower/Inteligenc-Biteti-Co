@@ -237,14 +237,20 @@ export default function Mail() {
 
                 {/* Automação: thumbnail + name */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-[104px] h-[60px] rounded-lg border border-border bg-card p-2 flex flex-col gap-1 flex-shrink-0">
-                    <div className="flex items-center gap-1 text-[10px] font-medium">
+                  <div className="w-[104px] h-[60px] rounded-lg border border-border bg-card p-1.5 flex flex-col gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 text-[9px] font-medium">
                       <span className={`h-1.5 w-1.5 rounded-full ${a.is_active ? "bg-emerald-500" : "bg-zinc-400"}`} />
                       {a.is_active ? "Ativo" : "Inativo"}
                     </div>
-                    <div className="flex-1 flex items-center justify-center gap-1">
-                      <div className="w-2.5 h-2.5 rounded-full bg-blue-600/70" />
-                      <div className="w-8 h-4 rounded-sm bg-muted" />
+                    {/* Mini flow preview (trigger + steps) */}
+                    <div className="flex-1 flex flex-col items-center justify-center gap-[2px] overflow-hidden">
+                      <div className={`h-2 w-9 rounded-[3px] border border-dashed ${(a.flow_steps as any)?.trigger ? "border-purple-400 bg-purple-100/60" : "border-border"}`} />
+                      {(((a.flow_steps as any)?.steps || []) as any[]).slice(0, 3).map((s: any, i: number) => (
+                        <div key={i} className="flex flex-col items-center gap-[2px]">
+                          <div className="h-[4px] w-px bg-border" />
+                          <div className={`h-2.5 w-2.5 rounded-full ${s?.type === "email" ? "bg-blue-600" : "bg-amber-500"}`} />
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <button
