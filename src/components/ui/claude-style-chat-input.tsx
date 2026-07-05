@@ -268,12 +268,14 @@ export const ClaudeChatInput: React.FC<ClaudeChatInputProps> = ({
       onDrop={onDrop}
     >
       <div
-        className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-background"
+        className="flex flex-col items-stretch relative z-10 rounded-2xl cursor-text border border-border bg-muted shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
         onClick={(e) => {
           const t = e.target as HTMLElement;
           if (!t.closest("button, a, label")) textareaRef.current?.focus();
         }}
       >
+        {/* Second, animated colorful border along the bottom */}
+        <div className="chat-anim-border pointer-events-none absolute -bottom-[3px] left-4 right-4 h-[3px] rounded-full" />
         <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
           {(files.length > 0 || pastedContent.length > 0) && (
             <div className="flex gap-3 overflow-x-auto pb-2 px-1">
