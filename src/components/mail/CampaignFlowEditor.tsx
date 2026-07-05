@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Users,
-  ChevronLeft, X, GitBranch, Tag, Search, ChevronDown,
-  ZoomIn, ZoomOut, Maximize2,
+  ChevronLeft, ChevronRight, X, GitBranch, Tag, Search, ChevronDown,
+  ZoomIn, ZoomOut, Maximize2, Calendar as CalendarIcon,
 } from "lucide-react";
 import emailIcon from "@/assets/mail/email.png";
 import aguardeIcon from "@/assets/mail/aguarde.png";
@@ -24,7 +24,7 @@ const isPipelineTrigger = (t: TriggerCfg | null): t is Extract<TriggerCfg, { pip
 
 type Step =
   | { id: string; type: "email"; templateId?: string; templateName?: string; subject?: string; preheader?: string }
-  | { id: string; type: "timer"; mode?: "duration" | "datetime"; amount?: number; unit?: "minutes" | "hours" | "days"; datetime?: string };
+  | { id: string; type: "timer"; mode?: "duration" | "datetime"; amount?: number; unit?: "seconds" | "minutes" | "hours" | "days" | "months" | "years"; datetime?: string };
 
 const fmtDateTime = (dt: string) => {
   const [d, t] = (dt || "").split("T");
@@ -37,7 +37,8 @@ interface Opt { id: string; nome?: string; name?: string; body_html?: string | n
 interface Domain { domain: string; sender_name: string | null; sender_local: string | null }
 
 const genId = () => crypto.randomUUID();
-const UNIT_LABEL: Record<string, string> = { minutes: "minuto(s)", hours: "hora(s)", days: "dia(s)" };
+const UNIT_LABEL: Record<string, string> = { seconds: "segundo(s)", minutes: "minuto(s)", hours: "hora(s)", days: "dia(s)", months: "mês(es)", years: "ano(s)" };
+const UNIT_OPTIONS = ["seconds", "minutes", "hours", "days", "months", "years"] as const;
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 // Icon badges use the actual designed app-icons, clipped to a full circle.
@@ -716,8 +717,78 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
 
 /* ---------------------------- Timer panel ---------------------------- */
 
+const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const WEEKDAYS_PT = ["D","S","T","Q","Q","S","S"];
+
+// Custom calendar dropdown (our visual).
+function MiniCalendar({ value, onPick }: { value: string; onPick: (d: string) => void }) {
+  const parse = (s: string) => {
+    const [y, m, d] = (s || "").split("-").map(Number);
+    return (y && m && d) ? new Date(y, m - 1, d) : new Date();
+  };
+  const [view, setView] = useState(() => { const s = parse(value); return new Date(s.getFullYear(), s.getMonth(), 1); });
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: number) => `${year}-${pad(month + 1)}-${pad(d)}`;
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  return (
+    <div className="w-[268px] rounded-xl border border-border bg-background shadow-xl p-3">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => setView(new Date(year, month - 1, 1))} className="h-7 w-7 rounded-md hover:bg-accent flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
+        <span className="text-sm font-semibold">{MONTHS_PT[month]} {year}</span>
+        <button onClick={() => setView(new Date(year, month + 1, 1))} className="h-7 w-7 rounded-md hover:bg-accent flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
+      </div>
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {WEEKDAYS_PT.map((w, i) => <div key={i} className="h-7 flex items-center justify-center text-[11px] text-muted-foreground font-medium">{w}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {cells.map((d, i) => d === null ? <div key={i} /> : (
+          <button
+            key={i}
+            onClick={() => onPick(fmt(d))}
+            className={cn(
+              "h-8 rounded-md text-sm transition-colors flex items-center justify-center",
+              value === fmt(d)
+                ? "bg-purple-600 text-white font-semibold"
+                : (today.getFullYear() === year && today.getMonth() === month && today.getDate() === d)
+                ? "text-purple-700 font-semibold hover:bg-accent"
+                : "hover:bg-accent"
+            )}
+          >
+            {d}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Format a stored time (HH:MM or HH:MM:SS) as a masked HH:MM:SS while typing.
+const maskTime = (raw: string) => {
+  const digits = raw.replace(/\D/g, "").slice(0, 6);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
+};
+const normalizeTime = (raw: string) => {
+  const digits = (raw || "").replace(/\D/g, "").padEnd(6, "0").slice(0, 6);
+  const h = Math.min(23, Number(digits.slice(0, 2)));
+  const m = Math.min(59, Number(digits.slice(2, 4)));
+  const s = Math.min(59, Number(digits.slice(4, 6)));
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(h)}:${p(m)}:${p(s)}`;
+};
+
 function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "timer" }>; onChange: (p: Partial<Step>) => void; onClose: () => void }) {
   const mode = step.mode || "duration";
+  const [calOpen, setCalOpen] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
   const dt = step.datetime || "";
   const datePart = dt.includes("T") ? dt.split("T")[0] : "";
   const timePart = dt.includes("T") ? dt.split("T")[1] : "";
@@ -726,7 +797,7 @@ function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "
     return d.toISOString().slice(0, 10);
   };
   const toDuration = () => onChange({ mode: "duration", amount: step.amount ?? 1, unit: step.unit ?? "days" });
-  const toDatetime = () => onChange({ mode: "datetime", datetime: dt || `${defaultDate()}T10:00` });
+  const toDatetime = () => onChange({ mode: "datetime", datetime: dt || `${defaultDate()}T00:00:00` });
 
   return (
     <SidePanel
@@ -759,16 +830,32 @@ function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "
               className="w-24 h-12 rounded-lg border border-border px-3 outline-none focus:border-purple-400 text-base"
             />
             <div className="relative flex-1">
-              <select
-                value={step.unit ?? "days"}
-                onChange={(e) => onChange({ unit: e.target.value as any })}
-                className="w-full h-12 rounded-lg border border-border pl-4 pr-11 outline-none text-base bg-background appearance-none cursor-pointer hover:border-foreground/30 focus:border-purple-400 transition-colors"
+              <button
+                onClick={() => setUnitOpen((v) => !v)}
+                className="w-full h-12 rounded-lg border border-border pl-4 pr-11 flex items-center text-base bg-background cursor-pointer hover:border-foreground/30 focus:border-purple-400 transition-colors text-left"
               >
-                <option value="minutes">minuto(s)</option>
-                <option value="hours">hora(s)</option>
-                <option value="days">dia(s)</option>
-              </select>
+                {UNIT_LABEL[step.unit ?? "days"]}
+              </button>
               <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+              {unitOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setUnitOpen(false)} />
+                  <div className="absolute z-50 mt-1 left-0 right-0 rounded-lg border border-border bg-background shadow-xl py-1 max-h-64 overflow-auto">
+                    {UNIT_OPTIONS.map((u) => (
+                      <button
+                        key={u}
+                        onClick={() => { onChange({ unit: u }); setUnitOpen(false); }}
+                        className={cn(
+                          "w-full text-left px-4 py-2 text-base hover:bg-accent transition-colors",
+                          (step.unit ?? "days") === u ? "text-purple-700 font-semibold" : "text-foreground"
+                        )}
+                      >
+                        {UNIT_LABEL[u]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -777,25 +864,44 @@ function TimerPanel({ step, onChange, onClose }: { step: Extract<Step, { type: "
           <p className="text-sm text-muted-foreground">Dispara em uma data e horário específicos, no fuso de <b>São Paulo</b>.</p>
           <div>
             <label className="text-sm font-semibold text-foreground/80">Data</label>
-            <input
-              type="date"
-              value={datePart}
-              onChange={(e) => onChange({ mode: "datetime", datetime: `${e.target.value}T${timePart || "10:00"}` })}
-              className="w-full h-12 mt-2 rounded-lg border border-border px-4 outline-none text-base bg-background focus:border-purple-400"
-            />
+            <div className="relative mt-2">
+              <button
+                onClick={() => setCalOpen((v) => !v)}
+                className="w-full h-12 rounded-lg border border-border px-4 flex items-center justify-between text-base bg-background hover:border-foreground/30 focus:border-purple-400 transition-colors"
+              >
+                <span className={datePart ? "" : "text-muted-foreground"}>
+                  {datePart ? datePart.split("-").reverse().join("/") : "Selecione a data"}
+                </span>
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+              </button>
+              {calOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setCalOpen(false)} />
+                  <div className="absolute z-50 mt-1 left-0">
+                    <MiniCalendar
+                      value={datePart}
+                      onPick={(d) => { onChange({ mode: "datetime", datetime: `${d}T${timePart || "00:00:00"}` }); setCalOpen(false); }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           <div>
             <label className="text-sm font-semibold text-foreground/80">Horário (São Paulo)</label>
             <input
-              type="time"
+              type="text"
+              inputMode="numeric"
               value={timePart}
-              onChange={(e) => onChange({ mode: "datetime", datetime: `${datePart || defaultDate()}T${e.target.value}` })}
-              className="w-full h-12 mt-2 rounded-lg border border-border px-4 outline-none text-base bg-background focus:border-purple-400"
+              placeholder="00:00:00"
+              onChange={(e) => onChange({ mode: "datetime", datetime: `${datePart || defaultDate()}T${maskTime(e.target.value)}` })}
+              onBlur={(e) => onChange({ mode: "datetime", datetime: `${datePart || defaultDate()}T${normalizeTime(e.target.value)}` })}
+              className="w-full h-12 mt-2 rounded-lg border border-border px-4 outline-none text-base bg-background focus:border-purple-400 tracking-wider"
             />
           </div>
-          {step.datetime && (
+          {datePart && timePart && (
             <p className="text-sm text-foreground bg-muted/60 rounded-lg px-3 py-2">
-              Vai disparar em <b>{fmtDateTime(step.datetime)}</b> (horário de São Paulo).
+              Vai disparar em <b>{datePart.split("-").reverse().join("/")} às {timePart}</b> (horário de São Paulo).
             </p>
           )}
         </div>

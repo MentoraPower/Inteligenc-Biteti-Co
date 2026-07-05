@@ -165,7 +165,7 @@ export default function MailTemplates() {
                 {/* Top: real email preview (16:9) */}
                 <button
                   onClick={() => setEditing(t)}
-                  className="block aspect-[16/9] bg-white overflow-hidden relative border-b border-border"
+                  className="block aspect-[4/3] bg-white overflow-hidden relative border-b border-border"
                 >
                   {t.body_html && t.body_html.includes("<") ? (
                     <iframe

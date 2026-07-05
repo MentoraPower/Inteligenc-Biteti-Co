@@ -15,8 +15,11 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 
 const delayMs = (amount: number, unit: string) => {
   const a = Math.max(1, Number(amount) || 1);
+  if (unit === "seconds") return a * 1_000;
   if (unit === "minutes") return a * 60_000;
   if (unit === "hours") return a * 3_600_000;
+  if (unit === "months") return a * 30 * 86_400_000;
+  if (unit === "years") return a * 365 * 86_400_000;
   return a * 86_400_000; // days
 };
 
@@ -82,7 +85,7 @@ serve(async (req) => {
           let next: string;
           if (step.mode === "datetime" && step.datetime) {
             // Configured date/time is São Paulo local (UTC-3, no DST) -> absolute UTC instant.
-            const target = new Date(`${step.datetime}:00-03:00`);
+            const target = new Date(`${step.datetime}-03:00`);
             next = (isNaN(target.getTime()) || target.getTime() <= Date.now())
               ? new Date().toISOString()
               : target.toISOString();
