@@ -504,7 +504,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
           >
             <div className={cn(
               "h-full overflow-hidden relative flex flex-col bg-card",
-              mailEditorOpen ? "" : "pt-1 pb-3 px-3"
+              mailEditorOpen ? "" : isMailActive ? "pb-3" : "pt-1 pb-3 px-3"
             )}>
               <PageTransition>
                 <RouteContentMemo>
