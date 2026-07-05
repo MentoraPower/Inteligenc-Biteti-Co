@@ -159,13 +159,13 @@ export default function MailTemplates() {
             Nenhum template ainda. Clique em <b>Criar template</b> para começar.
           </div>
         ) : (
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-3">
             {templates.map((t) => (
-              <div key={t.id} className="rounded-xl border border-border overflow-hidden bg-card flex flex-col group hover:border-foreground/20 hover:shadow-md transition-all">
-                {/* Top: real email preview (16:9) */}
+              <div key={t.id} className="rounded-md border border-border overflow-hidden bg-card group hover:border-foreground/30 transition-colors">
+                {/* Small rectangular email preview (16:9) */}
                 <button
                   onClick={() => setEditing(t)}
-                  className="block aspect-[4/3] bg-white overflow-hidden relative border-b border-border"
+                  className="block aspect-video bg-white overflow-hidden relative border-b border-border"
                 >
                   {t.body_html && t.body_html.includes("<") ? (
                     <iframe
@@ -178,42 +178,36 @@ export default function MailTemplates() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <LayoutTemplate className="h-8 w-8 text-muted-foreground/40" />
+                      <LayoutTemplate className="h-6 w-6 text-muted-foreground/40" />
                     </div>
                   )}
                 </button>
-                {/* Bottom: name + subject, divider, updated date + 3-dots */}
-                <div className="p-4 flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <button onClick={() => setEditing(t)} className="min-w-0 text-left flex-1">
-                      <p className="font-bold text-base leading-snug truncate">{t.name}</p>
-                      <p className="text-[13px] text-muted-foreground truncate mt-1">
-                        {t.subject || "Sem linha de assunto"}
-                      </p>
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg flex-shrink-0 -mr-1.5 -mt-1 text-muted-foreground hover:text-foreground">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditing(t)}>
-                          <Pencil className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setConfirmDelete(t)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-3 border-t border-border">
-                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>Editado em {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</span>
-                  </div>
+                {/* Compact footer: name + date + 3-dots */}
+                <div className="flex items-center justify-between gap-1 px-2.5 py-2">
+                  <button onClick={() => setEditing(t)} className="min-w-0 text-left flex-1">
+                    <p className="text-[13px] font-semibold truncate leading-tight">{t.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                      {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md flex-shrink-0 -mr-1 text-muted-foreground hover:text-foreground">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditing(t)}>
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setConfirmDelete(t)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}

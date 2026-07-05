@@ -363,8 +363,8 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                 {step.type === "email" ? (
                   <div data-node className="w-[520px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 z-10">
-                      <button onClick={() => duplicateStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => removeStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => duplicateStep(step.id)} className="h-6 w-6 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3 w-3" /></button>
+                      <button onClick={() => removeStep(step.id)} className="h-6 w-6 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3 w-3" /></button>
                     </div>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
                       <div className="flex items-center gap-5 pl-4 pr-6 py-6">
@@ -384,8 +384,8 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                 ) : (
                   <div data-node className="w-fit min-w-[280px] max-w-[440px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 z-10">
-                      <button onClick={() => duplicateStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => removeStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => duplicateStep(step.id)} className="h-6 w-6 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3 w-3" /></button>
+                      <button onClick={() => removeStep(step.id)} className="h-6 w-6 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3 w-3" /></button>
                     </div>
                     <button onClick={() => setTimerFor(step.id)} className="w-full text-left">
                       <div className="flex items-center gap-3 pl-4 pr-6 py-4">
