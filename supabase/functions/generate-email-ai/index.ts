@@ -34,8 +34,11 @@ Regra de texto IMPORTANTE:
 Imagens:
 - Se houver imagens disponíveis (URLs fornecidas), use-as em tags <img src="URL" ...> onde o usuário pedir. Não invente URLs de imagem; use apenas as URLs fornecidas. Sem imagens disponíveis e sem pedido, não coloque imagens.
 
-Responda ESTRITAMENTE com um objeto JSON válido, sem markdown, sem cercas de código, no formato:
-{"reply": "<resposta curta em português, sem usar '-'; se criou/editou, resuma o que fez; se não, confirme que entendeu e pergunte o que falta>", "email_changed": <true se criou/alterou o e-mail, false caso contrário>, "html": "<documento HTML completo do e-mail quando email_changed=true; string vazia quando false>"}`;
+Responda em TEXTO PURO neste formato EXATO (sem markdown, sem JSON, sem cercas de código). Comece imediatamente com "REPLY:":
+REPLY: <resposta curta em português numa única linha, sem usar '-'; se criou/editou, resuma o que fez; se não, confirme que entendeu e pergunte o que falta>
+CHANGED: <true se criou/alterou o e-mail, false caso contrário>
+===HTML===
+<quando CHANGED=true, o documento HTML COMPLETO do e-mail aqui; quando false, deixe VAZIO (nada após esta linha)>`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -92,43 +95,48 @@ serve(async (req) => {
         max_tokens: 8000,
         system,
         messages: anthropicMessages,
+        stream: true,
       }),
     });
 
-    const data = await resp.json();
-    if (data?.error) {
-      throw new Error(data.error.message || "Erro da API da Claude");
+    if (!resp.ok || !resp.body) {
+      const errText = await resp.text();
+      throw new Error(errText || "Erro da API da Claude");
     }
 
-    const text = (data.content || [])
-      .filter((b: any) => b.type === "text")
-      .map((b: any) => b.text)
-      .join("")
-      .trim();
+    // Forward the model's text deltas to the client as a plain text stream.
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = resp.body!.getReader();
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let buffer = "";
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              const l = line.trim();
+              if (!l.startsWith("data:")) continue;
+              const payload = l.slice(5).trim();
+              if (!payload || payload === "[DONE]") continue;
+              try {
+                const evt = JSON.parse(payload);
+                if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+                  controller.enqueue(encoder.encode(evt.delta.text));
+                }
+              } catch { /* ignore keep-alives */ }
+            }
+          }
+        } catch { /* stream ended */ }
+        controller.close();
+      },
+    });
 
-    // Parse the JSON the model returned (strip code fences if present).
-    let parsed: { reply?: string; email_changed?: boolean; html?: string } = {};
-    try {
-      const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-      parsed = JSON.parse(cleaned);
-    } catch {
-      // Fallback: if it looks like raw HTML, use it; otherwise treat as a reply only.
-      if (/<html|<body|<table/i.test(text)) {
-        parsed = { reply: "E-mail atualizado.", email_changed: true, html: text };
-      } else {
-        parsed = { reply: text.slice(0, 500), email_changed: false, html: "" };
-      }
-    }
-
-    const changed = parsed.email_changed === true && !!(parsed.html && parsed.html.trim());
-    return new Response(
-      JSON.stringify({
-        reply: parsed.reply || "Pronto!",
-        email_changed: changed,
-        html: changed ? parsed.html : "",
-      }),
-      { headers: { ...corsHeaders, "content-type": "application/json" } }
-    );
+    return new Response(stream, { headers: { ...corsHeaders, "content-type": "text/plain; charset=utf-8" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as any)?.message || e) }), {
       status: 500,

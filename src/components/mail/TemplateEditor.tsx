@@ -21,9 +21,9 @@ import {
   FileText,
   X,
   User,
-  CheckCircle2,
+  Check,
+  ChevronDown,
   Loader2,
-  Circle,
 } from "lucide-react";
 
 // Injected into the mobile preview iframe so a fixed-width (600px) email reflows to phone width
@@ -82,6 +82,7 @@ interface Attachment {
 
 interface ChatStep {
   label: string;
+  detail?: string;
   status: "pending" | "active" | "done";
 }
 interface ChatMessage {
@@ -94,12 +95,12 @@ interface ChatMessage {
   steps?: ChatStep[];
 }
 
-const EMAIL_STEPS = [
-  "Entendendo o pedido",
-  "Estruturando o e‑mail",
-  "Escrevendo os textos",
-  "Aplicando o design e as cores",
-  "Finalizando o e‑mail",
+const EMAIL_STEPS: { label: string; detail: string }[] = [
+  { label: "Entendendo o pedido", detail: "Analisei o que você pediu para o e‑mail." },
+  { label: "Estruturando o e‑mail", detail: "Defini o layout em tabelas, responsivo no desktop e no celular." },
+  { label: "Escrevendo os textos", detail: "Escrevi o título, o corpo e a chamada para ação." },
+  { label: "Aplicando o design e as cores", detail: "Apliquei a paleta, o espaçamento e os botões." },
+  { label: "Finalizando o e‑mail", detail: "Revisei e finalizei o HTML." },
 ];
 
 interface TemplateEditorProps {
@@ -279,7 +280,14 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
   const persist = useCallback(async () => {
     const cleanChat = messagesRef.current
       .filter((m) => !m.loading)
-      .map((m) => ({ id: m.id, role: m.role, content: m.content, attachments: m.attachments || null }));
+      .map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        attachments: m.attachments || null,
+        // Persist the checklist (all steps marked done) so it reappears when reopening the chat.
+        steps: m.steps ? m.steps.map((s) => ({ label: s.label, detail: s.detail || null, status: "done" as const })) : null,
+      }));
     await (supabase as any)
       .from("email_templates")
       .update({ body_html: emailHtmlRef.current, chat: cleanChat })
@@ -343,9 +351,18 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     return pub?.publicUrl || null;
   };
 
-  // Manus-style step checklist that advances in real time while generating.
+  // Manus-style step checklist — added only when an email is actually being built,
+  // and advanced one at a time (never all at once).
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const toggleStep = (key: string) => setExpandedSteps((prev) => {
+    const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n;
+  });
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startSteps = (msgId: string) => {
+  // Attach the checklist (first step active) to an assistant message and start it.
+  const beginSteps = (msgId: string) => {
+    setMessages((m) => m.map((x) => (x.id === msgId
+      ? { ...x, steps: EMAIL_STEPS.map((s, i) => ({ label: s.label, detail: s.detail, status: i === 0 ? "active" as const : "pending" as const })) }
+      : x)));
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
     stepTimerRef.current = setInterval(() => {
       setMessages((m) => m.map((x) => {
@@ -359,11 +376,27 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
           ),
         };
       }));
-    }, 1300);
+    }, 1200);
   };
+  // Drain the remaining steps one by one (not all at once), then stop.
   const finishSteps = (msgId: string) => {
-    if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
-    setMessages((m) => m.map((x) => (x.id === msgId && x.steps ? { ...x, steps: x.steps.map((s) => ({ ...s, status: "done" as const })) } : x)));
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    stepTimerRef.current = setInterval(() => {
+      let remaining = 0;
+      setMessages((m) => m.map((x) => {
+        if (x.id !== msgId || !x.steps) return x;
+        const idx = x.steps.findIndex((s) => s.status !== "done");
+        remaining = idx;
+        if (idx < 0) return x;
+        return {
+          ...x,
+          steps: x.steps.map((s, i) =>
+            i === idx ? { ...s, status: "done" as const } : (i === idx + 1 && s.status === "pending" ? { ...s, status: "active" as const } : s)
+          ),
+        };
+      }));
+      if (remaining < 0 && stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
+    }, 240);
   };
   useEffect(() => () => {
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
@@ -418,27 +451,65 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       setMessages((m) => [
         ...m,
         userMsg,
-        {
-          id: placeholderId,
-          role: "assistant",
-          content: "",
-          loading: true,
-          steps: wantsEmail ? EMAIL_STEPS.map((label, i) => ({ label, status: i === 0 ? "active" : "pending" })) : undefined,
-        },
+        { id: placeholderId, role: "assistant", content: "", loading: true },
       ]);
-      if (wantsEmail) startSteps(placeholderId);
 
       const history = priorMessages.map((m) => ({ role: m.role, content: m.content }));
-      const { data: res, error } = await (supabase as any).functions.invoke("generate-email-ai", {
-        body: { history, userText: text, imageUrls, pastedTexts, currentHtml: emailHtml },
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-email-ai`, {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: `Bearer ${KEY}`, apikey: KEY },
+        body: JSON.stringify({ history, userText: text, imageUrls, pastedTexts, currentHtml: emailHtml }),
       });
-      if (error) throw new Error(error.message);
-      if (res?.error) throw new Error(res.error);
+      if (!resp.ok || !resp.body) {
+        const t = await resp.text().catch(() => "");
+        throw new Error(t || `HTTP ${resp.status}`);
+      }
 
-      finishSteps(placeholderId);
-      setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: res.reply || "Pronto!", loading: false, animate: true } : x)));
-      if (res.email_changed && res.html) {
-        revealEmail(res.html);
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      const MARK = "===HTML===";
+      let acc = "";
+      let headerDone = false;
+      let changed = false;
+      let undoPushed = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        const markIdx = acc.indexOf(MARK);
+        if (markIdx === -1) {
+          // Still receiving the header — show the reply as it streams.
+          const rm = acc.match(/REPLY:\s*([\s\S]*?)(?:\r?\nCHANGED:|$)/i);
+          const partial = rm ? rm[1].trim() : "";
+          if (partial) setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: partial, loading: false } : x)));
+        } else {
+          if (!headerDone) {
+            const header = acc.slice(0, markIdx);
+            const rm = header.match(/REPLY:\s*([\s\S]*?)\r?\nCHANGED:/i);
+            const reply = rm ? rm[1].trim() : "Pronto!";
+            changed = /CHANGED:\s*true/i.test(header);
+            setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: reply, loading: false } : x)));
+            // Only show the checklist when an email is actually being built.
+            if (changed) beginSteps(placeholderId);
+            headerDone = true;
+          }
+          if (changed) {
+            const html = acc.slice(markIdx + MARK.length).replace(/^\s*\r?\n/, "");
+            if (html) {
+              if (!undoPushed) { setUndoStack((u) => [...u, emailHtmlRef.current || ""]); setRedoStack([]); undoPushed = true; }
+              setEmailHtml(html); // stream the real email into the preview live
+            }
+          }
+        }
+      }
+
+      if (changed) {
+        finishSteps(placeholderId);
+        const finalHtml = acc.slice(acc.indexOf(MARK) + MARK.length).replace(/^\s*\r?\n/, "").trim();
+        if (finalHtml) { setEmailHtml(finalHtml); baseHtml.current = finalHtml; }
       }
     } catch (e: any) {
       if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
@@ -581,28 +652,7 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                         ))}
                       </div>
                     )}
-                    {m.steps && (
-                      <div className="flex flex-col gap-2 py-1 mb-1">
-                        {m.steps.map((s, i) => (
-                          <div key={i} className="flex items-center gap-2.5">
-                            {s.status === "done" ? (
-                              <CheckCircle2 className="h-[18px] w-[18px] text-emerald-500 flex-shrink-0" />
-                            ) : s.status === "active" ? (
-                              <Loader2 className="h-[18px] w-[18px] text-purple-500 animate-spin flex-shrink-0" />
-                            ) : (
-                              <Circle className="h-[18px] w-[18px] text-muted-foreground/40 flex-shrink-0" />
-                            )}
-                            <span className={cn(
-                              "text-sm transition-colors",
-                              s.status === "done" ? "text-foreground" : s.status === "active" ? "text-foreground font-medium" : "text-muted-foreground/60"
-                            )}>
-                              {s.label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {m.loading && !m.steps ? (
+                    {m.loading && !m.content ? (
                       <div className="py-1 leading-none">
                         <span className="text-3xl leading-none text-foreground/60 animate-pulse">•</span>
                       </div>
@@ -617,6 +667,48 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                         {m.role === "assistant" && m.animate ? <TypewriterText text={m.content} /> : m.content}
                       </div>
                     ) : null}
+                    {m.steps && (
+                      <div className="flex flex-col mt-1">
+                        {m.steps.map((s, i) => {
+                          const isLast = i === m.steps!.length - 1;
+                          const key = `${m.id}:${i}`;
+                          const open = expandedSteps.has(key);
+                          return (
+                            <div key={i} className="flex gap-2.5">
+                              {/* icon + connector line */}
+                              <div className="flex flex-col items-center flex-shrink-0">
+                                {s.status === "active" ? (
+                                  <Loader2 className="h-[18px] w-[18px] text-muted-foreground animate-spin" />
+                                ) : (
+                                  <div className={cn(
+                                    "h-[18px] w-[18px] rounded-full bg-white border flex items-center justify-center",
+                                    s.status === "done" ? "border-zinc-300" : "border-zinc-200"
+                                  )}>
+                                    {s.status === "done" && <Check className="h-3 w-3 text-zinc-400" strokeWidth={3} />}
+                                  </div>
+                                )}
+                                {!isLast && <div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 my-0.5" />}
+                              </div>
+                              {/* label + optional detail */}
+                              <div className={cn("min-w-0", isLast ? "pb-0.5" : "pb-3")}>
+                                <button
+                                  onClick={() => s.detail && toggleStep(key)}
+                                  className={cn("flex items-center gap-1.5 text-sm text-left", s.status === "pending" ? "text-muted-foreground/60" : "text-foreground")}
+                                >
+                                  <span>{s.label}</span>
+                                  {s.detail && s.status === "done" && (
+                                    <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform flex-shrink-0", open && "rotate-180")} />
+                                  )}
+                                </button>
+                                {open && s.detail && (
+                                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{s.detail}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
