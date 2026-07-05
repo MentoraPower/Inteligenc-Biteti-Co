@@ -512,6 +512,9 @@ function TriggerModal({ current, onClose, onSave, onDelete }: { current: Trigger
   const [sub, setSub] = useState<Opt | null>(cp ? { id: cp.subOriginId, nome: cp.subOriginName } : null);
   const [pipe, setPipe] = useState<Opt | null>(cp ? { id: cp.pipelineId, nome: cp.pipelineName } : null);
   const [tag, setTag] = useState<string>(current && !isPipelineTrigger(current) ? current.tagName : "");
+  const [tagOpen, setTagOpen] = useState(false);
+  const tagBtnRef = useRef<HTMLButtonElement>(null);
+  const [tagRect, setTagRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -620,14 +623,28 @@ function TriggerModal({ current, onClose, onSave, onDelete }: { current: Trigger
       ) : (
         <>
           <div className="flex items-center gap-3 px-6 h-16 border-b border-border flex-shrink-0">
-            <div><p className="text-base font-bold leading-tight">{stage === "tag_removed" ? "Tag removida" : "Tag adicionada"}</p><p className="text-xs text-muted-foreground">Escolha a tag que inicia a automação</p></div>
+            <div><p className="text-base font-bold leading-tight">{stage === "tag_removed" ? "Tag removida" : "Tag adicionada"}</p></div>
           </div>
           <div className="flex-1 overflow-auto p-8">
-            <SelectField label="Selecionar tag" value={tag} onChange={(e) => setTag(e.target.value)}>
-              <option value="">Escolha uma tag</option>
-              {tags.map((t) => <option key={t} value={t}>{t}</option>)}
-            </SelectField>
-            {tags.length === 0 && <p className="text-sm text-muted-foreground mt-2">Nenhuma tag encontrada nos contatos.</p>}
+            <label className="text-sm font-semibold text-foreground/80">Selecionar tag</label>
+            <div className="relative mt-2">
+              <button ref={tagBtnRef} onClick={() => { setTagRect(tagBtnRef.current?.getBoundingClientRect() ?? null); setTagOpen((v) => !v); }} className="w-full h-12 rounded-lg border border-border pl-4 pr-11 flex items-center text-base bg-background cursor-pointer hover:border-foreground/30 transition-colors text-left">
+                <span className={tag ? "" : "text-muted-foreground"}>{tag || "Escolha uma tag"}</span>
+              </button>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+            </div>
+            {tagOpen && tagRect && createPortal(
+              <>
+                <div className="fixed inset-0 z-[110]" onClick={() => setTagOpen(false)} />
+                <div className="fixed z-[111] rounded-lg border border-border bg-background shadow-xl py-1 max-h-64 overflow-auto" style={{ top: tagRect.bottom + 4, left: tagRect.left, width: tagRect.width }}>
+                  {tags.map((t) => (
+                    <button key={t} onClick={() => { setTag(t); setTagOpen(false); }} className={cn("w-full text-left px-4 py-2 text-base hover:bg-accent transition-colors", tag === t ? "text-purple-700 font-semibold" : "text-foreground")}>{t}</button>
+                  ))}
+                  {tags.length === 0 && <p className="px-4 py-2 text-sm text-muted-foreground">Nenhuma tag encontrada nos contatos.</p>}
+                </div>
+              </>,
+              document.body
+            )}
           </div>
           {configFooter(!!tag, () => onSave({ type: stage, tagName: tag }))}
         </>

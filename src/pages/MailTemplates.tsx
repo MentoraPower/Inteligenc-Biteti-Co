@@ -161,38 +161,35 @@ export default function MailTemplates() {
         ) : (
           <div className="grid grid-cols-4 gap-3">
             {templates.map((t) => (
-              <div key={t.id} className="rounded-md border border-border overflow-hidden bg-card group hover:border-foreground/30 transition-colors">
-                {/* Small rectangular email preview (16:9) */}
-                <button
-                  onClick={() => setEditing(t)}
-                  className="block aspect-video bg-white overflow-hidden relative border-b border-border"
-                >
-                  {t.body_html && t.body_html.includes("<") ? (
-                    <iframe
-                      title={t.name}
-                      srcDoc={fitDoc(t.body_html)}
-                      scrolling="no"
-                      tabIndex={-1}
-                      aria-hidden
-                      className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <LayoutTemplate className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                </button>
-                {/* Compact footer: name + date + 3-dots */}
-                <div className="flex items-center justify-between gap-1 px-2.5 py-2">
-                  <button onClick={() => setEditing(t)} className="min-w-0 text-left flex-1">
-                    <p className="text-[13px] font-semibold truncate leading-tight">{t.name}</p>
-                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                      {new Date(t.created_at).toLocaleDateString("pt-BR")}
+              <div key={t.id} className="rounded-md border border-border bg-card p-3 group hover:border-foreground/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  {/* Real email visual, square, in the corner (scaled — no distortion) */}
+                  <button onClick={() => setEditing(t)} className="w-16 h-16 rounded border border-border overflow-hidden bg-white relative flex-shrink-0">
+                    {t.body_html && t.body_html.includes("<") ? (
+                      <iframe
+                        title={t.name}
+                        srcDoc={t.body_html}
+                        scrolling="no"
+                        tabIndex={-1}
+                        aria-hidden
+                        className="absolute top-0 left-0 border-0 pointer-events-none"
+                        style={{ width: 600, height: 600, transform: `scale(${64 / 600})`, transformOrigin: "top left" }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <LayoutTemplate className="h-5 w-5 text-muted-foreground/40" />
+                      </div>
+                    )}
+                  </button>
+                  <button onClick={() => setEditing(t)} className="min-w-0 flex-1 text-left">
+                    <p className="text-sm font-semibold truncate leading-tight">{t.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate mt-1">
+                      {t.subject || "Sem linha de assunto"}
                     </p>
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md flex-shrink-0 -mr-1 text-muted-foreground hover:text-foreground">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md flex-shrink-0 -mr-1 -mt-0.5 text-muted-foreground hover:text-foreground">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -208,6 +205,10 @@ export default function MailTemplates() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-border flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Clock className="h-3 w-3 flex-shrink-0" />
+                  Editado em {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                 </div>
               </div>
             ))}
