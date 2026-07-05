@@ -219,7 +219,7 @@ const DashboardLayout = memo(function DashboardLayout({ children }: DashboardLay
 
   // Sidebar dimensions
   const sidebarCollapsedWidth = 64;
-  const submenuWidth = 256;
+  const submenuWidth = 224;
   const sidebarMargin = 0; // flush to the edges (no side / top / bottom gap)
   const topbarHeight = 60;
   const submenuExtra = 0;   // submenu flush with the sidebar (no top/bottom gap)
