@@ -29,7 +29,7 @@ export function MailOptionsPanel() {
             >
               <span
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-bold truncate transition-colors",
+                  "rounded-full px-3 py-1.5 text-sm font-medium truncate transition-colors",
                   isActive ? "bg-muted text-foreground" : "text-foreground/80 group-hover:bg-accent"
                 )}
               >
