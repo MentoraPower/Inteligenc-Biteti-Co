@@ -86,6 +86,21 @@ interface Props {
 export function CampaignFlowEditor({ automation, onBack }: Props) {
   const initFlow = ((automation as any).flow_steps || {}) as { trigger?: TriggerCfg; steps?: Step[] };
   const [active, setActive] = useState(!!automation.is_active);
+  const [tags, setTags] = useState<string[]>(((automation as any).tags as string[]) || []);
+  const [tagInput, setTagInput] = useState("");
+  const [addingTag, setAddingTag] = useState(false);
+  const saveTags = async (next: string[]) => {
+    setTags(next);
+    await (supabase as any).from("email_automations").update({ tags: next }).eq("id", automation.id);
+  };
+  const addTag = () => {
+    const v = tagInput.trim();
+    setAddingTag(false);
+    setTagInput("");
+    if (!v || tags.includes(v)) return;
+    void saveTags([...tags, v]);
+  };
+  const removeTag = (t: string) => void saveTags(tags.filter((x) => x !== t));
   const [trigger, setTrigger] = useState<TriggerCfg | null>(initFlow.trigger ?? null);
   const [steps, setSteps] = useState<Step[]>(Array.isArray(initFlow.steps) ? initFlow.steps : []);
   const [saved, setSaved] = useState(true);
@@ -225,6 +240,30 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
           </button>
           <span className="text-muted-foreground">/</span>
           <span className="font-semibold">{automation.name}</span>
+          {/* Campaign tags */}
+          <div className="flex items-center gap-1.5 ml-2">
+            {tags.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-medium">
+                {t}
+                <button onClick={() => removeTag(t)} className="hover:bg-purple-500/20 rounded-full p-0.5"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+            {addingTag ? (
+              <input
+                autoFocus
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addTag(); if (e.key === "Escape") { setAddingTag(false); setTagInput(""); } }}
+                onBlur={addTag}
+                placeholder="nova tag"
+                className="h-6 w-28 rounded-full border border-border px-2.5 text-xs outline-none focus:border-purple-400 bg-background"
+              />
+            ) : (
+              <button onClick={() => setAddingTag(true)} className="inline-flex items-center gap-1 h-6 px-2.5 rounded-full border border-dashed border-border text-xs text-muted-foreground hover:border-purple-400 hover:text-purple-700 transition-colors">
+                <Tag className="h-3 w-3" /> Tag
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs font-medium">

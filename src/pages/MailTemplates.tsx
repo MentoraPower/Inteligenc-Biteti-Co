@@ -159,7 +159,7 @@ export default function MailTemplates() {
             Nenhum template ainda. Clique em <b>Criar template</b> para começar.
           </div>
         ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
             {templates.map((t) => (
               <div key={t.id} className="rounded-xl border border-border overflow-hidden bg-card flex flex-col group hover:border-foreground/20 hover:shadow-md transition-all">
                 {/* Top: real email preview (16:9) */}
@@ -183,18 +183,18 @@ export default function MailTemplates() {
                   )}
                 </button>
                 {/* Bottom: name + subject, divider, updated date + 3-dots */}
-                <div className="p-4 flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-2">
+                <div className="p-3 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-1.5">
                     <button onClick={() => setEditing(t)} className="min-w-0 text-left flex-1">
-                      <p className="font-semibold text-[15px] leading-tight truncate">{t.name}</p>
-                      <p className="text-xs text-muted-foreground truncate mt-1">
+                      <p className="font-semibold text-sm leading-tight truncate">{t.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                         {t.subject || "Sem linha de assunto"}
                       </p>
                     </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg flex-shrink-0 -mr-1.5 -mt-1 text-muted-foreground hover:text-foreground">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg flex-shrink-0 -mr-1 -mt-0.5 text-muted-foreground hover:text-foreground">
+                          <MoreVertical className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -210,9 +210,9 @@ export default function MailTemplates() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-3 border-t border-border">
-                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                    Atualizado em {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-2 border-t border-border">
+                    <Clock className="h-3 w-3 flex-shrink-0" />
+                    {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                   </div>
                 </div>
               </div>

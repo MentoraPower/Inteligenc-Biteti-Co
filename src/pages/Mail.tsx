@@ -74,6 +74,7 @@ interface EmailAutomation {
   is_active: boolean;
   created_at: string;
   flow_steps: any[] | null;
+  tags?: string[] | null;
 }
 
 export default function Mail() {
@@ -263,14 +264,14 @@ export default function Mail() {
       <div className="overflow-x-auto">
         <div className="min-w-[980px]">
           {/* Header */}
-          <div className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[36px_minmax(200px,1.3fr)_160px_200px_140px_120px] items-center gap-6 px-4 py-3 border-b border-border text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">
             <div>
               <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border accent-purple-800 cursor-pointer" />
             </div>
             <div>Automação</div>
+            <div>Tags</div>
             <div className="whitespace-nowrap">Editado pela última vez</div>
             <div>Contatos atuais</div>
-            <div>Índice de conversão</div>
             <div className="flex justify-end">
               <Settings className="h-4 w-4" />
             </div>
@@ -287,7 +288,7 @@ export default function Mail() {
               );
             }
             return shown.map((a) => (
-              <div key={a.id} className="grid grid-cols-[36px_minmax(220px,1.4fr)_230px_150px_160px_130px] items-center gap-6 px-4 py-4 border-b border-border/50 text-sm">
+              <div key={a.id} className="grid grid-cols-[36px_minmax(200px,1.3fr)_160px_200px_140px_120px] items-center gap-6 px-4 py-4 border-b border-border/50 text-sm">
                 <div>
                   <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggleOne(a.id)} className="h-4 w-4 rounded border-border accent-purple-800 cursor-pointer" />
                 </div>
@@ -303,6 +304,19 @@ export default function Mail() {
                   </button>
                 </div>
 
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1 min-w-0">
+                  {(a.tags && a.tags.length > 0) ? (
+                    a.tags.map((t) => (
+                      <span key={t} className="inline-flex items-center h-6 px-2.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-medium truncate max-w-full">
+                        {t}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground/50 text-xs">—</span>
+                  )}
+                </div>
+
                 {/* Editado pela última vez */}
                 <div className="text-muted-foreground">
                   {new Date(a.created_at).toLocaleDateString("pt-BR")}
@@ -312,9 +326,6 @@ export default function Mail() {
                 <div>
                   <span className="text-blue-600 font-medium">0</span>
                 </div>
-
-                {/* Índice de conversão */}
-                <div className="text-muted-foreground">—</div>
 
                 {/* Actions */}
                 <div className="flex justify-end items-center">
