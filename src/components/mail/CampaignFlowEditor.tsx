@@ -593,12 +593,13 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
     else { toast.success("E‑mail de teste enviado!"); setTestOpen(false); }
   };
 
-  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  const Row = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
     <div className="grid grid-cols-[140px_1fr] items-center gap-3 py-3.5 border-b border-border">
-      <label className="text-base text-muted-foreground">{label}</label>
+      <label className="text-base text-muted-foreground">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );
+  const canFinish = !!tpl && !!(step.subject && step.subject.trim());
 
   return (
     <SidePanel
@@ -610,7 +611,10 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
       footer={(close) => (
         <div className="flex-1 flex items-center justify-between">
           <button onClick={() => setTestOpen((v) => !v)} className="text-sm text-purple-700 font-medium hover:underline">Enviar um teste</button>
-          <button onClick={close} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold">Finalizar</button>
+          <div className="flex items-center gap-3">
+            {!canFinish && <span className="text-xs text-red-500">{!tpl ? "Escolha o e‑mail" : "Assunto é obrigatório"}</span>}
+            <button onClick={close} disabled={!canFinish} className="h-10 px-5 rounded bg-purple-900 hover:bg-purple-800 text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Finalizar</button>
+          </div>
         </div>
       )}
     >
@@ -633,8 +637,8 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
               <button onClick={() => setPicking((v) => !v)} className="text-base text-purple-700 hover:underline font-medium flex-shrink-0">{tpl ? "Selecionar novo e‑mail" : "Escolher e‑mail"}</button>
             </div>
           </Row>
-          <Row label="Linha de assunto:">
-            <input value={step.subject || ""} onChange={(e) => onChange({ subject: e.target.value })} placeholder="Escreva sua linha de assunto" className="w-full h-9 bg-transparent outline-none text-base placeholder:text-muted-foreground/70" />
+          <Row label="Linha de assunto:" required>
+            <input value={step.subject || ""} onChange={(e) => onChange({ subject: e.target.value })} placeholder="Escreva sua linha de assunto" className={cn("w-full h-9 bg-transparent outline-none text-base", tpl && !step.subject?.trim() ? "placeholder:text-red-400" : "placeholder:text-muted-foreground/70")} />
           </Row>
           <Row label="Pré‑cabeçalho:">
             <input value={step.preheader || ""} onChange={(e) => onChange({ preheader: e.target.value })} placeholder="Escreva seu preheader" className="w-full h-9 bg-transparent outline-none text-base placeholder:text-muted-foreground/70" />
