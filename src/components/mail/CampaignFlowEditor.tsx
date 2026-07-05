@@ -573,6 +573,15 @@ function AddActionModal({ onClose, onEmail, onTimer }: { onClose: () => void; on
 
 /* ---------------------------- Email panel ---------------------------- */
 
+function EmailRow({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[140px_1fr] items-center gap-3 py-3.5 border-b border-border">
+      <label className="text-base text-muted-foreground">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
 function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extract<Step, { type: "email" }>; templates: Opt[]; domain: Domain | null; onChange: (p: Partial<Step>) => void; onClose: () => void }) {
   const [picking, setPicking] = useState(!step.templateId);
   const tpl = templates.find((t) => t.id === step.templateId);
@@ -593,12 +602,6 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
     else { toast.success("E‑mail de teste enviado!"); setTestOpen(false); }
   };
 
-  const Row = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
-    <div className="grid grid-cols-[140px_1fr] items-center gap-3 py-3.5 border-b border-border">
-      <label className="text-base text-muted-foreground">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
   const canFinish = !!tpl && !!(step.subject && step.subject.trim());
 
   return (
@@ -631,21 +634,21 @@ function EmailPanel({ step, templates, domain, onChange, onClose }: { step: Extr
           </div>
         )}
         <div className="flex-shrink-0">
-          <Row label="Nome do e‑mail:">
+          <EmailRow label="Nome do e‑mail:">
             <div className="flex items-center justify-between gap-2">
               <span className="text-base font-medium truncate">{tpl?.name || "Nenhum e‑mail selecionado"}</span>
               <button onClick={() => setPicking((v) => !v)} className="text-base text-purple-700 hover:underline font-medium flex-shrink-0">{tpl ? "Selecionar novo e‑mail" : "Escolher e‑mail"}</button>
             </div>
-          </Row>
-          <Row label="Linha de assunto:" required>
+          </EmailRow>
+          <EmailRow label="Linha de assunto:" required>
             <input value={step.subject || ""} onChange={(e) => onChange({ subject: e.target.value })} placeholder="Escreva sua linha de assunto" className={cn("w-full h-9 bg-transparent outline-none text-base", tpl && !step.subject?.trim() ? "placeholder:text-red-400" : "placeholder:text-muted-foreground/70")} />
-          </Row>
-          <Row label="Pré‑cabeçalho:">
+          </EmailRow>
+          <EmailRow label="Pré‑cabeçalho:">
             <input value={step.preheader || ""} onChange={(e) => onChange({ preheader: e.target.value })} placeholder="Escreva seu preheader" className="w-full h-9 bg-transparent outline-none text-base placeholder:text-muted-foreground/70" />
-          </Row>
-          <Row label="De:">
+          </EmailRow>
+          <EmailRow label="De:">
             <span className="text-base">{fromLine}</span>
-          </Row>
+          </EmailRow>
         </div>
 
         {picking ? (
