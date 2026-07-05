@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Users,
+  Mail, Plus, Send, MailOpen, MousePointerClick, Ban, Users, Copy, Trash2,
   ChevronLeft, ChevronRight, X, GitBranch, Tag, Search, ChevronDown,
   ZoomIn, ZoomOut, Maximize2, Calendar as CalendarIcon,
 } from "lucide-react";
@@ -226,6 +226,12 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
   const insertStep = (i: number, s: Step) => setSteps((arr) => [...arr.slice(0, i), s, ...arr.slice(i)]);
   const updateStep = (id: string, patch: Partial<Step>) => setSteps((arr) => arr.map((x) => (x.id === id ? ({ ...x, ...patch } as Step) : x)));
   const removeStep = (id: string) => setSteps((arr) => arr.filter((x) => x.id !== id));
+  const duplicateStep = (id: string) => setSteps((arr) => {
+    const i = arr.findIndex((x) => x.id === id);
+    if (i < 0) return arr;
+    const copy = { ...arr[i], id: genId() } as Step;
+    return [...arr.slice(0, i + 1), copy, ...arr.slice(i + 1)];
+  });
   const addEmail = (i: number) => { const id = genId(); insertStep(i, { id, type: "email" }); setAddAt(null); setEmailFor(id); };
   const addTimer = (i: number) => { const id = genId(); insertStep(i, { id, type: "timer", mode: "duration", amount: 1, unit: "days" }); setAddAt(null); setTimerFor(id); };
   const sentCount = (id: string) => stats[id]?.sent ?? 0;
@@ -356,7 +362,10 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                 <Line />
                 {step.type === "email" ? (
                   <div data-node className="w-[520px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
-                    <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100 z-10" title="Remover"><X className="h-3.5 w-3.5" /></button>
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 z-10">
+                      <button onClick={() => duplicateStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => removeStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
                     <button onClick={() => setEmailFor(step.id)} className="w-full text-left">
                       <div className="flex items-center gap-5 pl-4 pr-6 py-6">
                         <MailBadge box="w-12 h-12" />
@@ -373,14 +382,17 @@ export function CampaignFlowEditor({ automation, onBack }: Props) {
                     </button>
                   </div>
                 ) : (
-                  <div data-node className="w-[400px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
-                    <button onClick={() => removeStep(step.id)} className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent opacity-0 group-hover:opacity-100" title="Remover"><X className="h-3.5 w-3.5" /></button>
+                  <div data-node className="w-fit min-w-[280px] max-w-[440px] rounded bg-card shadow-sm border border-border overflow-hidden group relative">
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 z-10">
+                      <button onClick={() => duplicateStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-muted-foreground bg-background border border-border hover:bg-accent" title="Duplicar"><Copy className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => removeStep(step.id)} className="h-7 w-7 rounded-sm flex items-center justify-center text-red-600 bg-background border border-border hover:bg-red-500/10" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
                     <button onClick={() => setTimerFor(step.id)} className="w-full text-left">
-                      <div className="flex items-start gap-3 p-4">
+                      <div className="flex items-center gap-3 pl-4 pr-6 py-4">
                         <AguardeBadge />
-                        <div className="pt-0.5 min-w-0">
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold leading-tight">Aguarde</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
                             {step.mode === "datetime" && step.datetime
                               ? `Até ${fmtDateTime(step.datetime)}`
                               : `Aguardar ${step.amount ?? 1} ${UNIT_LABEL[step.unit ?? "days"]}`}
