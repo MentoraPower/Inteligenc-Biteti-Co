@@ -879,6 +879,39 @@ function ElementorPage({ onBack, subOriginId, pipelines }: { onBack: () => void;
   );
 }
 
+// Universal capture snippet: listens to the submit of ANY form on the page and forwards
+// name/email/phone (plus every other field) to the connection URL. Works with any form
+// plugin or plain HTML — no per-field mapping required.
+function universalSnippet(url: string): string {
+  return `<script>
+(function(){
+  var URL=${JSON.stringify(url)};
+  function collect(form){
+    var out={},els=form.querySelectorAll("input,textarea,select");
+    for(var i=0;i<els.length;i++){
+      var el=els[i],t=(el.type||"").toLowerCase(),v=(el.value||"").trim();
+      if(!v||t==="submit"||t==="button"||t==="hidden"&&!el.name)continue;
+      var h=((el.name||"")+" "+(el.id||"")+" "+(el.placeholder||"")+" "+(el.getAttribute("aria-label")||"")).toLowerCase();
+      if(!out.email&&(t==="email"||/e-?mail/.test(h)))out.email=v;
+      else if(!out.phone&&(t==="tel"||/phone|whats|celular|telefone|fone|\\btel\\b/.test(h)))out.phone=v;
+      else if(!out.name&&/nome|name/.test(h))out.name=v;
+      else if(el.name)out[el.name]=v;
+    }
+    return out;
+  }
+  document.addEventListener("submit",function(e){
+    try{
+      var f=e.target;if(!f||f.tagName!=="FORM")return;
+      var d=collect(f);
+      if(!d.email&&!d.phone)return;
+      d.page_url=location.href;
+      fetch(URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d),keepalive:true,mode:"cors"}).catch(function(){});
+    }catch(_){}
+  },true);
+})();
+</script>`;
+}
+
 function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { subOriginId: string; pipelines: { id: string; nome: string }[]; editing?: PlatformIntegration; onDone: () => void; onCancel: () => void; }) {
   const cfg = (editing?.config || {}) as any;
   const [name, setName] = useState(editing?.name || "");
@@ -965,8 +998,8 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
   return (
     <div className="rounded-2xl bg-zinc-500/[0.06] p-4 space-y-4">
       <div>
-        <h4 className="font-semibold text-[15px]">{editing || token ? "Integração Elementor" : "Nova integração Elementor"}</h4>
-        <p className="text-xs text-muted-foreground mt-0.5">No formulário do Elementor, ligue "Ativar Biteti" e cole a URL. Nomeie cada campo pelo <b>ID nativo</b> (aba Avançado → ID) e mapeie aqui.</p>
+        <h4 className="font-semibold text-[15px]">{editing || token ? "Integração de Formulários" : "Nova integração de Formulários"}</h4>
+        <p className="text-xs text-muted-foreground mt-0.5">Captura <b>qualquer formulário</b> da página que envie nome, e-mail e telefone — Elementor, Contact Form 7, WPForms ou HTML puro. No Elementor, ligue "Ativar Biteti" e cole a URL; em outros formulários, use o snippet universal abaixo.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -1054,6 +1087,17 @@ function ElementorForm({ subOriginId, pipelines, editing, onDone, onCancel }: { 
             <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl flex-shrink-0" onClick={() => copy(`${window.location.origin}/api/integrations/elementor?token=${token}`, "__url__")}>
               {copiedKey === "__url__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </Button>
+          </div>
+
+          <div className="space-y-1.5 pt-2">
+            <label className={labelCls}>Snippet universal (qualquer formulário da página)</label>
+            <p className="text-[11px] text-muted-foreground -mt-0.5">Não usa Elementor? Cole este código no rodapé do site (uma vez). Ele captura o envio de <b>qualquer</b> formulário que tenha nome, e-mail e telefone.</p>
+            <div className="flex items-start gap-2">
+              <pre className="flex-1 max-h-40 overflow-auto rounded-lg bg-background/60 ring-1 ring-border p-3 text-[10px] leading-relaxed font-mono whitespace-pre-wrap break-all">{universalSnippet(`${typeof window !== "undefined" ? window.location.origin : ""}/api/integrations/elementor?token=${token}`)}</pre>
+              <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl flex-shrink-0" onClick={() => copy(universalSnippet(`${window.location.origin}/api/integrations/elementor?token=${token}`), "__snippet__")}>
+                {copiedKey === "__snippet__" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       )}

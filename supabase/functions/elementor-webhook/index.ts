@@ -53,6 +53,19 @@ serve(async (req) => {
 
     const forwardBody: Record<string, any> = {};
 
+    // 0) Generic capture: forward every top-level scalar field from the body, so ANY
+    //    form on the page (not just Elementor's `fields` array) is understood — a flat
+    //    { name, email, phone, ... } or any other plugin's payload just works. The
+    //    receive-webhook aliases/guessers map name/email/telefone from whatever keys arrive.
+    const RESERVED = new Set(["token", "apikey", "api_key", "fields", "form_data", "page_url", "form_name"]);
+    for (const [k, v] of Object.entries((body && typeof body === "object" ? body : {}) as Record<string, any>)) {
+      if (RESERVED.has(k)) continue;
+      if (v === null || v === undefined || typeof v === "object") continue;
+      forwardBody[k] = v;
+    }
+    // Pass a generic form_data array through untouched — receive-webhook understands it.
+    if (Array.isArray((body as any)?.form_data)) forwardBody.form_data = (body as any).form_data;
+
     // 1) Per-field "Biteti" name typed in the Elementor editor (highest priority).
     for (const f of rawFields) {
       const crm = String(f?.crm || "").trim();

@@ -497,6 +497,27 @@ function guessName(raw: any, normalized: Record<string, any>): string | null {
   return withSpace || candidates[0] || null;
 }
 
+function guessPhone(raw: any, normalized: Record<string, any>): string | null {
+  if (normalized.whatsapp) return String(normalized.whatsapp);
+  if (normalized.phone) return String(normalized.phone);
+
+  const values: string[] = [];
+  collectStringValues(raw, values);
+
+  // Phone-like: 8–15 digits (BR mobile/landline, with or without country code),
+  // possibly wrapped in + ( ) - and spaces. Skip anything that looks like an email.
+  for (const v of values) {
+    if (v.includes("@")) continue;
+    if (!/[\d]/.test(v)) continue;
+    const digits = v.replace(/\D/g, "");
+    if (digits.length >= 8 && digits.length <= 15) {
+      const m = v.match(/\+?\d[\d\s().-]{6,}\d/);
+      if (m) return m[0].trim();
+    }
+  }
+  return null;
+}
+
 // Normalize payload from different sources (Elementor WordPress, direct, etc.)
 function normalizePayload(raw: any): Record<string, any> {
   // If it's already a flat object with expected name field, return as-is
@@ -643,6 +664,7 @@ async function processLead(args: ProcessLeadArgs) {
     let payload = normalizePayload(rawPayload);
     payload.email = payload.email || guessEmail(rawPayload, payload) || "";
     payload.name = payload.name || guessName(rawPayload, payload) || "";
+    payload.whatsapp = payload.whatsapp || payload.phone || guessPhone(rawPayload, payload) || "";
 
     console.log(`[${requestId}] Normalized payload:`, JSON.stringify(payload).substring(0, 800));
 
