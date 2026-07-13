@@ -417,10 +417,27 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     if (wantsEmail) setGenerating(true);
 
     try {
-      // Upload attached images to Storage; collect their public URLs.
+      // Upload attached images to Storage; PDFs become ebooks with a platform download link.
       const attachments: Attachment[] = [];
       const imageUrls: string[] = [];
+      const ebookLinks: { name: string; url: string }[] = [];
       for (const f of data.files) {
+        const isPdf = f.file.type === "application/pdf" || /\.pdf$/i.test(f.file.name);
+        if (isPdf) {
+          const safe = f.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `${crypto.randomUUID()}-${safe}`;
+          const { error: upErr } = await (supabase as any).storage.from("ebooks").upload(path, f.file, { contentType: "application/pdf", upsert: false });
+          if (!upErr) {
+            const { data: pub } = (supabase as any).storage.from("ebooks").getPublicUrl(path);
+            const { data: rec } = await (supabase as any).from("ebooks").insert({ name: f.file.name, file_url: pub?.publicUrl, file_name: f.file.name }).select("id").single();
+            if (rec?.id) {
+              const link = `${window.location.origin}/ebook/${rec.id}`;
+              ebookLinks.push({ name: f.file.name, url: link });
+              attachments.push({ id: crypto.randomUUID(), kind: "text", name: f.file.name, content: `Ebook (download): ${link}` });
+            }
+          }
+          continue;
+        }
         if (!f.file.type.startsWith("image/")) continue;
         const path = `${template.id}/${crypto.randomUUID()}-${f.file.name.replace(/[^\w.]+/g, "_")}`;
         const { error: upErr } = await (supabase as any).storage
@@ -457,7 +474,7 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-email-ai`, {
         method: "POST",
         headers: { "content-type": "application/json", Authorization: `Bearer ${KEY}`, apikey: KEY },
-        body: JSON.stringify({ history, userText: text, imageUrls, pastedTexts, currentHtml: emailHtml }),
+        body: JSON.stringify({ history, userText: text, imageUrls, pastedTexts, currentHtml: emailHtml, ebookLinks }),
       });
       if (!resp.ok || !resp.body) {
         const t = await resp.text().catch(() => "");

@@ -64,7 +64,7 @@ serve(async (req) => {
       throw new Error("ANTHROPIC_API_KEY não configurada nos secrets do projeto.");
     }
 
-    const { history, userText, imageUrls, pastedTexts, currentHtml } = await req.json();
+    const { history, userText, imageUrls, pastedTexts, currentHtml, ebookLinks } = await req.json();
 
     const priorMessages = (history || [])
       .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && m.content)
@@ -95,6 +95,9 @@ serve(async (req) => {
     let system = SYSTEM_PROMPT;
     if (Array.isArray(imageUrls) && imageUrls.length > 0) {
       system += `\n\nIMAGENS DISPONÍVEIS (use estas URLs em <img> quando fizer sentido / o usuário pedir):\n${imageUrls.map((u: string) => `- ${u}`).join("\n")}`;
+    }
+    if (Array.isArray(ebookLinks) && ebookLinks.length > 0) {
+      system += `\n\nEBOOK ANEXADO (o usuário enviou um PDF): adicione no e-mail um botão de CTA bem visível, escrito "Baixar ebook" (ou similar), linkando EXATAMENTE para a URL abaixo, SEM alterá-la. Ao clicar, essa URL da plataforma baixa o PDF automaticamente. Isto conta como criar/editar o e-mail: defina CHANGED:true.\n${ebookLinks.map((e: any) => `- ${e.name}: ${e.url}`).join("\n")}`;
     }
     if (currentHtml && String(currentHtml).trim()) {
       system += `\n\nE-MAIL ATUAL (edite sobre este quando o pedido for uma alteração):\n${currentHtml}`;
