@@ -97,7 +97,7 @@ serve(async (req) => {
       system += `\n\nIMAGENS DISPONÍVEIS (use estas URLs em <img> quando fizer sentido / o usuário pedir):\n${imageUrls.map((u: string) => `- ${u}`).join("\n")}`;
     }
     if (Array.isArray(ebookLinks) && ebookLinks.length > 0) {
-      system += `\n\nEBOOK ANEXADO (o usuário enviou um PDF): adicione no e-mail um botão de CTA bem visível, escrito "Baixar ebook" (ou similar), linkando EXATAMENTE para a URL abaixo, SEM alterá-la. Ao clicar, essa URL da plataforma baixa o PDF automaticamente. Isto conta como criar/editar o e-mail: defina CHANGED:true.\n${ebookLinks.map((e: any) => `- ${e.name}: ${e.url}`).join("\n")}`;
+      system += `\n\nEBOOK ANEXADO (o usuário enviou um PDF). Faça o seguinte: no REPLY, confirme que RECEBEU o ebook e diga que adicionou o botão de download. Adicione no e-mail um botão de CTA bem visível, escrito "Baixar ebook" (ou similar), linkando EXATAMENTE para a URL abaixo, SEM alterá-la. Ao clicar, essa URL da plataforma baixa o PDF automaticamente. Isto conta como criar/editar o e-mail: defina CHANGED:true.\n${ebookLinks.map((e: any) => `- ${e.name}: ${e.url}`).join("\n")}`;
     }
     if (currentHtml && String(currentHtml).trim()) {
       system += `\n\nE-MAIL ATUAL (edite sobre este quando o pedido for uma alteração):\n${currentHtml}`;

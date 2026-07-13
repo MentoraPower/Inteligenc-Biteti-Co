@@ -74,7 +74,7 @@ function TypewriterText({ text }: { text: string }) {
 
 interface Attachment {
   id: string;
-  kind: "image" | "text";
+  kind: "image" | "text" | "pdf";
   name: string;
   url?: string;
   content?: string;
@@ -417,7 +417,21 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
     if (wantsEmail) setGenerating(true);
 
     try {
-      // Upload attached images to Storage; PDFs become ebooks with a platform download link.
+      // 1) Show the user's message + attachments IMMEDIATELY (before uploads) so it appears in the chat right away.
+      const userMsgId = crypto.randomUUID();
+      const prelim: Attachment[] = data.files.map((f) =>
+        f.file.type.startsWith("image/")
+          ? { id: crypto.randomUUID(), kind: "image" as const, name: f.file.name, url: f.preview || undefined }
+          : { id: crypto.randomUUID(), kind: "pdf" as const, name: f.file.name, content: "Enviando…" }
+      );
+      data.pastedContent.forEach((p) => prelim.push({ id: p.id, kind: "text", name: "Texto colado", content: p.content }));
+      setMessages((m) => [
+        ...m,
+        { id: userMsgId, role: "user", content: text || (prelim.length ? "(anexo enviado)" : ""), attachments: prelim.length ? prelim : undefined },
+        { id: placeholderId, role: "assistant", content: "", loading: true },
+      ]);
+
+      // 2) Upload: images -> email-assets; PDFs -> ebooks bucket + platform download link.
       const attachments: Attachment[] = [];
       const imageUrls: string[] = [];
       const ebookLinks: { name: string; url: string }[] = [];
@@ -431,11 +445,13 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
             const { data: pub } = (supabase as any).storage.from("ebooks").getPublicUrl(path);
             const { data: rec } = await (supabase as any).from("ebooks").insert({ name: f.file.name, file_url: pub?.publicUrl, file_name: f.file.name }).select("id").single();
             if (rec?.id) {
-              const link = `${window.location.origin}/ebook/${rec.id}`;
-              ebookLinks.push({ name: f.file.name, url: link });
-              attachments.push({ id: crypto.randomUUID(), kind: "text", name: f.file.name, content: `Ebook (download): ${link}` });
+              ebookLinks.push({ name: f.file.name, url: `${window.location.origin}/ebook/${rec.id}` });
+              // Clicking the attachment opens the actual PDF.
+              attachments.push({ id: crypto.randomUUID(), kind: "pdf", name: f.file.name, url: pub?.publicUrl });
+              continue;
             }
           }
+          attachments.push({ id: crypto.randomUUID(), kind: "pdf", name: f.file.name, content: "Falha ao enviar o PDF" });
           continue;
         }
         if (!f.file.type.startsWith("image/")) continue;
@@ -455,18 +471,8 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       data.pastedContent.forEach((p) =>
         attachments.push({ id: p.id, kind: "text", name: "Texto colado", content: p.content })
       );
-
-      const userMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: text || (attachments.length ? "(anexo enviado)" : ""),
-        attachments: attachments.length ? attachments : undefined,
-      };
-      setMessages((m) => [
-        ...m,
-        userMsg,
-        { id: placeholderId, role: "assistant", content: "", loading: true },
-      ]);
+      // 3) Swap the preliminary attachments for the uploaded ones (persisted URLs).
+      setMessages((m) => m.map((x) => (x.id === userMsgId ? { ...x, attachments: attachments.length ? attachments : undefined } : x)));
 
       const history = priorMessages.map((m) => ({ role: m.role, content: m.content }));
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -665,12 +671,21 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
                         {m.attachments.map((a) => (
                           <button
                             key={a.id}
-                            onClick={() => setPreview(a)}
-                            className="rounded-xl overflow-hidden border border-border transition-colors text-left"
-                            title={a.name}
+                            onClick={() => (a.kind === "pdf" && a.url ? window.open(a.url, "_blank") : setPreview(a))}
+                            className="rounded-xl overflow-hidden border border-border transition-colors text-left hover:border-foreground/30"
+                            title={a.kind === "pdf" ? "Abrir PDF" : a.name}
                           >
                             {a.kind === "image" ? (
                               <img src={a.url} alt={a.name} className="w-24 h-24 object-cover" />
+                            ) : a.kind === "pdf" ? (
+                              <div className="w-44 h-24 bg-background p-3 flex flex-col justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <FileText className="h-4 w-4 text-red-500" />
+                                  <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">PDF</span>
+                                </div>
+                                <span className="text-xs font-medium truncate">{a.name}</span>
+                                <span className="text-[10px] text-muted-foreground">{a.url ? "Clique para abrir" : (a.content || "")}</span>
+                              </div>
                             ) : (
                               <div className="w-40 h-24 bg-background p-3 flex flex-col gap-1">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
