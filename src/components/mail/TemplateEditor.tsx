@@ -438,19 +438,21 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
       for (const f of data.files) {
         const isPdf = f.file.type === "application/pdf" || /\.pdf$/i.test(f.file.name);
         if (isPdf) {
-          const safe = f.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = `${crypto.randomUUID()}-${safe}`;
-          const { error: upErr } = await (supabase as any).storage.from("ebooks").upload(path, f.file, { contentType: "application/pdf", upsert: false });
-          if (!upErr) {
-            const { data: pub } = (supabase as any).storage.from("ebooks").getPublicUrl(path);
-            const { data: rec } = await (supabase as any).from("ebooks").insert({ name: f.file.name, file_url: pub?.publicUrl, file_name: f.file.name }).select("id").single();
-            if (rec?.id) {
-              ebookLinks.push({ name: f.file.name, url: `${window.location.origin}/ebook/${rec.id}` });
-              // Clicking the attachment opens the actual PDF.
-              attachments.push({ id: crypto.randomUUID(), kind: "pdf", name: f.file.name, url: pub?.publicUrl });
-              continue;
+          const race = <T,>(p: Promise<T>, ms: number, fb: T): Promise<T> => Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fb), ms))]);
+          try {
+            const safe = f.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `${crypto.randomUUID()}-${safe}`;
+            const up: any = await race((supabase as any).storage.from("ebooks").upload(path, f.file, { contentType: "application/pdf", upsert: false }), 20000, { error: { message: "timeout" } });
+            if (!up?.error) {
+              const { data: pub } = (supabase as any).storage.from("ebooks").getPublicUrl(path);
+              const rec: any = await race((supabase as any).from("ebooks").insert({ name: f.file.name, file_url: pub?.publicUrl, file_name: f.file.name }).select("id").single(), 15000, { data: null });
+              if (rec?.data?.id) {
+                ebookLinks.push({ name: f.file.name, url: `${window.location.origin}/ebook/${rec.data.id}` });
+                attachments.push({ id: crypto.randomUUID(), kind: "pdf", name: f.file.name, url: pub?.publicUrl });
+                continue;
+              }
             }
-          }
+          } catch { /* fall through to failure card */ }
           attachments.push({ id: crypto.randomUUID(), kind: "pdf", name: f.file.name, content: "Falha ao enviar o PDF" });
           continue;
         }
