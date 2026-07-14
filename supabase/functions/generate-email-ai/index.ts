@@ -51,7 +51,9 @@ STEPS: <quando CHANGED=true, liste em UMA linha as etapas que você executou. SI
   3) A ÚLTIMA etapa é SEMPRE de finalização (ex.: "Finalizando o e-mail").
   Separe por " | ". Cada etapa no formato "Título curto::descrição do que foi feito" (a descrição pode ser maior em umas e menor em outras). Use POUCAS etapas (2 a 3) para alterações pequenas e MAIS para criações do zero. Quando CHANGED=false, deixe esta linha VAZIA.>
 ===HTML===
-<quando CHANGED=true, o documento HTML COMPLETO do e-mail aqui; quando false, deixe VAZIO (nada após esta linha)>`;
+<quando CHANGED=true, o documento HTML COMPLETO do e-mail aqui; quando false, deixe VAZIO (nada após esta linha)>
+
+IMPORTANTE: use este formato EXATO em TODA resposta, SEM EXCEÇÃO, inclusive em saudações, perguntas, conversa fiada ou recusas. Nesses casos: REPLY com a resposta, CHANGED: false, STEPS vazio, e NADA após ===HTML===. NUNCA responda em texto solto sem as linhas REPLY:, CHANGED: e ===HTML===. Sempre comece a resposta com "REPLY:".`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

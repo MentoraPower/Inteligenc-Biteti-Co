@@ -506,8 +506,9 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
         const markIdx = acc.indexOf(MARK);
         if (markIdx === -1) {
           // Still receiving the header — show the reply as it streams.
+          // Fallback to the raw text when the model doesn't use the "REPLY:" format.
           const rm = acc.match(/REPLY:\s*([\s\S]*?)(?:\r?\nCHANGED:|$)/i);
-          const partial = rm ? rm[1].trim() : "";
+          const partial = rm ? rm[1].trim() : acc.trim();
           if (partial) setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: partial, loading: false } : x)));
         } else {
           if (!headerDone) {
@@ -548,6 +549,13 @@ export function TemplateEditor({ template, onBack }: TemplateEditorProps) {
           setEmailHtml(finalHtml);
           baseHtml.current = finalHtml;
         }
+      }
+      // Safety: model returned a plain-text reply (no ===HTML=== marker) — never leave it stuck loading.
+      if (acc.indexOf(MARK) === -1) {
+        const rm = acc.match(/REPLY:\s*([\s\S]*)/i);
+        let reply = (rm ? rm[1] : acc).replace(/\r?\n?CHANGED:[\s\S]*$/i, "").trim();
+        if (!reply) reply = "Pronto!";
+        setMessages((m) => m.map((x) => (x.id === placeholderId ? { ...x, content: reply, loading: false } : x)));
       }
     } catch (e: any) {
       if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
