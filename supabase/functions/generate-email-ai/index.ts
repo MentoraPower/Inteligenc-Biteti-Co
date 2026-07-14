@@ -97,7 +97,12 @@ serve(async (req) => {
       system += `\n\nIMAGENS DISPONÍVEIS (use estas URLs em <img> quando fizer sentido / o usuário pedir):\n${imageUrls.map((u: string) => `- ${u}`).join("\n")}`;
     }
     if (Array.isArray(ebookLinks) && ebookLinks.length > 0) {
-      system += `\n\nEBOOK ANEXADO (o usuário enviou um PDF). Faça o seguinte: no REPLY, confirme que RECEBEU o ebook e diga que adicionou o botão de download. Adicione no e-mail um botão de CTA bem visível, escrito "Baixar ebook" (ou similar), linkando EXATAMENTE para a URL abaixo, SEM alterá-la. Ao clicar, essa URL da plataforma baixa o PDF automaticamente. Isto conta como criar/editar o e-mail: defina CHANGED:true.\n${ebookLinks.map((e: any) => `- ${e.name}: ${e.url}`).join("\n")}`;
+      system += `\n\nEBOOK ANEXADO (o usuário enviou um PDF). Regras:
+- Se o E-MAIL ATUAL JÁ TEM um botão de baixar ebook (ou o usuário pediu para "trocar o ebook do botão/do envio"), APENAS SUBSTITUA o href desse botão existente pela nova URL abaixo, mantendo o texto e o resto do botão iguais. NÃO crie um segundo botão.
+- Se NÃO existe botão de ebook ainda, adicione UM botão de CTA bem visível escrito "Baixar ebook" (ou similar) linkando para a URL.
+- Use EXATAMENTE a URL abaixo, sem alterá-la (ao clicar, ela baixa o PDF automaticamente).
+- No REPLY, confirme que recebeu o ebook e diga se adicionou ou trocou o botão. Defina CHANGED:true.
+Nova URL do ebook:\n${ebookLinks.map((e: any) => `- ${e.name}: ${e.url}`).join("\n")}`;
     }
     if (currentHtml && String(currentHtml).trim()) {
       system += `\n\nE-MAIL ATUAL (edite sobre este quando o pedido for uma alteração):\n${currentHtml}`;
